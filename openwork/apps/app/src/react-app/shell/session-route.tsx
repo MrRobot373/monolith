@@ -1659,6 +1659,7 @@ export function SessionRoute() {
       />
     ) : null}
     <SessionPage
+      modeTabs={{ selectedAgent, onSelectAgent: setSelectedAgent }}
       selectedSessionId={selectedSessionId}
       selectedWorkspaceId={selectedWorkspaceId}
       selectedWorkspaceDisplay={selectedWorkspace ? {

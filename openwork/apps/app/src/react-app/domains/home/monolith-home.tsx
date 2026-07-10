@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
-import type { ComponentType } from "react";
+import { useState, type ComponentType } from "react";
 import {
+  ArrowUp,
   BarChart3,
   CalendarClock,
   FilePlus2,
@@ -43,6 +44,62 @@ export function MonolithHomeHero() {
         </h1>
       </div>
       <p className="text-[13px] text-dls-secondary">{t("monolith.home.notice")}</p>
+    </div>
+  );
+}
+
+type MonolithStartComposerProps = {
+  workspaceName?: string;
+  disabled?: boolean;
+  onStart: (prompt: string) => void;
+};
+
+/**
+ * Standalone Cowork-style task input for the no-session home. The real session
+ * composer needs a live session; this one creates the task on submit via
+ * `onCreateTaskWithPrompt`, after which the full composer takes over.
+ */
+export function MonolithStartComposer({ workspaceName, disabled, onStart }: MonolithStartComposerProps) {
+  const [text, setText] = useState("");
+
+  const submit = () => {
+    const prompt = text.trim();
+    if (!prompt || disabled) return;
+    onStart(prompt);
+    setText("");
+  };
+
+  return (
+    <div className="w-full rounded-3xl border border-dls-border bg-dls-surface p-4 shadow-[var(--dls-card-shadow)]">
+      <textarea
+        value={text}
+        onChange={(event) => setText(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            submit();
+          }
+        }}
+        rows={3}
+        autoFocus
+        placeholder={t("monolith.home.input_placeholder")}
+        className="w-full resize-none bg-transparent text-[15px] leading-6 text-dls-text outline-none placeholder:text-dls-secondary"
+      />
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-dls-border bg-dls-surface-muted/60 px-2.5 py-1 text-[12px] text-dls-secondary">
+          <FolderOpen className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{workspaceName?.trim() || t("monolith.home.workspace_fallback")}</span>
+        </span>
+        <button
+          type="button"
+          onClick={submit}
+          disabled={disabled || !text.trim()}
+          aria-label={t("monolith.home.start")}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-dls-accent text-white transition-colors hover:bg-dls-accent-hover disabled:opacity-40"
+        >
+          <ArrowUp className="size-4" aria-hidden />
+        </button>
+      </div>
     </div>
   );
 }

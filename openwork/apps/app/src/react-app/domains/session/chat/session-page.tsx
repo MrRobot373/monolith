@@ -48,6 +48,7 @@ import {
 import { ShareWorkspaceModal } from "../../workspace/share-workspace-modal";
 import { StatusBar, type StatusBarProps } from "./status-bar";
 import { OwDotTicker } from "../../../shell/dot-ticker";
+import { MonolithHomeHero, MonolithStartComposer, MonolithSuggestions } from "../../home/monolith-home";
 import { ModeTabs } from "../../../shell/mode-tabs";
 import { NotificationBell } from "../../../shell/notification-center";
 import { useReactRenderWatchdog } from "../../../shell/react-render-watchdog";
@@ -131,6 +132,11 @@ export type SessionPageSurfaceProps = Omit<
 >;
 
 export type SessionPageProps = {
+  /** MONOLITH: Chat|Cowork|Code mode switcher wiring; shown in the header on all states. */
+  modeTabs?: {
+    selectedAgent: string | null;
+    onSelectAgent: (agent: string | null) => void;
+  };
   selectedSessionId: string | null;
   selectedWorkspaceId: string;
   selectedWorkspaceDisplay: {
@@ -738,6 +744,16 @@ export function SessionPage(props: SessionPageProps) {
       props.surface,
   );
   const canRenderSplitSurface = Boolean(canRenderReactSurface && splitSessionId && splitSessionId !== props.selectedSessionId);
+  // MONOLITH: the Cowork-style home renders when nothing else claims the panel
+  // (no session selected, no error/setup/loading state).
+  const showMonolithHome =
+    !showDelayedSessionLoadingState &&
+    !canRenderReactSurface &&
+    !showStartupSkeleton &&
+    !props.notFoundMessage &&
+    !showWorkspaceSetupEmptyState &&
+    !showSelectedWorkspaceError &&
+    !props.selectedSessionId;
 
   const openSessionTab = useCallback((workspaceId: string, sessionId: string) => {
     setSessionTabs((current) => {
@@ -875,12 +891,12 @@ export function SessionPage(props: SessionPageProps) {
             <ResizablePanel minSize="360px" className="min-w-0">
               <main className="flex h-full min-w-0 flex-col overflow-hidden border-r border-border">
           <header className="relative z-10 flex h-10 shrink-0 items-center justify-between border-b border-border px-4 md:px-6 mac:titlebar-drag  mac:backdrop-blur-2xl mac:backdrop-saturate-150 @container/titlebar">
-            {props.surface ? (
+            {props.modeTabs ? (
               <div className="pointer-events-none absolute inset-x-0 top-1/2 hidden -translate-y-1/2 justify-center md:flex">
                 <div className="pointer-events-auto mac:titlebar-no-drag">
                   <ModeTabs
-                    selectedAgent={props.surface.selectedAgent ?? null}
-                    onSelectAgent={props.surface.onSelectAgent}
+                    selectedAgent={props.modeTabs.selectedAgent}
+                    onSelectAgent={props.modeTabs.onSelectAgent}
                   />
                 </div>
               </div>
@@ -930,7 +946,7 @@ export function SessionPage(props: SessionPageProps) {
 
           <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1 overflow-hidden">
             <ResizablePanel minSize="180px" className="min-h-0">
-            <div className="relative h-full min-w-0 overflow-hidden bg-dls-surface mac:bg-dls-surface/85 mac:backdrop-blur-2xl mac:backdrop-saturate-150">
+            <div className={cn("relative h-full min-w-0 overflow-hidden mac:bg-dls-surface/85 mac:backdrop-blur-2xl mac:backdrop-saturate-150", showMonolithHome ? "paper-grid" : "bg-dls-surface")}>
               {showStartupSkeleton ? (
                 <div className="px-6 py-14" role="status" aria-live="polite">
                   <div className="mx-auto max-w-2xl space-y-6">
@@ -1072,7 +1088,15 @@ export function SessionPage(props: SessionPageProps) {
               ) : null}
 
               {!showDelayedSessionLoadingState && !canRenderReactSurface && !showStartupSkeleton ? (
-                <div className={`mx-auto max-w-[800px] px-6 ${showWorkspaceSetupEmptyState ? "pt-20" : "pt-10"}`}>
+                <div
+                  className={cn(
+                    "mx-auto max-w-[800px] px-6",
+                    showWorkspaceSetupEmptyState ? "pt-20" : "pt-10",
+                    // MONOLITH: the no-session home fills the panel and centers
+                    // vertically on the dotted paper canvas (see wrapper below).
+                    showMonolithHome && "flex h-full flex-col pt-0",
+                  )}
+                >
                   {props.notFoundMessage ? (
                     <div className="px-6 py-16 text-center">
                       <div className="mx-auto max-w-md rounded-2xl border border-dls-border bg-dls-card px-5 py-6 shadow-[var(--dls-card-shadow)]">
@@ -1141,83 +1165,40 @@ export function SessionPage(props: SessionPageProps) {
                       {t("session.loading_detail")}
                     </div>
                   ) : (
-                    <div className="flex flex-1 items-center justify-center px-6 py-16">
-                      <div className="w-full max-w-md space-y-6">
-                        <div className="space-y-1 text-center">
-                          <h2 className="text-lg font-semibold text-dls-text">
-                            {providerCount === 0
-                              ? t("session.connect_model_to_start")
-                              : t("session.select_or_create_session")}
-                          </h2>
-                          <p className="text-xs text-dls-secondary">
-                            {providerCount === 0
-                              ? "Add an AI model provider so your tasks can run."
-                              : "Try one of these to get started:"}
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          {providerCount === 0 ? (
-                            <button
-                              type="button"
-                              className="flex w-full items-start gap-3 rounded-xl border border-blue-7/50 bg-blue-2/40 p-3.5 text-left transition-colors hover:bg-blue-3/50"
-                              onClick={() => props.onOpenProviderAuth?.()}
-                            >
-                              <Zap className="mt-0.5 size-5 shrink-0 text-blue-10" />
-                              <div>
-                                <div className="text-[13px] font-medium text-dls-text">Connect a model provider</div>
-                                <div className="mt-0.5 text-[11px] text-dls-secondary">
-                                  Add an API key for Anthropic, OpenAI, Google, or other providers
-                                </div>
-                              </div>
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.sidebar.onCreateTaskWithPrompt?.(
-                                props.selectedWorkspaceId,
-                                "Create a sample CSV file with 20 rows of fake customer data (name, email, company, revenue). Then show me a summary of the data.",
-                              );
-                            }}
-                          >
-                            <img src="https://cdn.simpleicons.org/googlesheets" alt="" width={20} height={20} className="mt-0.5 shrink-0" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Edit a CSV</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Create a sample spreadsheet with customer data</div>
+                    <div className="flex flex-1 flex-col justify-center gap-6 py-10">
+                      <MonolithHomeHero />
+                      {providerCount === 0 ? (
+                        <button
+                          type="button"
+                          className="flex w-full items-start gap-3 rounded-xl border border-amber-7/40 bg-amber-2/40 p-3.5 text-left transition-colors hover:bg-amber-3/40"
+                          onClick={() => props.onOpenProviderAuth?.()}
+                        >
+                          <Zap className="mt-0.5 size-5 shrink-0 text-amber-11" />
+                          <div>
+                            <div className="text-[13px] font-medium text-dls-text">{t("session.connect_model_to_start")}</div>
+                            <div className="mt-0.5 text-[11px] text-dls-secondary">
+                              {t("monolith.home.no_provider_body")}
                             </div>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.sidebar.onCreateTaskWithPrompt?.(
-                                props.selectedWorkspaceId,
-                                "Open craigslist.org in the browser and search for couches for sale. Show me the top 5 results with prices.",
-                              );
-                            }}
-                          >
-                            <img src="/openwork-mark.svg" alt="" width={20} height={20} className="mt-0.5 shrink-0" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Browse the web</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Search Craigslist for couches and list the results</div>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.onOpenSettings?.();
-                            }}
-                          >
-                            <img src="https://cdn.simpleicons.org/hackthebox" alt="" width={20} height={20} className="mt-0.5 shrink-0" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Connect an extension</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Add MCP servers, plugins, and integrations</div>
-                            </div>
-                          </button>
+                          </div>
+                        </button>
+                      ) : null}
+                      <div className="flex flex-col gap-1.5">
+                        <MonolithStartComposer
+                          workspaceName={workspaceName}
+                          disabled={!props.selectedWorkspaceId || !props.sidebar.onCreateTaskWithPrompt}
+                          onStart={(prompt) =>
+                            props.sidebar.onCreateTaskWithPrompt?.(props.selectedWorkspaceId, prompt)
+                          }
+                        />
+                        <div className="px-2 text-right text-[11px] text-dls-secondary">
+                          {t("monolith.home.hint")}
                         </div>
                       </div>
+                      <MonolithSuggestions
+                        onPick={(prompt) =>
+                          props.sidebar.onCreateTaskWithPrompt?.(props.selectedWorkspaceId, prompt)
+                        }
+                      />
                     </div>
                   )}
                 </div>
