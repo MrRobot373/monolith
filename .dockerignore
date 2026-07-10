@@ -1,0 +1,9 @@
+# Keep the build context lean (esp. for the webui build that copies openwork/).
+**/node_modules
+openwork/.git
+openwork/**/dist
+openwork/**/.turbo
+openwork/tmp
+data
+.env
+*.log

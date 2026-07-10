@@ -1,0 +1,29 @@
+# SearXNG configuration
+use_default_settings: true
+
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "monolith-searxng-secret-key-change-me"
+  limiter: false # Disable rate limiter internally
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json # Enable JSON format so agent can parse search results
+
+engines:
+  - name: google
+    engine: google
+    shortcut: go
+    timeout: 3.0
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: dd
+    timeout: 3.0
+  - name: wikipedia
+    engine: wikipedia
+    shortcut: wp
+    timeout: 2.0

@@ -1,0 +1,159 @@
+# MONOLITH — Phase 1 core stack (single shared workspace).
+# Built on OpenWork's MIT-licensed orchestrator (UI served at :8787/ui) + a LiteLLM
+# hybrid model gateway (cloud + local Ollama). Multi-user auth (Authelia) and the
+# agent tools (Agent-Reach, open-claude-code, Perplexica) arrive in Phases 2-3.
+#
+# Bring up:   docker compose up -d --build
+# Then open:  http://localhost   (Caddy -> openwork-host:8787/ui)
+
+name: monolith
+
+services:
+  # ---- Reverse proxy (TLS in prod, plain http on :80 for local) -------------
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "3001:3001"   # Perplexica/Vane cited-search site (behind login)
+    environment:
+      # Local default = ":80" (plain http). For a real server set
+      # MONOLITH_SITE_ADDRESS=work.yourco.com and Caddy auto-provisions HTTPS.
+      MONOLITH_SITE_ADDRESS: ${MONOLITH_SITE_ADDRESS:-:80}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/users:/etc/caddy/users:ro
+      - ./hub:/srv/hub:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - webui
+      - vane
+
+  # ---- Perplexica / Vane — cited AI web search (self-contained, bundles SearxNG)
+  vane:
+    image: itzcrazykns1337/vane:latest
+    restart: unless-stopped
+    volumes:
+      - vane_data:/home/vane/data
+    expose:
+      - "3000"
+
+  # ---- Full OpenWork web UI (built from source, replaces the Toy UI) ---------
+  webui:
+    build:
+      context: .
+      dockerfile: webui/Dockerfile
+      args:
+        # Browser-reachable engine API + tokens, baked into the SPA at build time.
+        VITE_OPENWORK_URL: ${WEBUI_OPENWORK_URL:-http://localhost}
+        VITE_OPENWORK_TOKEN: ${OPENWORK_TOKEN}
+        VITE_OPENWORK_HOST_TOKEN: ${OPENWORK_HOST_TOKEN}
+        MONOLITH_PRODUCT_NAME: ${MONOLITH_PRODUCT_NAME:-MONOLITH}
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - openwork-host
+
+  # ---- OpenWork workspace (MIT core: orchestrator + server + opencode engine)-
+  # One container == one working OpenWork workspace at :8787/ui.
+  # Phase 2 replaces this single service with one container per user.
+  openwork-host:
+    build:
+      context: ./workspace-image
+    restart: unless-stopped
+    environment:
+      OPENWORK_DATA_DIR: /data/openwork-orchestrator
+      OPENWORK_SIDECAR_DIR: /data/sidecars
+      OPENWORK_WORKSPACE: /workspace
+      OPENWORK_TOKEN: ${OPENWORK_TOKEN}
+      OPENWORK_HOST_TOKEN: ${OPENWORK_HOST_TOKEN}
+      OPENWORK_APPROVAL_MODE: ${OPENWORK_APPROVAL_MODE:-manual}
+      # Model gateway wiring (consumed by the entrypoint's opencode provider seed).
+      MONOLITH_GATEWAY_URL: http://litellm:4000/v1
+      MONOLITH_GATEWAY_KEY: ${OPENWORK_LITELLM_KEY:-${LITELLM_MASTER_KEY}}
+    volumes:
+      - openwork_workspace:/workspace
+      - openwork_data:/data
+    # Not published to the host: the browser reaches the API only through Caddy
+    # (same-origin, behind the login). Internal-only.
+    expose:
+      - "8787"
+    depends_on:
+      - litellm
+      - searxng
+
+  # ---- SearXNG — privacy-respecting search engine for agents ----------------
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    expose:
+      - "8080"
+
+  # ---- Hybrid model gateway --------------------------------------------------
+  litellm:
+    image: ghcr.io/berriai/litellm:main-stable
+    restart: unless-stopped
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    # Loads all .env vars (incl. the OLLAMA_KEY_* round-robin pool) into the gateway.
+    env_file:
+      - .env
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY}   # NEVER change after first boot (encrypts stored keys)
+      DATABASE_URL: postgresql://litellm:${LITELLM_DB_PASSWORD}@litellm-db:5432/litellm
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml:ro
+    expose:
+      - "4000"
+    depends_on:
+      litellm-db:
+        condition: service_healthy
+
+  litellm-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${LITELLM_DB_PASSWORD}
+      POSTGRES_DB: litellm
+    volumes:
+      - litellm_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # ---- Local models (optional; cloud handles quality in hybrid mode) ---------
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    expose:
+      - "11434"
+    # For an NVIDIA GPU host, uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+volumes:
+  caddy_data:
+  caddy_config:
+  openwork_workspace:
+  openwork_data:
+  litellm_pg:
+  ollama_models:
+  vane_data:

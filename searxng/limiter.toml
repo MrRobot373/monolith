@@ -1,0 +1,6 @@
+[botdetection]
+enabled = false
+
+[botdetection.ip_limit]
+link_token = false
+link_token_ip = false

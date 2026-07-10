@@ -1,0 +1,15 @@
+{
+  "product": "MONOLITH",
+  "openworkBase": "http://work.localhost",
+  "searchBase": "http://localhost:3001",
+  "modes": [
+    { "name": "Research",      "desc": "Ask anything — get a cited, sourced answer.",        "engine": "search" },
+    { "name": "Law",           "desc": "Review contracts & NDAs, compliance, drafting.",      "engine": "openwork", "agent": "legal" },
+    { "name": "Doctor / Health","desc": "Nutrition, fitness plans, plain-language lab help.",  "engine": "openwork", "agent": "health" },
+    { "name": "Finance",       "desc": "Models, tearsheets, earnings prep, reconciliation.",   "engine": "openwork", "agent": "finance" },
+    { "name": "Deep Research", "desc": "Multi-step research with a written, cited report.",    "engine": "openwork", "agent": "research" },
+    { "name": "Code",          "desc": "Read, write, refactor and run code.",                  "engine": "openwork", "agent": "code" },
+    { "name": "Cowork",        "desc": "A general agent that works on your files.",            "engine": "openwork" },
+    { "name": "Agent",         "desc": "Autonomous, multi-step tasks end to end.",             "engine": "openwork" }
+  ]
+}

@@ -1,0 +1,7 @@
+# Serves the OpenWork SPA (static build) on :80. SPA fallback -> index.html.
+:80 {
+	root * /srv
+	encode gzip
+	try_files {path} /index.html
+	file_server
+}

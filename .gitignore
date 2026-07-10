@@ -1,0 +1,22 @@
+# Secrets & runtime state
+.env
+data/
+**/data/
+backups/
+
+# Native (no-Docker) launcher: secrets, per-run state, chosen workspace, built UI
+native/.env
+native/.run/
+native/workspace/
+
+# Dependencies & build output (openwork/apps/app source IS tracked — we modify it;
+# see the plan: MONOLITH's Cowork UI is built from this source in both deploy paths)
+node_modules/
+openwork/apps/app/dist/
+.turbo/
+.pnpm-store/
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+*.log
