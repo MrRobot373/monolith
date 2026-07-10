@@ -173,11 +173,25 @@ function seedWorkspace(workspacePath) {
     }
   }
 
+  // Seed mode agents (chat / code) into <ws>/.opencode/agent/ — the UI's
+  // Chat|Cowork|Code tabs select these by name. Product-managed like skills.
+  let agentCount = 0;
+  const agentsSrc = path.join(HERE, "agents");
+  if (fs.existsSync(agentsSrc)) {
+    const dest = path.join(ws, ".opencode", "agent");
+    fs.mkdirSync(dest, { recursive: true });
+    for (const name of fs.readdirSync(agentsSrc)) {
+      if (!name.endsWith(".md")) continue;
+      fs.copyFileSync(path.join(agentsSrc, name), path.join(dest, name));
+      agentCount++;
+    }
+  }
+
   console.log(
     `[seed] ${cfgPath}\n` +
     `       default=${cfg.model}\n` +
     `       local models: ${localIds.length} | cloud models: ${hasPoolKeys ? cloudIds.length : 0} | ` +
-    `disabled built-ins: ${cfg.disabled_providers.length} | skills: ${skillCount}`,
+    `disabled built-ins: ${cfg.disabled_providers.length} | skills: ${skillCount} | agents: ${agentCount}`,
   );
 }
 

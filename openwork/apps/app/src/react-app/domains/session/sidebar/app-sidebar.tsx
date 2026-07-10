@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Archive,
   ArchiveRestore,
+  CalendarClock,
   ChevronRight,
   FolderPlus,
   Loader2,
@@ -13,7 +14,9 @@ import {
   PinOff,
   Plus,
   Search,
+  Send,
   Share2,
+  SlidersHorizontal,
   Trash2,
   RefreshCw,
   RotateCcw,
@@ -103,8 +106,25 @@ import {
 } from "./session-management-store";
 import { cn } from "@/lib/utils";
 import { useBrandLogoUrl } from "../../cloud/brand-theme";
+import { MonolithMark } from "../../../design-system/monolith-mark";
 import { WorkspaceIcon } from "../../../design-system/workspace-icon";
 import { getSessionActivityStatusLabel, type SessionActivityStatus } from "../status/session-activity-store";
+
+/**
+ * MONOLITH: Cowork-style primary navigation. Entries ship as disabled stubs
+ * until their phase lands (Projects → workspaces view, Scheduled → scheduler,
+ * Customize → skills/plugins/connectors hub, Dispatch → persistent thread).
+ */
+const MONOLITH_NAV_STUBS: Array<{
+  key: string;
+  labelKey: string;
+  icon: typeof FolderOpen;
+}> = [
+  { key: "projects", labelKey: "monolith.nav.projects", icon: FolderOpen },
+  { key: "scheduled", labelKey: "monolith.nav.scheduled", icon: CalendarClock },
+  { key: "customize", labelKey: "monolith.nav.customize", icon: SlidersHorizontal },
+  { key: "dispatch", labelKey: "monolith.nav.dispatch", icon: Send },
+];
 
 interface SessionStatusIndicatorProps {
   className?: string;
@@ -749,7 +769,14 @@ export function AppSidebar(props: AppSidebarProps) {
               className="h-9 max-h-9 w-auto max-w-[180px] object-contain object-left"
             />
           </div>
-        ) : null}
+        ) : (
+          <div className="flex shrink-0 items-center gap-2 px-4 pb-1 pt-3 mac:pt-0">
+            <MonolithMark size={16} className="text-dls-accent" />
+            <span className="select-none text-[13px] font-semibold tracking-wide text-dls-text">
+              MONOLITH
+            </span>
+          </div>
+        )}
         {props.onOpenSessionSearch ? (
           <SidebarHeader className="pb-0">
             <SidebarMenu>
@@ -769,6 +796,41 @@ export function AppSidebar(props: AppSidebarProps) {
             </SidebarMenu>
           </SidebarHeader>
         ) : null}
+        <SidebarGroup className="py-1">
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => {
+                    if (props.selectedWorkspaceId) {
+                      props.onCreateTaskInWorkspace(props.selectedWorkspaceId);
+                    }
+                  }}
+                  disabled={props.newTaskDisabled || !props.selectedWorkspaceId}
+                  className="font-medium"
+                >
+                  <Plus className="size-4" />
+                  <span className="flex-1 truncate">{t("monolith.nav.new_task")}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {MONOLITH_NAV_STUBS.map((entry) => (
+                <SidebarMenuItem key={entry.key}>
+                  <SidebarMenuButton
+                    disabled
+                    className="text-sidebar-foreground/70"
+                    title={t("monolith.nav.soon")}
+                  >
+                    <entry.icon className="size-4" />
+                    <span className="flex-1 truncate">{t(entry.labelKey)}</span>
+                    <span className="ml-auto rounded-full border border-dls-border px-1.5 text-[10px] uppercase tracking-wide text-dls-secondary">
+                      {t("monolith.nav.soon")}
+                    </span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
         <LazyMotion features={domMax}>
           <m.div
             layoutScroll
@@ -1582,6 +1644,22 @@ function SessionMenuItem({
   const isSessionActive = tree.activeIds.has(session.id);
   const isSessionStreaming = tree.streamingIds.has(session.id) || isStreamingSessionStatus(sessionActivityStatus);
   const isArchived = isSessionArchived(session);
+  // MONOLITH: Cowork-style status subtitle under the task title while a run
+  // is active, waiting on the user, or failed. Idle rows stay single-line.
+  const statusSublabel = (() => {
+    switch (sessionActivityStatus) {
+      case "thinking":
+      case "responding":
+      case "compacting":
+        return t("monolith.status.working");
+      case "waiting":
+        return t("monolith.status.needs_input");
+      case "error":
+        return t("monolith.status.failed");
+      default:
+        return null;
+    }
+  })();
 
   const openSession = () => {
     ctx.onOpenSession(workspaceId, session.id);
@@ -1652,10 +1730,17 @@ function SessionMenuItem({
           onClick={openSession}
           onPointerEnter={prefetchSession}
           onFocus={prefetchSession}
-          className={cn("transition-[padding] duration-75 group-hover/menu-sub-item:pe-8 group-has-data-popup-open/menu-sub-item:pe-8", depth > 0 && "ps-13", isSessionStreaming || isSessionActive && "pe-8")}
+          className={cn("transition-[padding] duration-75 group-hover/menu-sub-item:pe-8 group-has-data-popup-open/menu-sub-item:pe-8", depth > 0 && "ps-13", isSessionStreaming || isSessionActive && "pe-8", statusSublabel && "h-auto py-1")}
         >
           <PinnedIndicator isPinned={isPinned} />
-          <span className="truncate" title={displayTitle}>{displayTitle}</span>
+          <span className="min-w-0 flex-1" title={displayTitle}>
+            <span className="block truncate">{displayTitle}</span>
+            {statusSublabel ? (
+              <span className="block truncate text-[11px] leading-4 text-dls-secondary">
+                {statusSublabel}
+              </span>
+            ) : null}
+          </span>
         </SidebarMenuSubButton>
       </SessionContextMenu>
       <SessionActions

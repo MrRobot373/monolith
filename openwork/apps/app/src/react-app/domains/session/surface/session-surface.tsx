@@ -72,6 +72,8 @@ import {
 } from "./composer-state-store";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageListProvider, type DispatchAction } from "@/components/chat/message-list-provider";
+import { MonolithHomeHero, MonolithSuggestions } from "@/react-app/domains/home/monolith-home";
+import { cn } from "@/lib/utils";
 import { OpenTargetProvider, type OpenTargetOptions } from "@/lib/target-provider";
 import type { ThreadStatus } from "@/lib/messages";
 import {
@@ -1229,9 +1231,24 @@ export function SessionSurface(props: SessionSurfaceProps) {
   }), [props.sessionId, renderedMessages]);
   useControlAction(sessionReadTranscriptControlAction);
 
+  // MONOLITH: a fresh, idle, empty session renders as the Cowork-style home
+  // ("new task") hero — headline + centered composer + starter cards — instead
+  // of an empty transcript with a bottom bar.
+  const isNewTask =
+    renderedMessages.length === 0 &&
+    !pendingSessionLoad &&
+    !error &&
+    !snapshotQuery.isError &&
+    effectiveActivityStatus === "idle";
+
   return (
     <DevProfiler id="SessionSurface">
-    <div className="flex h-full min-h-0 flex-col">
+    <div className={cn("flex h-full min-h-0 flex-col", isNewTask && "justify-center paper-grid")}>
+      {isNewTask ? (
+        <div className="mx-auto w-full max-w-[800px] px-4 pb-3 sm:px-6">
+          <MonolithHomeHero />
+        </div>
+      ) : null}
       {model.transitionState === "switching" && showDelayedLoading ? (
         <div className="flex justify-center px-6 pt-4">
           <div className="rounded-full border border-dls-border bg-dls-hover/80 px-3 py-1 text-xs text-dls-secondary">
@@ -1240,7 +1257,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
         </div>
       ) : null}
 
-      <div className="relative min-h-0 flex-1">
+      <div className={cn("relative min-h-0", isNewTask ? "hidden" : "flex-1")}>
         <div
           ref={scrollRef}
           onWheel={(event) => {
@@ -1338,7 +1355,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
         />
       </div>
 
-      <div ref={composerShellRef} className="shrink-0 px-0 pb-2 pt-2">
+      <div ref={composerShellRef} className={cn("shrink-0 px-0 pb-2 pt-2", isNewTask && "mx-auto w-full max-w-[800px] px-4 sm:px-6")}>
         {(props.providerConnectedCount ?? 0) === 0 ? (
           <button
             type="button"
@@ -1436,6 +1453,11 @@ export function SessionSurface(props: SessionSurfaceProps) {
         />
         </DevProfiler>
       </div>
+      {isNewTask ? (
+        <div className="mx-auto w-full max-w-[800px] px-4 pb-6 pt-3 sm:px-6">
+          <MonolithSuggestions onPick={handleMessageListSetPrompt} />
+        </div>
+      ) : null}
       {/* Error display moved inline into the session conversation area */}
       {props.developerMode ? <SessionDebugPanel model={model} snapshot={snapshot} /> : null}
     </div>
