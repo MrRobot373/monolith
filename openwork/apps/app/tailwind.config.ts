@@ -17,6 +17,8 @@ safelist: [
         sidebar: "var(--dls-sidebar)",
         border: "var(--dls-border)",
         accent: "var(--dls-accent)",
+        "accent-hover": "var(--dls-accent-hover)",
+        bubble: "var(--dls-bubble)",
         text: "var(--dls-text-primary)",
         secondary: "var(--dls-text-secondary)",
         hover: "var(--dls-hover)",
