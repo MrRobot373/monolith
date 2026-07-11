@@ -16,6 +16,7 @@ import {
   Search,
   Send,
   Share2,
+  ShieldCheck,
   SlidersHorizontal,
   Trash2,
   RefreshCw,
@@ -124,6 +125,7 @@ const MONOLITH_NAV_STUBS: Array<{
   { key: "scheduled", labelKey: "monolith.nav.scheduled", icon: CalendarClock },
   { key: "customize", labelKey: "monolith.nav.customize", icon: SlidersHorizontal },
   { key: "dispatch", labelKey: "monolith.nav.dispatch", icon: Send },
+  { key: "admin", labelKey: "monolith.nav.admin", icon: ShieldCheck },
 ];
 
 interface SessionStatusIndicatorProps {
@@ -611,6 +613,10 @@ export type AppSidebarProps = {
   onOpenProjects?: () => void;
   /** MONOLITH: opens the Scheduled tasks view. */
   onOpenScheduled?: () => void;
+  /** MONOLITH: opens the workspace's persistent Dispatch thread. */
+  onOpenDispatch?: () => void;
+  /** MONOLITH: opens the org admin panel. */
+  onOpenAdmin?: () => void;
   /** Opens the cross-session message search dialog (Cmd/Ctrl+Shift+F). */
   onOpenSessionSearch?: () => void;
   onReorderWorkspaces?: (workspaceIds: string[]) => void;
@@ -827,7 +833,16 @@ export function AppSidebar(props: AppSidebarProps) {
                       ? props.onOpenProjects
                       : entry.key === "scheduled"
                         ? props.onOpenScheduled
-                        : undefined;
+                        : entry.key === "dispatch"
+                          ? props.onOpenDispatch
+                          : entry.key === "admin"
+                            ? props.onOpenAdmin
+                            : undefined;
+                const chip = !action
+                  ? t("monolith.nav.soon")
+                  : entry.key === "dispatch"
+                    ? t("monolith.nav.beta")
+                    : null;
                 return (
                   <SidebarMenuItem key={entry.key}>
                     <SidebarMenuButton
@@ -838,9 +853,9 @@ export function AppSidebar(props: AppSidebarProps) {
                     >
                       <entry.icon className="size-4" />
                       <span className="flex-1 truncate">{t(entry.labelKey)}</span>
-                      {!action ? (
+                      {chip ? (
                         <span className="ml-auto rounded-full border border-dls-border px-1.5 text-[10px] uppercase tracking-wide text-dls-secondary">
-                          {t("monolith.nav.soon")}
+                          {chip}
                         </span>
                       ) : null}
                     </SidebarMenuButton>

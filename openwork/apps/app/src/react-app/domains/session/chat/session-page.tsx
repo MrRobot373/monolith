@@ -51,6 +51,7 @@ import { OwDotTicker } from "../../../shell/dot-ticker";
 import { MonolithHomeHero, MonolithStartComposer, MonolithSuggestions } from "../../home/monolith-home";
 import { ModeTabs } from "../../../shell/mode-tabs";
 import { NotificationBell } from "../../../shell/notification-center";
+import { notifyAlert, notifyEvent } from "../../../shell/notifications";
 import { useReactRenderWatchdog } from "../../../shell/react-render-watchdog";
 import { useShellConfig } from "../../../shell/shell-config";
 import { type SidePanelItem, useUiStateStore } from "../../../shell/ui-state-store";
@@ -63,6 +64,7 @@ import { SidePanel } from "../panel/side-panel";
 import { TaskRail } from "../panel/task-rail";
 import { ProjectsModal } from "../../workspace/projects-modal";
 import { ScheduledModal } from "../modals/scheduled-modal";
+import { AdminModal } from "../../settings/admin-modal";
 import { TerminalDock } from "../terminal/terminal-dock";
 import { useActivePanelTab, usePanelTabStore, useSessionPanelState } from "../panel/panel-tab-store";
 import { useWorkspaceShellLayout } from "../../../shell/workspace-shell-layout";
@@ -665,6 +667,8 @@ export function SessionPage(props: SessionPageProps) {
   const [projectsOpen, setProjectsOpen] = useState(false);
   // MONOLITH: Scheduled tasks view (monolith-server sidecar).
   const [scheduledOpen, setScheduledOpen] = useState(false);
+  // MONOLITH: org admin panel (sidecar org.json).
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const selectedSessionTitle = useMemo(
     () => sessionTitleForId(props.sidebar.workspaceSessionGroups, props.selectedSessionId),
@@ -775,6 +779,72 @@ export function SessionPage(props: SessionPageProps) {
     });
     props.sidebar.onOpenSession(workspaceId, sessionId);
   }, [props.sidebar]);
+
+  // MONOLITH Dispatch: one persistent thread per workspace, resolved by the
+  // monolith-server sidecar (created on first open, reused afterwards).
+  const openDispatchThread = useCallback(async () => {
+    const workspaceId = props.selectedWorkspaceId.trim();
+    if (!workspaceId) return;
+    try {
+      const response = await fetch("/__monolith/dispatch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ workspaceId, directory: props.selectedWorkspaceRoot }),
+      });
+      const payload = (await response.json()) as { ok?: boolean; sessionId?: string; error?: string };
+      if (!response.ok || !payload.sessionId) {
+        throw new Error(payload.error || `${response.status}`);
+      }
+      openSessionTab(workspaceId, payload.sessionId);
+    } catch (error) {
+      notifyAlert({
+        kind: "system",
+        title: t("monolith.dispatch.failed"),
+        body: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }, [openSessionTab, props.selectedWorkspaceId, props.selectedWorkspaceRoot]);
+
+  // MONOLITH: background-task notifications — when a non-focused session
+  // finishes working or starts waiting on input, drop a notification-center
+  // entry (Cowork's "needs approval / completed" signals).
+  const prevSessionStatusRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const previous = prevSessionStatusRef.current;
+    const next = props.sidebar.sessionStatusById ?? {};
+    const titleFor = (sessionId: string) => {
+      for (const group of props.sidebar.workspaceSessionGroups) {
+        const session = group.sessions.find((entry) => entry.id === sessionId);
+        if (session) return getDisplaySessionTitle(session.title) || sessionId;
+      }
+      return null;
+    };
+    for (const [sessionId, status] of Object.entries(next)) {
+      const before = previous[sessionId];
+      if (!before || before === status) continue;
+      if (sessionId === props.selectedSessionId) continue;
+      const wasWorking = before === "thinking" || before === "responding" || before === "compacting";
+      const title = titleFor(sessionId);
+      if (!title) continue;
+      if (status === "waiting") {
+        notifyEvent({
+          kind: "system",
+          severity: "warning",
+          title: t("monolith.notify.needs_input"),
+          body: title,
+          dedupeKey: `monolith-waiting-${sessionId}`,
+        });
+      } else if (wasWorking && status === "idle") {
+        notifyEvent({
+          kind: "system",
+          title: t("monolith.notify.finished"),
+          body: title,
+          dedupeKey: `monolith-finished-${sessionId}-${Date.now()}`,
+        });
+      }
+    }
+    prevSessionStatusRef.current = { ...next };
+  }, [props.sidebar.sessionStatusById, props.sidebar.workspaceSessionGroups, props.selectedSessionId]);
 
   const closeSessionTab = useCallback((sessionId: string) => {
     setSessionTabs((current) => current.filter((tab) => tab.sessionId !== sessionId));
@@ -891,6 +961,8 @@ export function SessionPage(props: SessionPageProps) {
           onOpenCreateWorkspace={props.sidebar.onOpenCreateWorkspace}
           onOpenProjects={() => setProjectsOpen(true)}
           onOpenScheduled={() => setScheduledOpen(true)}
+          onOpenDispatch={() => void openDispatchThread()}
+          onOpenAdmin={() => setAdminOpen(true)}
           onOpenCustomize={() => {
             // Side-panel state is keyed by session id, so the embedded
             // extensions panel only works inside a session; the home falls
@@ -1425,6 +1497,8 @@ export function SessionPage(props: SessionPageProps) {
         groups={props.sidebar.workspaceSessionGroups}
         onOpenSession={openSessionTab}
       />
+
+      <AdminModal open={adminOpen} onClose={() => setAdminOpen(false)} />
 
 
       {props.onRenameSession ? (

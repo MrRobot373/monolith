@@ -30,6 +30,15 @@
 # collide with the app's Authorization: Bearer header). The SPA is behind login.
 http://work.localhost {
 	import headers
+	# MONOLITH sidecar (schedules + dispatch). Same-host basic auth applies:
+	# the browser re-attaches the site login credentials to these XHRs.
+	@monolith path /__monolith/*
+	handle @monolith {
+		basic_auth {
+			admin $2a$14$oq3Dt1zMiwsnE7BkvLHleuE2WhxMKOs5VUbjL.oQiboTZFrlbEcSG
+		}
+		reverse_proxy monolith-server:8790
+	}
 	@api path /health* /workspaces* /workspace/* /opencode/* /event* /files* /session* /host/*
 	handle @api {
 		reverse_proxy openwork-host:8787

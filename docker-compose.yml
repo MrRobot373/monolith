@@ -85,6 +85,28 @@ services:
       - litellm
       - searxng
 
+  # ---- MONOLITH sidecar (scheduled tasks + dispatch threads) ----------------
+  # Plain Node, no build: the source dir is mounted read-only. Caddy routes
+  # work.<domain>/__monolith/* here (behind the site login).
+  monolith-server:
+    image: node:22-alpine
+    restart: unless-stopped
+    command: ["node", "/app/server.mjs"]
+    environment:
+      OPENWORK_URL: http://openwork-host:8787
+      OPENWORK_TOKEN: ${OPENWORK_TOKEN}
+      OPENWORK_HOST_TOKEN: ${OPENWORK_HOST_TOKEN}
+      LITELLM_URL: http://litellm:4000
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+      DATA_DIR: /data
+    volumes:
+      - ./monolith-server:/app:ro
+      - monolith_sidecar:/data
+    expose:
+      - "8790"
+    depends_on:
+      - openwork-host
+
   # ---- SearXNG — privacy-respecting search engine for agents ----------------
   searxng:
     image: searxng/searxng:latest
@@ -157,3 +179,4 @@ volumes:
   litellm_pg:
   ollama_models:
   vane_data:
+  monolith_sidecar:

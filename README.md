@@ -100,3 +100,21 @@ Anthropic's knowledge-work-plugins are open-source. Not legal advice — confirm
 - **Model quality** depends on a real key in `.env` (local Qwen is weak).
 - **Domain modes:** Law/Finance reuse real plugin skills; Health/Research/Code use tuned personas.
 - Deep visual rebrand of the OpenWork UI (beyond the product name) is a later, careful task.
+
+## Cowork-style UI (2026-07)
+
+The UI is a MONOLITH-branded, Claude-Cowork-style workspace built from the tracked
+`openwork/apps/app` source (MIT core): Chat|Cowork|Code mode tabs (mapped to seeded agents),
+task home with starter cards, task rail (Progress/Artifacts/Context), Projects (workspaces with
+an AGENTS.md instructions editor), Scheduled tasks, a persistent Dispatch thread per workspace,
+Customize hub, and an Admin panel.
+
+**monolith-server/** is the product sidecar (dependency-free Node) powering Scheduled, Dispatch,
+and org config under `/__monolith/*`:
+- Native path: embedded in `native/serve-ui.mjs`; state in `native/data/`.
+- Docker path: `monolith-server` compose service; Caddy routes `work.<domain>/__monolith/*`
+  to it behind the site login; state in the `monolith_sidecar` volume.
+
+Rebuild the UI after changing `openwork/apps/app`:
+`pnpm -C openwork --filter @openwork/app typecheck && node native/build-ui.mjs`
+(native) and `docker compose build webui && docker compose up -d webui` (Docker).
