@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Agent } from "@opencode-ai/sdk/v2/client";
-import { AppWindowMac, ArrowUp, Check, ChevronDown, ChevronRight, FileText, ListPlus, Paperclip, Plug, Settings, Square, Terminal, X, Zap } from "lucide-react";
+import { AppWindowMac, ArrowUp, Check, ChevronDown, ChevronRight, FileText, ListPlus, Paperclip, Plug, Plus, Settings, Square, Terminal, X, Zap } from "lucide-react";
 import fuzzysort from "fuzzysort";
 import { toast } from "@/components/ui/sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -1339,7 +1339,7 @@ export function ReactSessionComposer(props: ComposerProps) {
                     aria-haspopup="dialog"
                     title={t("composer.tools_label")}
                   >
-                    <Plug size={16} />
+                    <Plus size={16} />
                   </button>
                   {toolMenuOpen ? (
                     <div className="absolute bottom-full left-0 z-40 mb-3 w-[min(calc(100vw-2.5rem),34rem)] overflow-hidden rounded-[22px] border border-dls-border bg-dls-surface shadow-[var(--dls-shell-shadow)]">

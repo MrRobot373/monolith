@@ -1,0 +1,12 @@
+<!doctype html>
+<script>
+  try {
+    localStorage.setItem("openwork.themePref", "light");
+    var K = "openwork.preferences";
+    var p = JSON.parse(localStorage.getItem(K) || "{}");
+    p.defaultModel = { providerID: "ollama", modelID: "gemma4:e4b" };
+    p.analyticsEnabled = false;
+    localStorage.setItem(K, JSON.stringify(p));
+  } catch (e) {}
+  location.replace("/");
+</script>

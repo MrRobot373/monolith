@@ -883,6 +883,16 @@ export function SessionPage(props: SessionPageProps) {
           onEditWorkspaceConnection={props.sidebar.onEditWorkspaceConnection}
           onForgetWorkspace={props.sidebar.onForgetWorkspace}
           onOpenCreateWorkspace={props.sidebar.onOpenCreateWorkspace}
+          onOpenCustomize={() => {
+            // Side-panel state is keyed by session id, so the embedded
+            // extensions panel only works inside a session; the home falls
+            // back to the full settings page.
+            if (props.settingsSlot && props.selectedSessionId) {
+              toggleCurrentSidePanel("extensions");
+            } else {
+              props.onOpenSettings();
+            }
+          }}
           onOpenSessionSearch={props.sidebar.onOpenSessionSearch}
           onReorderWorkspaces={props.sidebar.onReorderWorkspaces}
           onStartResize={startLeftSidebarResize}

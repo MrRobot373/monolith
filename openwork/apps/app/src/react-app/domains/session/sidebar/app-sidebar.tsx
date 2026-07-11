@@ -605,6 +605,8 @@ export type AppSidebarProps = {
   onEditWorkspaceConnection: (workspaceId: string) => void;
   onForgetWorkspace: (workspaceId: string) => void;
   onOpenCreateWorkspace: () => void;
+  /** MONOLITH: opens the Customize hub (skills/plugins/connectors panel). */
+  onOpenCustomize?: () => void;
   /** Opens the cross-session message search dialog (Cmd/Ctrl+Shift+F). */
   onOpenSessionSearch?: () => void;
   onReorderWorkspaces?: (workspaceIds: string[]) => void;
@@ -813,21 +815,27 @@ export function AppSidebar(props: AppSidebarProps) {
                   <span className="flex-1 truncate">{t("monolith.nav.new_task")}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {MONOLITH_NAV_STUBS.map((entry) => (
-                <SidebarMenuItem key={entry.key}>
-                  <SidebarMenuButton
-                    disabled
-                    className="text-sidebar-foreground/70"
-                    title={t("monolith.nav.soon")}
-                  >
-                    <entry.icon className="size-4" />
-                    <span className="flex-1 truncate">{t(entry.labelKey)}</span>
-                    <span className="ml-auto rounded-full border border-dls-border px-1.5 text-[10px] uppercase tracking-wide text-dls-secondary">
-                      {t("monolith.nav.soon")}
-                    </span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {MONOLITH_NAV_STUBS.map((entry) => {
+                const action = entry.key === "customize" ? props.onOpenCustomize : undefined;
+                return (
+                  <SidebarMenuItem key={entry.key}>
+                    <SidebarMenuButton
+                      disabled={!action}
+                      onClick={action}
+                      className="text-sidebar-foreground/70"
+                      title={action ? t(entry.labelKey) : t("monolith.nav.soon")}
+                    >
+                      <entry.icon className="size-4" />
+                      <span className="flex-1 truncate">{t(entry.labelKey)}</span>
+                      {!action ? (
+                        <span className="ml-auto rounded-full border border-dls-border px-1.5 text-[10px] uppercase tracking-wide text-dls-secondary">
+                          {t("monolith.nav.soon")}
+                        </span>
+                      ) : null}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
