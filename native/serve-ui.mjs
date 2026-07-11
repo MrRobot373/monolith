@@ -9,11 +9,22 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { createMonolithScheduler } from "../monolith-server/index.mjs";
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(HERE, ".env")); } catch { /* no .env yet */ }
 
 const PORT = Number(process.env.UI_PORT || 8080);
 const ROOT = path.resolve(HERE, "..", "openwork", "apps", "app", "dist");
+
+// MONOLITH sidecar features (scheduled tasks) share this server under /__monolith/*.
+const scheduler = createMonolithScheduler({
+  dataDir: path.join(HERE, "data"),
+  openworkUrl: `http://127.0.0.1:${process.env.OPENWORK_PORT || 8787}`,
+  token: process.env.OPENWORK_TOKEN || "",
+  hostToken: process.env.OPENWORK_HOST_TOKEN || "",
+  log: (...args) => console.log("[scheduler]", ...args),
+});
 
 if (!fs.existsSync(path.join(ROOT, "index.html"))) {
   console.error(`[serve-ui] no build found at ${ROOT}\n           run  native\\setup.cmd  (or  node native/build-ui.mjs)  first.`);
@@ -164,6 +175,8 @@ function seedOpencodeConfigNative(folderPath) {
 http.createServer((req, res) => {
   try {
     const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
+
+    if (scheduler.handle(req, res, urlPath)) return;
 
     if (req.method === "POST" && urlPath === "/__monolith/pick-directory") {
       pickDirectoryNative()

@@ -607,6 +607,10 @@ export type AppSidebarProps = {
   onOpenCreateWorkspace: () => void;
   /** MONOLITH: opens the Customize hub (skills/plugins/connectors panel). */
   onOpenCustomize?: () => void;
+  /** MONOLITH: opens the Projects view (workspaces as projects). */
+  onOpenProjects?: () => void;
+  /** MONOLITH: opens the Scheduled tasks view. */
+  onOpenScheduled?: () => void;
   /** Opens the cross-session message search dialog (Cmd/Ctrl+Shift+F). */
   onOpenSessionSearch?: () => void;
   onReorderWorkspaces?: (workspaceIds: string[]) => void;
@@ -816,7 +820,14 @@ export function AppSidebar(props: AppSidebarProps) {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {MONOLITH_NAV_STUBS.map((entry) => {
-                const action = entry.key === "customize" ? props.onOpenCustomize : undefined;
+                const action =
+                  entry.key === "customize"
+                    ? props.onOpenCustomize
+                    : entry.key === "projects"
+                      ? props.onOpenProjects
+                      : entry.key === "scheduled"
+                        ? props.onOpenScheduled
+                        : undefined;
                 return (
                   <SidebarMenuItem key={entry.key}>
                     <SidebarMenuButton

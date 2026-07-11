@@ -61,6 +61,8 @@ import type { OpenTargetOptions } from "@/lib/target-provider";
 import { VoicePanel } from "../voice/voice-panel";
 import { SidePanel } from "../panel/side-panel";
 import { TaskRail } from "../panel/task-rail";
+import { ProjectsModal } from "../../workspace/projects-modal";
+import { ScheduledModal } from "../modals/scheduled-modal";
 import { TerminalDock } from "../terminal/terminal-dock";
 import { useActivePanelTab, usePanelTabStore, useSessionPanelState } from "../panel/panel-tab-store";
 import { useWorkspaceShellLayout } from "../../../shell/workspace-shell-layout";
@@ -659,6 +661,10 @@ export function SessionPage(props: SessionPageProps) {
   ), [activeSidePanel, setCurrentSidePanel, voiceExtensionEnabled]);
   useControlAction(closeVoicePanelControlAction);
   const [showDelayedSessionLoadingState, setShowDelayedSessionLoadingState] = useState(false);
+  // MONOLITH: Projects view (workspaces-as-projects grid + instructions editor).
+  const [projectsOpen, setProjectsOpen] = useState(false);
+  // MONOLITH: Scheduled tasks view (monolith-server sidecar).
+  const [scheduledOpen, setScheduledOpen] = useState(false);
 
   const selectedSessionTitle = useMemo(
     () => sessionTitleForId(props.sidebar.workspaceSessionGroups, props.selectedSessionId),
@@ -883,6 +889,8 @@ export function SessionPage(props: SessionPageProps) {
           onEditWorkspaceConnection={props.sidebar.onEditWorkspaceConnection}
           onForgetWorkspace={props.sidebar.onForgetWorkspace}
           onOpenCreateWorkspace={props.sidebar.onOpenCreateWorkspace}
+          onOpenProjects={() => setProjectsOpen(true)}
+          onOpenScheduled={() => setScheduledOpen(true)}
           onOpenCustomize={() => {
             // Side-panel state is keyed by session id, so the embedded
             // extensions panel only works inside a session; the home falls
@@ -1399,6 +1407,25 @@ export function SessionPage(props: SessionPageProps) {
       </SidebarProvider>
 
       {props.providerAuthModal ? <ProviderAuthModal {...props.providerAuthModal} /> : null}
+
+      <ProjectsModal
+        open={projectsOpen}
+        onClose={() => setProjectsOpen(false)}
+        groups={props.sidebar.workspaceSessionGroups}
+        client={props.openworkServerClient}
+        onOpenWorkspace={(workspaceId) => {
+          void props.sidebar.onSelectWorkspace(workspaceId);
+        }}
+        onCreateWorkspace={props.sidebar.onOpenCreateWorkspace}
+      />
+
+      <ScheduledModal
+        open={scheduledOpen}
+        onClose={() => setScheduledOpen(false)}
+        groups={props.sidebar.workspaceSessionGroups}
+        onOpenSession={openSessionTab}
+      />
+
 
       {props.onRenameSession ? (
         <RenameSessionModal
