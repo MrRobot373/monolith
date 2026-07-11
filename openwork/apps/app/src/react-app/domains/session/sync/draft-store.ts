@@ -112,6 +112,28 @@ export const saveSessionDraft = (
   emitDraftStoreChange();
 };
 
+/**
+ * MONOLITH: take (return + remove) a pending draft for a session regardless of
+ * which workspace id it was keyed under. Session ids are globally unique, and
+ * the writer (session-route's create-with-prompt) uses the sidebar workspace id
+ * while the reader (session surface) only knows the runtime workspace id.
+ */
+export const takeSessionDraftBySessionId = (
+  sessionId: string | null | undefined,
+): SessionDraftSnapshot | null => {
+  const session = (sessionId ?? "").trim();
+  if (!session) return null;
+  const cache = loadDraftCache();
+  for (const [key, snapshot] of cache) {
+    if (!key.endsWith(`:${session}`)) continue;
+    cache.delete(key);
+    persistDraftCache();
+    emitDraftStoreChange();
+    return snapshot;
+  }
+  return null;
+};
+
 export const clearSessionDraft = (
   workspaceId: string,
   sessionId: string | null | undefined,

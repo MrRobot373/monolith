@@ -107,6 +107,7 @@ export default {
   "monolith.rail.context_connectors": "Connectors",
   "monolith.rail.connectors_empty": "No connectors configured yet.",
   "monolith.rail.connector_off": "Off",
+  "monolith.session.actions_label": "Task actions",
   "monolith.status.working": "Working…",
   "monolith.status.needs_input": "Needs your input",
   "monolith.status.failed": "Needs attention",

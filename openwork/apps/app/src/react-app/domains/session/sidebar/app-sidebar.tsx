@@ -359,7 +359,13 @@ function SessionActions({ className, sessionId, workspaceId, isPinned, isArchive
     <DropdownMenu>
       <DropdownMenuTrigger className="size-6 text-muted-foreground"
         render={
-          <Button variant="ghost" size="icon-sm" className={cn("size-6", className)}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className={cn("size-6", className)}
+            aria-label={t("monolith.session.actions_label")}
+            title={t("monolith.session.actions_label")}
+          >
             <MoreHorizontal className="size-4" />
           </Button>
         }

@@ -35,10 +35,21 @@ services:
   vane:
     image: itzcrazykns1337/vane:latest
     restart: unless-stopped
+    entrypoint:
+      - /bin/sh
+      - -c
+      - node /monolith/seed-config.mjs && exec docker-entrypoint.sh /home/vane/entrypoint.sh
+    environment:
+      MONOLITH_GATEWAY_URL: http://litellm:4000/v1
+      MONOLITH_GATEWAY_KEY: ${LITELLM_MASTER_KEY}
+      MONOLITH_VANE_CHAT_MODEL: local-qwen
     volumes:
       - vane_data:/home/vane/data
+      - ./vane/seed-config.mjs:/monolith/seed-config.mjs:ro
     expose:
       - "3000"
+    depends_on:
+      - litellm
 
   # ---- Full OpenWork web UI (built from source, replaces the Toy UI) ---------
   webui:

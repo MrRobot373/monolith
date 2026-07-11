@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
 import { Columns2, FileText, Globe, ListChecks, Mic2, Settings2, X, Zap } from "lucide-react";
 
@@ -65,7 +65,10 @@ import { TaskRail } from "../panel/task-rail";
 import { ProjectsModal } from "../../workspace/projects-modal";
 import { ScheduledModal } from "../modals/scheduled-modal";
 import { AdminModal } from "../../settings/admin-modal";
-import { TerminalDock } from "../terminal/terminal-dock";
+// Lazy: pulls in xterm (+CSS); only needed once the terminal dock is opened.
+const TerminalDock = lazy(() =>
+  import("../terminal/terminal-dock").then((module) => ({ default: module.TerminalDock })),
+);
 import { useActivePanelTab, usePanelTabStore, useSessionPanelState } from "../panel/panel-tab-store";
 import { useWorkspaceShellLayout } from "../../../shell/workspace-shell-layout";
 import { useControlAction, type OpenworkControlAction } from "../../../shell/control/control-provider";
@@ -1305,11 +1308,13 @@ export function SessionPage(props: SessionPageProps) {
               <>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize="280px" minSize="160px" maxSize="55%" className="min-h-0">
-                  <TerminalDock
-                    workspaceRoot={props.selectedWorkspaceRoot}
-                    isRemoteWorkspace={props.selectedWorkspaceDisplay.workspaceType === "remote"}
-                    onClose={() => props.onTerminalOpenChange?.(false)}
-                  />
+                  <Suspense fallback={null}>
+                    <TerminalDock
+                      workspaceRoot={props.selectedWorkspaceRoot}
+                      isRemoteWorkspace={props.selectedWorkspaceDisplay.workspaceType === "remote"}
+                      onClose={() => props.onTerminalOpenChange?.(false)}
+                    />
+                  </Suspense>
                 </ResizablePanel>
               </>
             ) : null}

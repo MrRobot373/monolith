@@ -73,6 +73,7 @@ import {
 import { MessageList } from "@/components/chat/message-list";
 import { MessageListProvider, type DispatchAction } from "@/components/chat/message-list-provider";
 import { MonolithHomeHero, MonolithSuggestions } from "@/react-app/domains/home/monolith-home";
+import { takeSessionDraftBySessionId } from "@/react-app/domains/session/sync/draft-store";
 import { cn } from "@/lib/utils";
 import { OpenTargetProvider, type OpenTargetOptions } from "@/lib/target-provider";
 import type { ThreadStatus } from "@/lib/messages";
@@ -429,6 +430,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
   const prependQueuedDrafts = useComposerStateStore((state) => state.prependQueuedDrafts);
   const [error, setError] = useState<SessionError | null>(null);
   const [sending, setSending] = useState(false);
+  const abortAfterSendRef = useRef(false);
   const [showDelayedLoading, setShowDelayedLoading] = useState(false);
   const [awaitingAssistantBaseline, setAwaitingAssistantBaseline] = useState<number | null>(null);
   const [rendered, setRendered] = useState<{ sessionId: string; snapshot: OpenworkSessionSnapshot } | null>(null);
@@ -446,6 +448,17 @@ export function SessionSurface(props: SessionSurfaceProps) {
     () => createClient(props.opencodeBaseUrl, undefined, { token: props.openworkToken, mode: "openwork" }),
     [props.opencodeBaseUrl, props.openworkToken],
   );
+  const abortCurrentRunWithRetry = useCallback(async (attempts = 1) => {
+    for (let attempt = 0; attempt < attempts; attempt += 1) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 500));
+      if (await abortSessionSafe(
+        opencodeClient,
+        props.sessionId,
+        props.workspaceRoot.trim() || undefined,
+      )) return true;
+    }
+    return false;
+  }, [opencodeClient, props.sessionId, props.workspaceRoot]);
 
   const snapshotQueryKey = useMemo(
     () => reactSnapshotKey(props.workspaceId, props.sessionId),
@@ -737,6 +750,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
   // up the new message — so this is safe to call while the agent is busy.
   const sendDraft = useCallback(async (nextDraft: ComposerDraft, draftAttachments: ComposerAttachment[]) => {
     setError(null);
+    abortAfterSendRef.current = false;
     // Record the prompt for Up/Down recall in the composer (#2012).
     appendComposerHistory(props.sessionId, nextDraft.text);
     useSessionActivityStore.getState().setRunStatus(props.workspaceId, props.sessionId, { type: "busy" });
@@ -744,6 +758,13 @@ export function SessionSurface(props: SessionSurfaceProps) {
     setAwaitingAssistantBaseline(renderedMessages.length);
     try {
       await props.onSendDraft(nextDraft, props.sessionId);
+      // An immediate Stop can arrive while the prompt request itself is still
+      // being accepted. In that window the server has no live run to abort;
+      // honor the pending intent as soon as the send completes registration.
+      if (abortAfterSendRef.current) {
+        abortAfterSendRef.current = false;
+        await abortCurrentRunWithRetry(8);
+      }
       draftAttachments.forEach(revokeAttachmentPreview);
       setSending(false);
     } catch (nextError) {
@@ -756,7 +777,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
       setSending(false);
       throw nextError;
     }
-  }, [appendComposerHistory, props.onSendDraft, props.sessionId, props.workspaceId, renderedMessages.length, setComposerDraft]);
+  }, [abortCurrentRunWithRetry, appendComposerHistory, props.onSendDraft, props.sessionId, props.workspaceId, renderedMessages.length, setComposerDraft]);
 
   const clearComposer = useCallback(() => {
     clearComposerSession(props.sessionId);
@@ -809,6 +830,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
   const handleAbort = useCallback(async () => {
     if (!chatStreaming) return;
     setError(null);
+    abortAfterSendRef.current = true;
     // Stop means stop: drop queued follow-ups before aborting, otherwise the
     // queue-drain effect below re-prompts the agent the moment the abort
     // lands and the session reports idle (#2014).
@@ -817,18 +839,19 @@ export function SessionSurface(props: SessionSurfaceProps) {
     // passes the workspace root), so the abort must target the same scope —
     // without it the server resolves the default project, finds no live run,
     // and answers `200: false` while the stream keeps going (#2014).
-    const aborted = await abortSessionSafe(
-      opencodeClient,
-      props.sessionId,
-      props.workspaceRoot.trim() || undefined,
-    );
-    if (!aborted) {
+    // MONOLITH: a Stop clicked right after Run can race both the prompt request
+    // and the server-side run registration. Poll briefly so the same click is
+    // still honored once the run becomes abortable.
+    const aborted = await abortCurrentRunWithRetry(8);
+    if (!aborted && !sending) {
       setError({ message: t("session.stop_failed") });
       return;
     }
-    captureAnalyticsEvent("task_run_stopped", {});
-    await snapshotQuery.refetch();
-  }, [chatStreaming, clearQueuedDrafts, opencodeClient, props.sessionId, props.workspaceRoot, snapshotQuery.refetch]);
+    if (aborted) {
+      captureAnalyticsEvent("task_run_stopped", {});
+      await snapshotQuery.refetch();
+    }
+  }, [abortCurrentRunWithRetry, chatStreaming, clearQueuedDrafts, props.sessionId, sending, snapshotQuery.refetch]);
 
   const handleDismissError = useCallback(() => {
     setError(null);
@@ -980,6 +1003,18 @@ export function SessionSurface(props: SessionSurfaceProps) {
     setComposerDraft(props.sessionId, text);
     await waitForControl(40);
   }, [props.sessionId, setComposerDraft]);
+
+  // MONOLITH: adopt the initial prompt saved when this session was created
+  // from the home screen / starter cards (`onCreateTaskWithPrompt` writes a
+  // pending draft, but upstream never read it back — the prompt was lost).
+  useEffect(() => {
+    if (!props.sessionId) return;
+    const pending = takeSessionDraftBySessionId(props.sessionId);
+    if (!pending || pending.mode !== "prompt" || !pending.text.trim()) return;
+    const current = getComposerDraft(useComposerStateStore.getState(), props.sessionId);
+    if (current.trim()) return;
+    void typeComposerText(pending.text);
+  }, [props.sessionId, typeComposerText]);
 
   useEffect(() => {
     const handleVoiceTranscript = (event: Event) => {
