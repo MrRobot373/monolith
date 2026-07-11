@@ -153,7 +153,7 @@ function seedOpencodeConfigNative(folderPath) {
     const timeout = setTimeout(() => {
       child.kill();
       reject(new Error("opencode config seeding timed out"));
-    }, 45 * 1000);
+    }, 120 * 1000);
 
     child.stdout.on("data", (chunk) => { stdout += String(chunk); });
     child.stderr.on("data", (chunk) => { stderr += String(chunk); });

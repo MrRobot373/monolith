@@ -68,22 +68,141 @@ const VERIFIED_CLOUD_MODELS = [
   "qwen3-coder:480b"
 ];
 
-let cloudIds = [POOL_MODEL];
+// ---- Live model probing -----------------------------------------------------
+// A model only reaches the picker if it answers a 1-token completion. Results
+// are cached (native/data/model-probe.json, 12h TTL) so startups stay fast.
+const PROBE_CACHE = path.join(HERE, "data", "model-probe.json");
+const PROBE_TTL_MS = 12 * 60 * 60 * 1000;
+const PROBE_TIMEOUT_MS = 12_000;
+const PROBE_CONCURRENCY = 6;
+
+function loadProbeCache(scope) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(PROBE_CACHE, "utf8"));
+    const entry = parsed?.[scope];
+    if (entry && Date.now() - entry.at < PROBE_TTL_MS && Array.isArray(entry.working)) return entry.working;
+  } catch {}
+  return null;
+}
+
+function saveProbeCache(scope, working) {
+  let parsed = {};
+  try { parsed = JSON.parse(fs.readFileSync(PROBE_CACHE, "utf8")) || {}; } catch {}
+  parsed[scope] = { at: Date.now(), working };
+  fs.mkdirSync(path.dirname(PROBE_CACHE), { recursive: true });
+  fs.writeFileSync(PROBE_CACHE, JSON.stringify(parsed, null, 2) + "\n");
+}
+
+async function probeModel(base, id, keyPicker) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch(`${base}/chat/completions`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${keyPicker()}`, "content-type": "application/json" },
+        body: JSON.stringify({ model: id, messages: [{ role: "user", content: "hi" }], max_tokens: 1, stream: false }),
+        signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+      });
+      if (r.ok) return true;
+      if (r.status === 429 || r.status >= 500) continue; // busy/flaky -> one retry (next key)
+      return false; // 4xx: not available on this key/tier/deployment
+    } catch { /* timeout or network -> retry once, then give up */ }
+  }
+  return false;
+}
+
+async function probeWorkingModels(scope, base, candidateIds, keyPicker) {
+  const cached = loadProbeCache(scope);
+  if (cached) return cached.filter((id) => candidateIds.includes(id));
+  const queue = [...candidateIds];
+  const working = [];
+  const workers = Array.from({ length: Math.min(PROBE_CONCURRENCY, queue.length) }, async () => {
+    while (queue.length) {
+      const id = queue.shift();
+      const ok = await probeModel(base, id, keyPicker);
+      console.log(`[seed] probe ${scope}/${id}: ${ok ? "ok" : "SKIP (no response)"}`);
+      if (ok) working.push(id);
+    }
+  });
+  await Promise.all(workers);
+  working.sort();
+  saveProbeCache(scope, working);
+  return working;
+}
+
+// Cloud pool: catalog ∩ verified list, then keep only models that answer.
+let cloudIds = [];
 if (hasPoolKeys) {
   const body = await fetchJson(`${POOL_BASE}/models`, { authorization: `Bearer ${poolKeys[0]}` });
   const ids = (body?.data || body?.models || []).map((m) => m.id || m.name).filter(Boolean);
+  const candidates = ids.length
+    ? [...new Set(ids.filter((id) => VERIFIED_CLOUD_MODELS.includes(id)))].sort()
+    : [...VERIFIED_CLOUD_MODELS];
+  let poolKeyIndex = 0;
+  const nextPoolKey = () => poolKeys[poolKeyIndex++ % poolKeys.length];
+  cloudIds = await probeWorkingModels("ollama-cloud", POOL_BASE, candidates, nextPoolKey);
+}
+const hasCloud = hasPoolKeys && cloudIds.length > 0;
+
+// LiteLLM gateway (Docker stack): offer only when it's up AND its models answer.
+const GATEWAY_BASE = (process.env.MONOLITH_GATEWAY_URL || "http://127.0.0.1:4000/v1").replace(/\/+$/, "");
+const GATEWAY_KEY = process.env.MONOLITH_GATEWAY_KEY || "sk-litellm-master-key";
+const GATEWAY_NAMES = {
+  claude: "Claude (Complex Tasks)",
+  gpt: "GPT-4o (Complex Tasks)",
+  gemini: "Gemini (Standard Tasks)",
+  "local-qwen": "Local Qwen (Offline)",
+};
+let gatewayIds = [];
+{
+  const body = await fetchJson(`${GATEWAY_BASE}/models`, { authorization: `Bearer ${GATEWAY_KEY}` });
+  const ids = (body?.data || []).map((m) => m.id).filter(Boolean);
   if (ids.length) {
-    cloudIds = [...new Set(ids.filter(id => VERIFIED_CLOUD_MODELS.includes(id)))].sort();
-    if (cloudIds.length === 0) {
-      cloudIds = [POOL_MODEL];
-    }
+    gatewayIds = await probeWorkingModels("litellm", GATEWAY_BASE, ids.sort(), () => GATEWAY_KEY);
   }
+}
+const hasGateway = gatewayIds.length > 0;
+
+// Local models: keep only ones that can actually chat.
+// - /api/show capability filter drops embedding-only models (e.g. mxbai-embed)
+//   without loading anything.
+// - ":cloud" aliases run on ollama.com through the local daemon and fail when
+//   the CLI isn't signed in — live-probe those (remote call, no model load).
+{
+  const OLLAMA_API = LOCAL_BASE.replace(/\/v1\/?$/, "");
+  const kept = [];
+  for (const name of localIds) {
+    try {
+      const r = await fetch(`${OLLAMA_API}/api/show`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: name }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) {
+        const info = await r.json();
+        const caps = Array.isArray(info?.capabilities) ? info.capabilities : null;
+        if (caps && !caps.includes("completion")) {
+          console.log(`[seed] local ${name}: SKIP (not a chat model)`);
+          continue;
+        }
+      }
+    } catch { /* metadata unavailable -> keep and let the alias probe decide */ }
+    kept.push(name);
+  }
+  const cloudAliases = kept.filter((name) => /(^|[:-])cloud$/.test(name));
+  let aliasWorking = cloudAliases;
+  if (cloudAliases.length) {
+    aliasWorking = await probeWorkingModels("ollama-local-cloud", LOCAL_BASE, cloudAliases, () => "local");
+  }
+  localIds = kept.filter((name) => !cloudAliases.includes(name) || aliasWorking.includes(name));
 }
 
 const preferredDefault = localIds.includes(LOCAL_MODEL)
   ? `ollama/${LOCAL_MODEL}`
   : localIds.length ? `ollama/${localIds[0]}`
-  : hasPoolKeys ? `ollama-cloud/${cloudIds[0]}` : `ollama/${LOCAL_MODEL}`;
+  : hasCloud ? `ollama-cloud/${cloudIds[0]}`
+  : hasGateway ? `litellm/${gatewayIds[0]}`
+  : `ollama/${LOCAL_MODEL}`;
 
 const modelExists = (model) => {
   if (typeof model !== "string" || !model.includes("/")) return false;
@@ -91,8 +210,8 @@ const modelExists = (model) => {
   const provider = model.slice(0, slash);
   const id = model.slice(slash + 1);
   if (provider === "ollama") return localIds.includes(id);
-  if (provider === "ollama-cloud") return hasPoolKeys && cloudIds.includes(id);
-  if (provider === "litellm") return ["claude", "gpt", "gemini", "local-qwen"].includes(id);
+  if (provider === "ollama-cloud") return hasCloud && cloudIds.includes(id);
+  if (provider === "litellm") return hasGateway && gatewayIds.includes(id);
   return false;
 };
 
@@ -112,28 +231,20 @@ function seedWorkspace(workspacePath) {
     ? cfg.provider
     : {};
 
-  cfg.provider.litellm = {
-    npm: "@ai-sdk/openai-compatible",
-    name: "LiteLLM Gateway",
-    options: {
-      baseURL: "http://127.0.0.1:4000/v1",
-      apiKey: "sk-litellm-master-key"
-    },
-    models: {
-      "claude": {
-        "name": "Claude (Complex Tasks)"
-      },
-      "gpt": {
-        "name": "GPT-4o (Complex Tasks)"
-      },
-      "gemini": {
-        "name": "Gemini (Standard Tasks)"
-      },
-      "local-qwen": {
-        "name": "Local Qwen (Offline)"
-      }
-    }
-  };
+  // Only offer the gateway when it's reachable AND its models answered the
+  // probe (a dead entry here is exactly a "listed but not working" model).
+  if (hasGateway) {
+    cfg.provider.litellm = {
+      npm: "@ai-sdk/openai-compatible",
+      name: "LiteLLM Gateway",
+      options: { baseURL: GATEWAY_BASE, apiKey: GATEWAY_KEY },
+      models: Object.fromEntries(
+        gatewayIds.map((id) => [id, { name: GATEWAY_NAMES[id] || id }]),
+      ),
+    };
+  } else {
+    delete cfg.provider.litellm;
+  }
 
   cfg.provider.ollama = {
     npm: "@ai-sdk/openai-compatible",
@@ -142,7 +253,7 @@ function seedWorkspace(workspacePath) {
     models: toModelsMap(localIds, " - local"),
   };
 
-  if (hasPoolKeys) {
+  if (hasCloud) {
     cfg.provider["ollama-cloud"] = {
       npm: "@ai-sdk/openai-compatible",
       name: "Ollama Cloud (pooled)",
@@ -190,7 +301,8 @@ function seedWorkspace(workspacePath) {
   console.log(
     `[seed] ${cfgPath}\n` +
     `       default=${cfg.model}\n` +
-    `       local models: ${localIds.length} | cloud models: ${hasPoolKeys ? cloudIds.length : 0} | ` +
+    `       local models: ${localIds.length} | cloud models (working): ${hasCloud ? cloudIds.length : 0} | ` +
+    `gateway models (working): ${hasGateway ? gatewayIds.length : 0} | ` +
     `disabled built-ins: ${cfg.disabled_providers.length} | skills: ${skillCount} | agents: ${agentCount}`,
   );
 }
