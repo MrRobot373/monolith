@@ -2,7 +2,7 @@
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
-import { Columns2, FileText, Globe, Mic2, Settings2, X, Zap } from "lucide-react";
+import { Columns2, FileText, Globe, ListChecks, Mic2, Settings2, X, Zap } from "lucide-react";
 
 import { t } from "../../../../i18n";
 import { OPENWORK_EXTENSION_CATALOG } from "../../../../app/constants";
@@ -60,6 +60,7 @@ import { isCollectibleArtifactTarget, isLocalhostBrowserTarget, isOpenableFileTa
 import type { OpenTargetOptions } from "@/lib/target-provider";
 import { VoicePanel } from "../voice/voice-panel";
 import { SidePanel } from "../panel/side-panel";
+import { TaskRail } from "../panel/task-rail";
 import { TerminalDock } from "../terminal/terminal-dock";
 import { useActivePanelTab, usePanelTabStore, useSessionPanelState } from "../panel/panel-tab-store";
 import { useWorkspaceShellLayout } from "../../../shell/workspace-shell-layout";
@@ -293,9 +294,13 @@ export function SessionPage(props: SessionPageProps) {
   const { config: shellConfig } = useShellConfig();
   const sidebarOpen = useUiStateStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStateStore((state) => state.setSidebarOpen);
-  const sessionSidePanel = useUiStateStore((state) => (
-    props.selectedSessionId ? state.sidePanelState[props.selectedSessionId] ?? null : null
-  ));
+  const sessionSidePanel = useUiStateStore((state) => {
+    if (!props.selectedSessionId) return null;
+    const stored = state.sidePanelState[props.selectedSessionId];
+    // MONOLITH: the Cowork task rail is the default right panel for a session.
+    // `undefined` = never touched → default open; explicit `null` = user closed it.
+    return stored === undefined ? "task" : stored;
+  });
   const voiceSidePanelOpen = useUiStateStore((state) => state.sidePanelState[GLOBAL_VOICE_SIDE_PANEL_KEY] === "voice");
   const setSidePanelState = useUiStateStore((state) => state.setSidePanelState);
   const toggleSidePanelState = useUiStateStore((state) => state.toggleSidePanelState);
@@ -325,6 +330,7 @@ export function SessionPage(props: SessionPageProps) {
   const panelRailActive = activeSidePanel === "panel";
   const extensionsRailActive = activeSidePanel === "extensions";
   const voiceRailActive = activeSidePanel === "voice";
+  const taskRailActive = activeSidePanel === "task";
   const voiceExtension = useMemo(
     () => OPENWORK_EXTENSION_CATALOG.find((entry) => getExtensionId(entry) === "openwork-voice") ?? null,
     [],
@@ -1242,12 +1248,33 @@ export function SessionPage(props: SessionPageProps) {
                 <ResizableHandle withHandle className="hidden lg:flex" />
                 <ResizablePanel
                   panelRef={browserPanelRef}
-                  defaultSize={`${activeSidePanel === "extensions" ? Math.max(browserPanelDefaultWidth, 480) : browserPanelDefaultWidth}px`}
-                  minSize={activeSidePanel === "extensions" ? "420px" : "320px"}
+                  defaultSize={`${activeSidePanel === "extensions" ? Math.max(browserPanelDefaultWidth, 480) : activeSidePanel === "task" ? 300 : browserPanelDefaultWidth}px`}
+                  minSize={activeSidePanel === "extensions" ? "420px" : activeSidePanel === "task" ? "260px" : "320px"}
                   maxSize="70%"
                   className="min-h-0 overflow-hidden lg:flex lg:flex-col"
                 >
-                  {activeSidePanel === "extensions" && props.settingsSlot ? (
+                  {activeSidePanel === "task" && props.selectedSessionId ? (
+                    <TaskRail
+                      sessionId={props.selectedSessionId}
+                      workspaceId={props.runtimeWorkspaceId}
+                      workspaceName={workspaceName}
+                      workspaceRoot={props.selectedWorkspaceRoot}
+                      client={props.openworkServerClient}
+                      todos={props.todos}
+                      artifacts={artifactFileTargets}
+                      onOpenArtifact={(target) => {
+                        if (!props.selectedSessionId) return;
+                        openTab(props.selectedSessionId, {
+                          id: target.id,
+                          type: "artifact",
+                          label: target.name,
+                          preview: target.preview,
+                        });
+                        setCurrentSidePanel("panel");
+                      }}
+                      onClose={closeRightPane}
+                    />
+                  ) : activeSidePanel === "extensions" && props.settingsSlot ? (
                     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background">
                       {props.settingsSlot}
                     </div>
@@ -1273,6 +1300,22 @@ export function SessionPage(props: SessionPageProps) {
             ) : null}
           </ResizablePanelGroup>
           <aside className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-border bg-background/95 px-1 py-2 text-muted-foreground mac:titlebar-no-drag">
+            {props.selectedSessionId ? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className={cn(
+                  "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
+                  taskRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+                )}
+                onClick={() => toggleCurrentSidePanel("task")}
+                title={t("monolith.rail.title")}
+                aria-label={t("monolith.rail.title")}
+                aria-pressed={taskRailActive}
+              >
+                <ListChecks size={17} />
+              </Button>
+            ) : null}
             {isElectronRuntime() ? (
               <Button
                 variant="ghost"

@@ -327,7 +327,7 @@ const AssistantMessage = React.memo(
               return (
                 <MessageContent
                   key={`text-${index}`}
-                  className="text-foreground prose w-full min-w-0 flex-1 rounded-lg bg-transparent p-0"
+                  className="text-foreground prose w-full min-w-0 flex-1 rounded-lg bg-transparent p-0 font-display text-[15px] leading-7"
                   markdown
                 >
                   {group.text}
@@ -552,12 +552,12 @@ const LoadingMessage = React.memo(({ label }: { label?: string }) => (
             intensity={1}
             noise={0.05}
             shape="sphere"
-            colors={["#818cf8", "#fb7185", "#fbbf24", "#34d399"]}
+            colors={["#d97757", "#e08b6d", "#f2c4b0", "#c96442"]}
             colorBack="#ffffff00"
-            style={{ backgroundColor: "#818cf8", width: "100%", height: "100%", borderRadius: "50%" }}
+            style={{ backgroundColor: "#d97757", width: "100%", height: "100%", borderRadius: "50%" }}
           />
         </div>
-        <span>{label ?? "Thinking…"}</span>
+        <span>{label ?? "Working on it…"}</span>
       </div>
     </div>
   </Message>

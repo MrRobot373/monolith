@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { useEffect, useReducer } from "react";
 import type { QuestionInfo } from "@opencode-ai/sdk/v2/client";
-import { Check, ChevronRight, HelpCircle } from "lucide-react";
+import { Check, ChevronRight, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { t } from "@/i18n";
@@ -144,37 +144,91 @@ export function QuestionPanel(props: QuestionPanelProps) {
     }, 150);
   };
 
+  // MONOLITH: Cowork-style skip — answer the current question with nothing
+  // and move on (or submit when it's the last one).
+  const handleSkip = () => {
+    if (!currentQuestion || props.busy) return;
+    const newAnswers = [...state.answers];
+    newAnswers[state.currentIndex] = [];
+    if (isLastQuestion) {
+      dispatch({ type: "setAnswers", answers: newAnswers });
+      props.onReply(newAnswers);
+    } else {
+      dispatch({ type: "advance", answers: newAnswers });
+    }
+  };
+
+  // MONOLITH: keyboard interaction (↑↓ navigate · Enter select · digits jump ·
+  // Esc skip) — the reducer supported focus movement but nothing dispatched it.
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (props.busy || !currentQuestion) return;
+    const target = event.target as HTMLElement;
+    const typingInInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+    if (event.key === "Escape") {
+      event.preventDefault();
+      handleSkip();
+      return;
+    }
+    if (typingInInput) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      dispatch({
+        type: "moveFocusedOption",
+        direction: event.key === "ArrowDown" ? 1 : -1,
+        optionsCount: options.length,
+      });
+      return;
+    }
+    if (event.key === "Enter") {
+      const focused = options[state.focusedOptionIndex];
+      if (focused) {
+        event.preventDefault();
+        toggleOption(focused.label);
+      }
+      return;
+    }
+    if (/^[1-9]$/.test(event.key)) {
+      const index = Number(event.key) - 1;
+      const option = options[index];
+      if (option) {
+        event.preventDefault();
+        dispatch({ type: "setFocusedOptionIndex", value: index });
+        toggleOption(option.label);
+      }
+    }
+  };
+
   if (!currentQuestion) return null;
 
   return (
-    <div className="overflow-hidden border-b border-dls-border bg-transparent">
-      <div className="border-b border-dls-border px-4 py-3">
-        <div className="flex items-start gap-2.5">
-          <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-blue-7/30 bg-blue-3/20 text-blue-11">
-            <HelpCircle size={12} />
+    <div
+      className="overflow-hidden rounded-2xl border border-dls-border bg-dls-surface shadow-[var(--dls-card-shadow)]"
+      onKeyDown={handleKeyDown}
+    >
+      <div className="flex items-start justify-between gap-3 px-4 pb-2 pt-3.5">
+        <div className="min-w-0 flex-1">
+          <div className="text-[15px] font-semibold leading-6 text-dls-text">
+            {currentQuestion.question || currentQuestion.header || t("common.question")}
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <div className="text-sm font-medium leading-5 text-gray-12">
-                {currentQuestion.header || t("common.question")}
-              </div>
-              <div className="text-[11px] font-medium leading-4 text-gray-9">
-                {t("question_modal.question_counter", undefined, {
-                  current: state.currentIndex + 1,
-                  total: props.questions.length,
-                })}
-              </div>
+          {currentQuestion.header && currentQuestion.question ? (
+            <div className="mt-0.5 text-[12px] leading-4 text-dls-secondary">
+              {currentQuestion.header}
             </div>
-            <div className="mt-1 text-sm leading-6 text-gray-11">
-              {currentQuestion.question}
-            </div>
-          </div>
+          ) : null}
         </div>
+        {props.questions.length > 1 ? (
+          <div className="shrink-0 pt-0.5 text-[12px] font-medium text-dls-secondary">
+            {t("question_modal.question_counter", undefined, {
+              current: state.currentIndex + 1,
+              total: props.questions.length,
+            })}
+          </div>
+        ) : null}
       </div>
 
-      <div className="max-h-72 space-y-3 overflow-auto px-4 py-3">
+      <div className="max-h-80 overflow-auto px-2 pb-1">
         {options.length > 0 ? (
-          <div className="space-y-2">
+          <div>
             {options.map((opt, idx) => {
               const isSelected = state.currentSelection.includes(opt.label);
               const isFocused = state.focusedOptionIndex === idx;
@@ -183,30 +237,39 @@ export function QuestionPanel(props: QuestionPanelProps) {
                   key={`${opt.label}:${idx}`}
                   type="button"
                   disabled={props.busy}
-                  className={`flex w-full items-start justify-between gap-3 rounded-xl border px-3 py-2.5 text-left text-sm transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60
-                        ${
-                          isSelected
-                            ? "bg-blue-9/10 border-blue-9/30 text-gray-12 shadow-sm"
-                            : "bg-gray-1 border-gray-6 hover:border-gray-8 text-gray-11 hover:text-gray-12 hover:bg-gray-3"
-                        }
-                        ${isFocused ? "ring-2 ring-blue-9/20 border-blue-9/40 bg-gray-3" : ""}
-                      `}
+                  className={`group flex w-full items-start gap-3 border-b border-dls-border/60 px-2 py-2.5 text-left text-sm transition-colors last:border-b-0 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    isFocused ? "bg-dls-hover" : "hover:bg-dls-hover/60"
+                  } rounded-lg`}
                   onClick={() => {
                     dispatch({ type: "setFocusedOptionIndex", value: idx });
                     toggleOption(opt.label);
                   }}
                 >
-                  <span className="min-w-0">
-                    <span className="block font-medium text-gray-12">{opt.label}</span>
+                  <span
+                    className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border text-[12px] font-semibold ${
+                      isSelected
+                        ? "border-dls-accent bg-dls-accent text-white"
+                        : "border-dls-border bg-dls-surface-muted/60 text-dls-secondary"
+                    }`}
+                  >
+                    {isSelected ? <Check size={13} strokeWidth={3} /> : idx + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-medium leading-5 text-dls-text">
+                      {opt.label}
+                    </span>
                     {opt.description && opt.description !== opt.label ? (
-                      <span className="mt-1 block text-xs leading-5 text-gray-11">{opt.description}</span>
+                      <span className="mt-0.5 block text-[12px] leading-5 text-dls-secondary">
+                        {opt.description}
+                      </span>
                     ) : null}
                   </span>
-                  {isSelected ? (
-                    <div className="size-5 rounded-full bg-blue-9 flex items-center justify-center shadow-sm">
-                      <Check size={12} className="text-white" strokeWidth={3} />
-                    </div>
-                  ) : null}
+                  <ChevronRight
+                    size={15}
+                    className={`mt-1 shrink-0 text-dls-secondary transition-opacity ${
+                      isFocused ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+                    }`}
+                  />
                 </button>
               );
             })}
@@ -214,64 +277,60 @@ export function QuestionPanel(props: QuestionPanelProps) {
         ) : null}
 
         {customAnswerEnabled ? (
-          <div className="border-t border-dls-border pt-3">
-            <label className="block text-xs font-semibold text-dls-secondary mb-2 uppercase tracking-wide">
-              {t("question_modal.custom_answer_label")}
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={state.customInput}
-                onFocus={() => dispatch({ type: "setCustomAnswerActive", value: true })}
-                onClick={() => dispatch({ type: "setCustomAnswerActive", value: true })}
-                onChange={(event) =>
-                  dispatch({
-                    type: "setCustomInput",
-                    value: event.currentTarget.value,
-                  })
+          <div className="flex items-center gap-2 border-t border-dls-border/60 px-2 py-2">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md border border-dls-border bg-dls-surface-muted/60 text-dls-secondary">
+              <Pencil size={12} />
+            </span>
+            <input
+              type="text"
+              value={state.customInput}
+              onFocus={() => dispatch({ type: "setCustomAnswerActive", value: true })}
+              onClick={() => dispatch({ type: "setCustomAnswerActive", value: true })}
+              onChange={(event) =>
+                dispatch({
+                  type: "setCustomInput",
+                  value: event.currentTarget.value,
+                })
+              }
+              className="w-full bg-transparent py-1.5 text-[13px] text-dls-text outline-none placeholder:text-dls-secondary"
+              placeholder={t("question_modal.custom_answer_placeholder")}
+              disabled={props.busy}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  if (event.nativeEvent.isComposing || event.keyCode === 229)
+                    return;
+                  event.stopPropagation();
+                  handleNext();
                 }
-                className="w-full px-4 py-3 rounded-xl bg-dls-surface border border-dls-border focus:border-dls-accent focus:ring-4 focus:ring-[rgba(var(--dls-accent-rgb),0.2)] focus:outline-none text-sm text-dls-text placeholder:text-dls-secondary transition-shadow"
-                placeholder={t("question_modal.custom_answer_placeholder")}
-                disabled={props.busy}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    if (event.nativeEvent.isComposing || event.keyCode === 229)
-                      return;
-                    event.stopPropagation();
-                    handleNext();
-                  }
-                }}
-              />
-              {customAnswerVisible ? (
-                <Button
-                  onClick={handleNext}
-                  disabled={!state.customInput.trim() || props.busy}
-                >
-                  {t("question_modal.custom_answer_send")}
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-dls-secondary flex items-center gap-2">
-            {props.busy ? "Submitting..." : null}
-          </div>
-
-          <div className="flex gap-2">
-            {currentQuestion.multiple ? (
+              }}
+            />
+            {customAnswerVisible ? (
               <Button
+                size="sm"
                 onClick={handleNext}
-                disabled={!canProceed || props.busy}
+                disabled={!state.customInput.trim() || props.busy}
               >
-                {isLastQuestion ? t("common.submit") : t("common.next")}
-                {!isLastQuestion ? (
-                  <ChevronRight data-icon="inline-end" />
-                ) : null}
+                {t("question_modal.custom_answer_send")}
               </Button>
             ) : null}
           </div>
+        ) : null}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-dls-border/60 px-4 py-2">
+        <div className="hidden items-center gap-1 text-[11px] text-dls-secondary sm:flex">
+          {props.busy ? t("monolith.question.submitting") : t("monolith.question.keys_hint")}
+        </div>
+        <div className="flex items-center gap-2">
+          {currentQuestion.multiple ? (
+            <Button size="sm" onClick={handleNext} disabled={!canProceed || props.busy}>
+              {isLastQuestion ? t("common.submit") : t("common.next")}
+              {!isLastQuestion ? <ChevronRight data-icon="inline-end" /> : null}
+            </Button>
+          ) : null}
+          <Button size="sm" variant="ghost" onClick={handleSkip} disabled={props.busy}>
+            {t("monolith.question.skip")}
+          </Button>
         </div>
       </div>
     </div>
