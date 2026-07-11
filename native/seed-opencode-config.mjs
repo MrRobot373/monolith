@@ -99,12 +99,18 @@ async function probeModel(base, id, keyPicker) {
       const r = await fetch(`${base}/chat/completions`, {
         method: "POST",
         headers: { authorization: `Bearer ${keyPicker()}`, "content-type": "application/json" },
-        body: JSON.stringify({ model: id, messages: [{ role: "user", content: "hi" }], max_tokens: 1, stream: false }),
+        // 200 tokens: enough for reasoning models to emit *something* (their
+        // content may stay empty while thinking, so reasoning counts as alive).
+        body: JSON.stringify({ model: id, messages: [{ role: "user", content: "hi" }], max_tokens: 200, stream: false }),
         signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
       });
-      if (r.ok) return true;
       if (r.status === 429 || r.status >= 500) continue; // busy/flaky -> one retry (next key)
-      return false; // 4xx: not available on this key/tier/deployment
+      if (!r.ok) return false; // 4xx: not available on this key/tier/deployment
+      const message = (await r.json())?.choices?.[0]?.message ?? {};
+      const produced =
+        (message.content ?? "").trim() ||
+        (message.reasoning_content ?? message.reasoning ?? "").trim();
+      return Boolean(produced);
     } catch { /* timeout or network -> retry once, then give up */ }
   }
   return false;
