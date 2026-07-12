@@ -38,6 +38,7 @@ ENV OPENWORK_DATA_DIR=/data/openwork-orchestrator \
 # Agent personas (Legal/Finance/Health/Research/Code) come from the repo; the
 # Legal & Finance skills come from Anthropic's open-source knowledge-work-plugins.
 COPY seed/ /opt/monolith-seed/
+COPY seed-models.mjs /opt/monolith-seed/seed-models.mjs
 RUN git clone --depth 1 https://github.com/anthropics/knowledge-work-plugins.git /tmp/kwp \
  && mkdir -p /opt/monolith-seed/.opencode/skills \
  && cp -r /tmp/kwp/legal/skills/.   /opt/monolith-seed/.opencode/skills/ 2>/dev/null || true \

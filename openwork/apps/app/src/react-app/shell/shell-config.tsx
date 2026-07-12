@@ -37,12 +37,15 @@ export type ShellConfig = {
 /* ------------------------------------------------------------------ */
 
 export const DEFAULT_SHELL_CONFIG: ShellConfig = {
-  appName: "OpenWork",
+  appName: "MONOLITH",
   statusBar: true,
   sidebar: true,
   docsButton: true,
   feedbackButton: true,
-  cloudSignin: true,
+  // MONOLITH: no "OpenWork Cloud" — this deployment has its own Supabase-backed
+  // account system (Settings > Account). Disabling this also suppresses the
+  // "OpenWork Models hosted frontier models" startup promo.
+  cloudSignin: false,
   welcomePage: true,
   starterCards: true,
   modelPicker: true,

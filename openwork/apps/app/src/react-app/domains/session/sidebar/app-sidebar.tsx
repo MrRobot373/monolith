@@ -4,7 +4,6 @@ import {
   AlertCircle,
   Archive,
   ArchiveRestore,
-  CalendarClock,
   ChevronRight,
   FolderPlus,
   Loader2,
@@ -14,10 +13,7 @@ import {
   PinOff,
   Plus,
   Search,
-  Send,
   Share2,
-  ShieldCheck,
-  SlidersHorizontal,
   Trash2,
   RefreshCw,
   RotateCcw,
@@ -111,22 +107,6 @@ import { MonolithMark } from "../../../design-system/monolith-mark";
 import { WorkspaceIcon } from "../../../design-system/workspace-icon";
 import { getSessionActivityStatusLabel, type SessionActivityStatus } from "../status/session-activity-store";
 
-/**
- * MONOLITH: Cowork-style primary navigation. Entries ship as disabled stubs
- * until their phase lands (Projects → workspaces view, Scheduled → scheduler,
- * Customize → skills/plugins/connectors hub, Dispatch → persistent thread).
- */
-const MONOLITH_NAV_STUBS: Array<{
-  key: string;
-  labelKey: string;
-  icon: typeof FolderOpen;
-}> = [
-  { key: "projects", labelKey: "monolith.nav.projects", icon: FolderOpen },
-  { key: "scheduled", labelKey: "monolith.nav.scheduled", icon: CalendarClock },
-  { key: "customize", labelKey: "monolith.nav.customize", icon: SlidersHorizontal },
-  { key: "dispatch", labelKey: "monolith.nav.dispatch", icon: Send },
-  { key: "admin", labelKey: "monolith.nav.admin", icon: ShieldCheck },
-];
 
 interface SessionStatusIndicatorProps {
   className?: string;
@@ -218,54 +198,7 @@ function SessionMenuContent({ variant, sessionId, workspaceId, isPinned, isArchi
             {t("workspace_list.rename_session")}
           </DropdownMenuItem>
         ) : null}
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Tag className="size-4" />
-            {t("session_management.move_to_group")}
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-52">
-            {groups.length === 0 ? (
-              <DropdownMenuItem onClick={() => ctx.onOpenCreateGroupModal?.(workspaceId)}>
-                <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                  {t("session_management.no_groups_yet")}
-                </span>
-                <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-foreground">
-                  <Plus className="size-3.5" />
-                </span>
-              </DropdownMenuItem>
-            ) : (
-              <>
-                <DropdownMenuItem
-                  onClick={() => store.getState().assignGroup(workspaceId, sessionId, null)}
-                  disabled={!assignedGroupId}
-                >
-                  {t("session_management.no_group")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {groups.map((group) => (
-                  <DropdownMenuItem
-                    key={group.id}
-                    onClick={() => store.getState().assignGroup(workspaceId, sessionId, group.id)}
-                    disabled={assignedGroupId === group.id}
-                  >
-                    {group.label}
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => ctx.onOpenCreateGroupModal?.(workspaceId)}>
-                  <FolderPlus className="size-4" />
-                  {t("session_management.new_group")}
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        {ctx.onArchiveSession ? (
-          <DropdownMenuItem onClick={() => ctx.onArchiveSession?.(sessionId, !isArchived)}>
-            {isArchived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
-            {isArchived ? t("session_management.unarchive_session") : t("session_management.archive_session")}
-          </DropdownMenuItem>
-        ) : null}
+        {/* MONOLITH: Move-to-group and Archive removed from the task menu. */}
         {ctx.onOpenDeleteSession ? (
           <>
             <DropdownMenuSeparator />
@@ -291,54 +224,7 @@ function SessionMenuContent({ variant, sessionId, workspaceId, isPinned, isArchi
           {t("workspace_list.rename_session")}
         </ContextMenuItem>
       ) : null}
-      <ContextMenuSub>
-        <ContextMenuSubTrigger>
-          <Tag className="mr-2 size-4" />
-          {t("session_management.move_to_group")}
-        </ContextMenuSubTrigger>
-        <ContextMenuSubContent>
-          {groups.length === 0 ? (
-            <ContextMenuItem onClick={() => ctx.onOpenCreateGroupModal?.(workspaceId)}>
-              <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                {t("session_management.no_groups_yet")}
-              </span>
-              <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-foreground/10 text-foreground">
-                <Plus className="size-3.5" />
-              </span>
-            </ContextMenuItem>
-          ) : (
-            <>
-              <ContextMenuItem
-                onClick={() => store.getState().assignGroup(workspaceId, sessionId, null)}
-                disabled={!assignedGroupId}
-              >
-                {t("session_management.no_group")}
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              {groups.map((group) => (
-                <ContextMenuItem
-                  key={group.id}
-                  onClick={() => store.getState().assignGroup(workspaceId, sessionId, group.id)}
-                  disabled={assignedGroupId === group.id}
-                >
-                  {group.label}
-                </ContextMenuItem>
-              ))}
-              <ContextMenuSeparator />
-              <ContextMenuItem onClick={() => ctx.onOpenCreateGroupModal?.(workspaceId)}>
-                <FolderPlus className="size-4" />
-                {t("session_management.new_group")}
-              </ContextMenuItem>
-            </>
-          )}
-        </ContextMenuSubContent>
-      </ContextMenuSub>
-      {ctx.onArchiveSession ? (
-        <ContextMenuItem onClick={() => ctx.onArchiveSession?.(sessionId, !isArchived)}>
-          {isArchived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
-          {isArchived ? t("session_management.unarchive_session") : t("session_management.archive_session")}
-        </ContextMenuItem>
-      ) : null}
+      {/* MONOLITH: Move-to-group and Archive removed from the task menu. */}
       {ctx.onOpenDeleteSession ? (
         <>
           <ContextMenuSeparator />
@@ -623,6 +509,14 @@ export type AppSidebarProps = {
   onOpenDispatch?: () => void;
   /** MONOLITH: opens the org admin panel. */
   onOpenAdmin?: () => void;
+  /** MONOLITH: opens app settings (footer gear + profile fallback). */
+  onOpenSettings?: () => void;
+  /** MONOLITH: opens the account/profile page (footer profile row). */
+  onOpenProfile?: () => void;
+  /** MONOLITH: footer profile label (account name / email). */
+  accountLabel?: string;
+  /** MONOLITH: footer profile sublabel (plan / status). */
+  accountSublabel?: string;
   /** Opens the cross-session message search dialog (Cmd/Ctrl+Shift+F). */
   onOpenSessionSearch?: () => void;
   onReorderWorkspaces?: (workspaceIds: string[]) => void;
@@ -769,6 +663,13 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const brandLogoUrl = useBrandLogoUrl();
 
+  const selectedWorkspaceName = React.useMemo(() => {
+    const group = props.workspaceSessionGroups.find(
+      (entry) => entry.workspace.id === props.selectedWorkspaceId,
+    );
+    return group ? workspaceLabel(group.workspace) : "";
+  }, [props.workspaceSessionGroups, props.selectedWorkspaceId]);
+
   return (
     <SidebarContext.Provider value={contextValue}>
       <Sidebar
@@ -817,6 +718,7 @@ export function AppSidebar(props: AppSidebarProps) {
         <SidebarGroup className="py-1">
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* New task in the active workspace — labelled with its name. */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => {
@@ -825,49 +727,41 @@ export function AppSidebar(props: AppSidebarProps) {
                     }
                   }}
                   disabled={props.newTaskDisabled || !props.selectedWorkspaceId}
-                  className="font-medium"
+                  className="h-auto py-1.5 font-medium"
                 >
                   <Plus className="size-4" />
-                  <span className="flex-1 truncate">{t("monolith.nav.new_task")}</span>
+                  <span className="flex min-w-0 flex-1 flex-col items-start">
+                    <span className="truncate leading-tight">{t("monolith.nav.new_task")}</span>
+                    {selectedWorkspaceName ? (
+                      <span className="truncate text-[11px] font-normal leading-tight text-sidebar-foreground/60">
+                        {selectedWorkspaceName}
+                      </span>
+                    ) : null}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              {MONOLITH_NAV_STUBS.map((entry) => {
-                const action =
-                  entry.key === "customize"
-                    ? props.onOpenCustomize
-                    : entry.key === "projects"
-                      ? props.onOpenProjects
-                      : entry.key === "scheduled"
-                        ? props.onOpenScheduled
-                        : entry.key === "dispatch"
-                          ? props.onOpenDispatch
-                          : entry.key === "admin"
-                            ? props.onOpenAdmin
-                            : undefined;
-                const chip = !action
-                  ? t("monolith.nav.soon")
-                  : entry.key === "dispatch"
-                    ? t("monolith.nav.beta")
-                    : null;
-                return (
-                  <SidebarMenuItem key={entry.key}>
-                    <SidebarMenuButton
-                      disabled={!action}
-                      onClick={action}
-                      className="text-sidebar-foreground/70"
-                      title={action ? t(entry.labelKey) : t("monolith.nav.soon")}
-                    >
-                      <entry.icon className="size-4" />
-                      <span className="flex-1 truncate">{t(entry.labelKey)}</span>
-                      {chip ? (
-                        <span className="ml-auto rounded-full border border-dls-border px-1.5 text-[10px] uppercase tracking-wide text-dls-secondary">
-                          {chip}
-                        </span>
-                      ) : null}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {/* Add a new workspace. */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={props.onOpenCreateWorkspace}
+                  className="text-sidebar-foreground/70"
+                >
+                  <FolderPlus className="size-4" />
+                  <span className="flex-1 truncate">{t("workspace_list.add_workspace")}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {/* Projects view (workspaces-as-projects). */}
+              {props.onOpenProjects ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={props.onOpenProjects}
+                    className="text-sidebar-foreground/70"
+                  >
+                    <FolderOpen className="size-4" />
+                    <span className="flex-1 truncate">{t("monolith.nav.projects")}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -899,13 +793,43 @@ export function AppSidebar(props: AppSidebarProps) {
           </m.div>
         </LazyMotion>
 
+        {/* Footer: profile + settings (moved here from the status bar). */}
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton onClick={props.onOpenCreateWorkspace}>
-                <Plus className="size-4" />
-                {t("workspace_list.add_workspace")}
-              </SidebarMenuButton>
+              <div className="flex items-center gap-1">
+                <SidebarMenuButton
+                  onClick={props.onOpenProfile ?? props.onOpenSettings}
+                  className="min-w-0 flex-1"
+                  title={props.accountLabel ?? t("monolith.account.title")}
+                >
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-dls-accent/15 text-[11px] font-semibold uppercase text-dls-accent">
+                    {(props.accountLabel ?? "M").trim().charAt(0)}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col items-start">
+                    <span className="truncate text-[13px] font-medium leading-tight">
+                      {props.accountLabel ?? t("monolith.account.local_user")}
+                    </span>
+                    {props.accountSublabel ? (
+                      <span className="truncate text-[11px] leading-tight text-sidebar-foreground/60">
+                        {props.accountSublabel}
+                      </span>
+                    ) : null}
+                  </span>
+                </SidebarMenuButton>
+                {props.onOpenSettings ? (
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-8 shrink-0 text-sidebar-foreground/70"
+                    onClick={props.onOpenSettings}
+                    aria-label={t("monolith.account.settings")}
+                    title={t("monolith.account.settings")}
+                  >
+                    <Settings className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

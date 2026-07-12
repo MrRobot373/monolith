@@ -270,12 +270,8 @@ export function CreateWorkspaceModal(props: CreateWorkspaceModalProps) {
                   ) : undefined
                 }
               />
-              <WorkspaceOptionCard
-                title={t("dashboard.create_remote_custom_title")}
-                description={t("dashboard.chooser_remote_desc")}
-                icon={Globe}
-                onClick={() => setScreen("remote")}
-              />
+              {/* MONOLITH: "Connect custom remote" removed — MONOLITH workspaces
+                  are local folders on the host. */}
               {props.onImportConfig ? (
                 <div className="pt-2">
                   <button
@@ -305,7 +301,7 @@ export function CreateWorkspaceModal(props: CreateWorkspaceModalProps) {
             hasSelectedFolder={hasSelectedFolder}
             pickingFolder={pickingFolder}
             onPickFolder={() => void handlePickFolder()}
-            onFolderInput={(value) => setSelectedFolder(normalizeWorkspaceFolderPath(value) || null)}
+            onFolderInput={(value) => setSelectedFolder(value)}
             submitting={submitting}
             localError={localError}
             onClose={props.onClose}

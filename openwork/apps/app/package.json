@@ -56,6 +56,7 @@
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@shikijs/transformers": "^4.0.2",
+    "@supabase/supabase-js": "^2.110.2",
     "@tanstack/react-query": "^5.90.3",
     "@tanstack/react-virtual": "^3.13.23",
     "@xterm/addon-fit": "^0.11.0",

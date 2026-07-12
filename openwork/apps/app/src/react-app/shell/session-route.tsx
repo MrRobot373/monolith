@@ -113,6 +113,7 @@ import { useRemoteAccessRestart } from "@/react-app/domains/workspace/remote-acc
 import { RenameWorkspaceModal } from "@/react-app/domains/workspace/rename-workspace-modal";
 import { useRemoteWorkspaceConnectionEditor } from "@/react-app/domains/workspace/use-remote-workspace-connection-editor";
 import { useDenAuth } from "@/react-app/domains/cloud/den-auth-provider";
+import { useMonolithAuth } from "@/react-app/domains/settings/cloud/monolith-auth";
 import { OpenWorkModelsStartupDialog } from "@/react-app/domains/cloud/openwork-models-startup-dialog";
 import { OPENWORK_MODEL_PREVIEWS } from "@/react-app/domains/cloud/openwork-models-promo";
 import { useOpenWorkModelsStartupPromo } from "@/react-app/domains/cloud/use-openwork-models-startup-promo";
@@ -315,6 +316,7 @@ export function SessionRoute() {
   const navigate = useNavigate();
   const platform = usePlatform();
   const denAuth = useDenAuth();
+  const monolithAuth = useMonolithAuth();
   const { config: shellConfig } = useShellConfig();
   const local = useLocal();
   const reloadCoordinator = useReloadCoordinator();
@@ -1051,17 +1053,46 @@ export function SessionRoute() {
   const handleRevealWorkspace = useCallback(async (workspaceId: string) => {
     const workspace = workspaces.find((item) => item.id === workspaceId);
     const path = workspace?.path?.trim();
-    if (!path || !isDesktopRuntime()) return;
+    if (!path) return;
+    if (isDesktopRuntime()) {
+      try {
+        await revealDesktopItemInDir(path);
+      } catch (error) {
+        toast.error("Couldn't reveal the folder", { description: describeRouteError(error) });
+      }
+      return;
+    }
+    // MONOLITH web deployment: no Electron bridge, so reveal through the
+    // native launcher's web bridge (native/serve-ui.mjs). Not available in
+    // Docker — there's no host filesystem to open an Explorer window on.
     try {
-      await revealDesktopItemInDir(path);
-    } catch {
-      // ignore
+      const response = await fetch("/__monolith/reveal-directory", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ path }),
+      });
+      if (response.status === 404 || response.status === 501) {
+        toast.info("Not available in this deployment", {
+          description: "Revealing a folder in Explorer only works with the native Windows launcher.",
+        });
+        return;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      toast.error("Couldn't reveal the folder", { description: describeRouteError(error) });
     }
   }, [workspaces]);
 
+  // MONOLITH: this product is a single browser-based workspace per URL, not a
+  // desktop app with remote-worker pairing — so "share" means copying a link
+  // to this workspace, not exporting a remote-access token.
   const handleShareWorkspace = useCallback((workspaceId: string) => {
-    shareWorkspaceState.openShareWorkspace(workspaceId);
-  }, [shareWorkspaceState]);
+    const url = `${window.location.origin}/workspace/${workspaceId}/session`;
+    void navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success("Workspace link copied", { description: url }))
+      .catch((error) => toast.error("Couldn't copy the link", { description: describeRouteError(error) }));
+  }, []);
 
   const handleSaveShareRemoteAccess = useCallback(
     async (enabled: boolean) => {
@@ -1694,6 +1725,14 @@ export function SessionRoute() {
         );
       }}
       onOpenSettings={() => handleOpenSettings("/settings/general")}
+      onOpenSettingsSection={(section) => handleOpenSettings(`/settings/${section}`)}
+      account={
+        monolithAuth.isSignedIn && monolithAuth.user
+          ? { label: monolithAuth.user.email ?? undefined, sublabel: t("monolith.account.signed_in_label") }
+          : monolithAuth.isConfigured
+            ? { label: t("monolith.account.not_signed_in") }
+            : null
+      }
       onOpenProviderAuth={() => sessionProviderAuthStore.openProviderAuthModal({ returnFocusTarget: "composer" })}
       providerAuthModal={sessionProviderAuthSnapshot.providerAuthModalOpen ? {
         open: true,

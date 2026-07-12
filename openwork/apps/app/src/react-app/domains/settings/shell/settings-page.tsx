@@ -2,6 +2,7 @@
 import type * as React from "react";
 import {
   ArrowLeft,
+  Bell,
   BrainCircuit,
   Bug,
   ChevronDown,
@@ -9,6 +10,7 @@ import {
   Cog,
   Container,
   FolderLock,
+  Gauge,
   Info,
   Layout,
   Paintbrush,
@@ -89,6 +91,10 @@ export function getSettingsTabIcon(tab: SettingsTab) {
       return Wrench;
     case "appearance":
       return Paintbrush;
+    case "notifications":
+      return Bell;
+    case "usage":
+      return Gauge;
     case "updates":
       return RefreshCcw;
     case "recovery":
@@ -130,6 +136,10 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return t("settings.tab_advanced");
     case "appearance":
       return t("settings.tab_appearance");
+    case "notifications":
+      return t("monolith.notifications.title");
+    case "usage":
+      return t("monolith.usage.title");
     case "updates":
       return t("settings.tab_updates");
     case "recovery":
@@ -173,6 +183,10 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return t("settings.tab_description_advanced");
     case "appearance":
       return t("settings.tab_description_appearance");
+    case "notifications":
+      return t("monolith.notifications.subtitle");
+    case "usage":
+      return t("monolith.usage.subtitle");
     case "updates":
       return t("settings.tab_description_updates");
     case "recovery":
@@ -193,7 +207,10 @@ export function getWorkspaceSettingsTabs(customerMode?: boolean): SettingsTab[] 
 
 export function getGlobalSettingsTabs(developerMode: boolean, customerMode?: boolean): SettingsTab[] {
   if (customerMode) return ["shell", "appearance"];
-  const tabs: SettingsTab[] = ["ai", "shell", "appearance", "environment", "updates", "recovery"];
+  // MONOLITH: "Updates" removed — it's Electron auto-updater UI and this is a
+  // web-first deployment (native/serve-ui.mjs, Docker webui) with no in-app updater.
+  // "notifications" and "usage" added (report #8/#9).
+  const tabs: SettingsTab[] = ["ai", "shell", "appearance", "notifications", "usage", "environment", "recovery"];
   if (developerMode) tabs.push("debug");
   return tabs;
 }

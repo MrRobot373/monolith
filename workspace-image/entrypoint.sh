@@ -10,38 +10,13 @@ WS="${OPENWORK_WORKSPACE:-/workspace}"
 export CFG="$WS/opencode.json"
 mkdir -p "$WS"
 
-# Idempotently ensure the MONOLITH gateway provider + a sensible DEFAULT model are
-# configured, without clobbering any other opencode.json settings. Making the local
-# model the default stops the app from pushing users to OpenWork's cloud sign-in.
+# Ensure the MONOLITH gateway provider is configured with ONLY the models that
+# answer a real completion right now (report #16 — a listed-but-dead model,
+# e.g. a cloud model with no API key, or local-qwen before it's pulled, is
+# worse than not listing it). Probing is cached 12h on the /data volume.
 if [ -n "${MONOLITH_GATEWAY_URL:-}" ]; then
-  echo "[monolith] ensuring OpenCode provider + default model -> $CFG (gateway: $MONOLITH_GATEWAY_URL)"
-  node -e '
-    const fs = require("fs");
-    const p = process.env.CFG;
-    let cfg = {};
-    try { cfg = JSON.parse(fs.readFileSync(p, "utf8")); } catch {}
-    cfg["$schema"] = "https://opencode.ai/config.json";
-    cfg.provider = cfg.provider || {};
-    cfg.provider.monolith = {
-      npm: "@ai-sdk/openai-compatible",
-      name: "MONOLITH Gateway",
-      options: {
-        baseURL: process.env.MONOLITH_GATEWAY_URL,
-        apiKey: process.env.MONOLITH_GATEWAY_KEY || ""
-      },
-      // These ids must match the model_name aliases in litellm/config.yaml
-      models: {
-        "claude":      { name: "Claude (cloud)" },
-        "gpt":         { name: "GPT (cloud)" },
-        "gemini":      { name: "Gemini (cloud)" },
-        "ollama-pool": { name: "Ollama Pool (round-robin)" },
-        "local-qwen":  { name: "Qwen (local)" }
-      }
-    };
-    // Default new sessions to the free local model (change to monolith/claude once a key is set).
-    if (!cfg.model) cfg.model = process.env.MONOLITH_DEFAULT_MODEL || "monolith/local-qwen";
-    fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
-  '
+  echo "[monolith] probing OpenCode gateway models -> $CFG (gateway: $MONOLITH_GATEWAY_URL)"
+  node /opt/monolith-seed/seed-models.mjs || echo "[warn] model probing failed (non-fatal); opencode.json left as-is"
 fi
 
 # Seed a web-reach skill so the agent knows it can reach the live web / content.

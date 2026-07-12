@@ -96,6 +96,8 @@ type SessionError = {
 };
 
 export type SessionSurfaceProps = {
+  /** MONOLITH: hide the "Pick a task" starter cards on the new-task hero — Chat mode is a plain conversation. Defaults to true. */
+  showSuggestions?: boolean;
   client: OpenworkServerClient;
   environmentClient?: OpenworkServerClient | null;
   workspaceId: string;
@@ -1488,7 +1490,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
         />
         </DevProfiler>
       </div>
-      {isNewTask ? (
+      {isNewTask && props.showSuggestions !== false ? (
         <div className="mx-auto w-full max-w-[800px] px-4 pb-6 pt-3 sm:px-6">
           <MonolithSuggestions onPick={handleMessageListSetPrompt} />
         </div>

@@ -172,11 +172,56 @@ function seedOpencodeConfigNative(folderPath) {
   });
 }
 
+function revealDirectoryNative(folderPath) {
+  return new Promise((resolve, reject) => {
+    if (process.platform !== "win32") {
+      resolve({ ok: false, unsupported: true });
+      return;
+    }
+    // explorer.exe returns non-zero even on success for some argument forms,
+    // so treat spawn failure (not exit code) as the real error.
+    const child = spawn("explorer.exe", [folderPath], { windowsHide: false, stdio: "ignore" });
+    child.on("error", (error) => reject(error));
+    child.on("spawn", () => resolve({ ok: true }));
+  });
+}
+
 http.createServer((req, res) => {
   try {
     const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
 
     if (scheduler.handle(req, res, urlPath)) return;
+
+    if (req.method === "POST" && urlPath === "/__monolith/reveal-directory") {
+      readJsonBody(req)
+        .then((payload) => {
+          const folderPath = typeof payload?.path === "string" ? payload.path.trim() : "";
+          if (!folderPath) {
+            send(res, 400, JSON.stringify({ ok: false, error: "path_required" }), {
+              "content-type": "application/json; charset=utf-8",
+              "cache-control": "no-store",
+            });
+            return null;
+          }
+          return revealDirectoryNative(folderPath);
+        })
+        .then((payload) => {
+          if (!payload) return;
+          const unsupported = payload.unsupported === true;
+          send(res, unsupported ? 501 : 200, JSON.stringify(payload), {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+          });
+        })
+        .catch((error) => {
+          console.error("[serve-ui] reveal directory failed:", error.message);
+          send(res, 500, JSON.stringify({ ok: false, error: "reveal_failed" }), {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+          });
+        });
+      return;
+    }
 
     if (req.method === "POST" && urlPath === "/__monolith/pick-directory") {
       pickDirectoryNative()

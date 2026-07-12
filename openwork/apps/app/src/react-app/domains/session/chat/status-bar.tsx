@@ -329,41 +329,8 @@ export function StatusBar(props: StatusBarProps) {
               </button>
             </div>
           ) : null}
-          {shellConfig.cloudSignin && !denAuth.isSignedIn && denAuth.status !== "checking" ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={(
-                  <Button
-                    variant="secondary"
-                    size="xs"
-                    onClick={() => {
-                      const baseUrl = readDenBootstrapConfig().baseUrl;
-                      platform.openLink(buildDenAuthUrl(baseUrl, "sign-in"));
-                    }}
-                    aria-label={t("den.signin_title")}
-                  >
-                    <Cloud className="size-3.5" />
-                    <span>{t("den.signin_button")}</span>
-                  </Button>
-                )}
-              />
-              <TooltipContent>{t("den.signin_title")}</TooltipContent>
-            </Tooltip>
-          ) : null}
-          {shellConfig.docsButton ? (
-            <Button
-              ref={docsButtonRef}
-              className="text-muted-foreground gap-2"
-              variant="ghost"
-              size="xs"
-              onClick={() => platform.openLink(DOCS_URL)}
-              title={t("status.open_docs")}
-              aria-label={t("status.open_docs")}
-            >
-              <BookOpen className="size-3.5" />
-              <span>{t("status.docs")}</span>
-            </Button>
-          ) : null}
+          {/* MONOLITH: Sign in, Docs, and Settings removed from the status bar.
+              Sign-in/account + Settings now live in the sidebar footer. */}
           {shellConfig.feedbackButton ? (
             <Button
               ref={feedbackButtonRef}
@@ -379,25 +346,6 @@ export function StatusBar(props: StatusBarProps) {
                 {t("status.feedback")}
               </span>
             </Button>
-          ) : null}
-          {props.showSettingsButton !== false ? (
-            <Tooltip>
-              <TooltipTrigger
-                render={(
-                  <Button
-                    ref={settingsButtonRef}
-                    className="text-muted-foreground gap-2"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={props.onOpenSettings}
-                    aria-label={props.settingsOpen ? t("status.back") : t("status.settings")}
-                  >
-                    <Settings className="size-3.5" />
-                  </Button>
-                )}
-              />
-              <TooltipContent>{t("status.settings")}</TooltipContent>
-            </Tooltip>
           ) : null}
         </div>
       </div>

@@ -49,9 +49,10 @@ import { ShareWorkspaceModal } from "../../workspace/share-workspace-modal";
 import { StatusBar, type StatusBarProps } from "./status-bar";
 import { OwDotTicker } from "../../../shell/dot-ticker";
 import { MonolithHomeHero, MonolithStartComposer, MonolithSuggestions } from "../../home/monolith-home";
-import { ModeTabs } from "../../../shell/mode-tabs";
+import { ModeTabs, modeFromAgent } from "../../../shell/mode-tabs";
 import { NotificationBell } from "../../../shell/notification-center";
 import { notifyAlert, notifyEvent } from "../../../shell/notifications";
+import { getNotificationPrefs, maybeSendBrowserPush } from "../../settings/notification-preferences";
 import { useReactRenderWatchdog } from "../../../shell/react-render-watchdog";
 import { useShellConfig } from "../../../shell/shell-config";
 import { type SidePanelItem, useUiStateStore } from "../../../shell/ui-state-store";
@@ -178,6 +179,10 @@ export type SessionPageProps = {
   mcpConnectedCount: number;
   onSendFeedback: () => void;
   onOpenSettings: () => void;
+  /** MONOLITH: opens a specific settings section (e.g. account) if available. */
+  onOpenSettingsSection?: (section: string) => void;
+  /** MONOLITH: signed-in account shown in the sidebar footer. */
+  account?: { label?: string; sublabel?: string } | null;
   sidebar: SessionPageSidebarProps;
   surface?: SessionPageSurfaceProps | null;
   history?: SessionPageHistoryControls | null;
@@ -299,14 +304,22 @@ function controlStringArg(args: unknown, key: string) {
 
 export function SessionPage(props: SessionPageProps) {
   const { config: shellConfig } = useShellConfig();
+  // MONOLITH: Chat/Cowork/Code get different default right-panel behavior —
+  // Chat is a plain conversation (no rail), Cowork keeps the task rail, Code
+  // defaults to the artifacts/file panel (+ auto-opens the terminal, below).
+  const uiMode = modeFromAgent(props.modeTabs?.selectedAgent ?? null);
   const sidebarOpen = useUiStateStore((state) => state.sidebarOpen);
   const setSidebarOpen = useUiStateStore((state) => state.setSidebarOpen);
   const sessionSidePanel = useUiStateStore((state) => {
     if (!props.selectedSessionId) return null;
     const stored = state.sidePanelState[props.selectedSessionId];
-    // MONOLITH: the Cowork task rail is the default right panel for a session.
-    // `undefined` = never touched → default open; explicit `null` = user closed it.
-    return stored === undefined ? "task" : stored;
+    // `undefined` = never touched → apply the mode default; explicit value
+    // (including `null` for "user closed it") always wins. Chat and Code both
+    // default closed (Code auto-reveals the artifacts panel once there's
+    // something to show it — see the effect below; opening an empty panel
+    // by default looks broken, so it isn't the default here).
+    if (stored !== undefined) return stored;
+    return uiMode === "cowork" ? "task" : null;
   });
   const voiceSidePanelOpen = useUiStateStore((state) => state.sidePanelState[GLOBAL_VOICE_SIDE_PANEL_KEY] === "voice");
   const setSidePanelState = useUiStateStore((state) => state.setSidePanelState);
@@ -332,6 +345,31 @@ export function SessionPage(props: SessionPageProps) {
   const artifactFileTargets = useMemo(() => accessibleTargets.filter(isCollectibleArtifactTarget), [accessibleTargets]);
   const artifactTargetCount = artifactFileTargets.length;
   const hasArtifactTargets = artifactTargetCount > 0;
+  const sidePanelUntouched = useUiStateStore((state) => (
+    props.selectedSessionId ? state.sidePanelState[props.selectedSessionId] === undefined : false
+  ));
+
+  // MONOLITH Code mode: terminal-forward on desktop (Electron), where the
+  // terminal is a real interactive PTY. In this web-only deployment the
+  // terminal dock is a permanent "available in the desktop app" placeholder,
+  // so auto-opening it here would just clutter the screen with a dead panel —
+  // skip it and let users open it manually if they're on desktop.
+  useEffect(() => {
+    if (uiMode !== "code" || !props.selectedSessionId || !isElectronRuntime()) return;
+    if (!props.terminalOpen) props.onTerminalOpenChange?.(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uiMode, props.selectedSessionId]);
+
+  // Auto-reveal the artifacts panel — "file tree" for this deployment — the
+  // moment the session actually produces something, instead of defaulting it
+  // open empty (see sessionSidePanel above).
+
+  useEffect(() => {
+    if (uiMode !== "code" || !props.selectedSessionId) return;
+    if (!hasArtifactTargets || !sidePanelUntouched) return;
+    setSidePanelState(props.selectedSessionId, "panel");
+  }, [uiMode, props.selectedSessionId, hasArtifactTargets, sidePanelUntouched, setSidePanelState]);
+
   const activeSidePanel = voiceSidePanelOpen ? "voice" : sessionSidePanel;
   const sidePanelOpen = activeSidePanel !== null;
   const panelRailActive = activeSidePanel === "panel";
@@ -830,20 +868,26 @@ export function SessionPage(props: SessionPageProps) {
       const title = titleFor(sessionId);
       if (!title) continue;
       if (status === "waiting") {
+        if (!getNotificationPrefs().needsInput) continue;
+        const notifTitle = t("monolith.notify.needs_input");
         notifyEvent({
           kind: "system",
           severity: "warning",
-          title: t("monolith.notify.needs_input"),
+          title: notifTitle,
           body: title,
           dedupeKey: `monolith-waiting-${sessionId}`,
         });
+        maybeSendBrowserPush(notifTitle, title);
       } else if (wasWorking && status === "idle") {
+        if (!getNotificationPrefs().taskCompleted) continue;
+        const notifTitle = t("monolith.notify.finished");
         notifyEvent({
           kind: "system",
-          title: t("monolith.notify.finished"),
+          title: notifTitle,
           body: title,
           dedupeKey: `monolith-finished-${sessionId}-${Date.now()}`,
         });
+        maybeSendBrowserPush(notifTitle, title);
       }
     }
     prevSessionStatusRef.current = { ...next };
@@ -979,6 +1023,13 @@ export function SessionPage(props: SessionPageProps) {
           onOpenSessionSearch={props.sidebar.onOpenSessionSearch}
           onReorderWorkspaces={props.sidebar.onReorderWorkspaces}
           onStartResize={startLeftSidebarResize}
+          onOpenSettings={props.onOpenSettings}
+          onOpenProfile={() => {
+            if (props.onOpenSettingsSection) props.onOpenSettingsSection("cloud-account");
+            else props.onOpenSettings();
+          }}
+          accountLabel={props.account?.label ?? undefined}
+          accountSublabel={props.account?.sublabel ?? undefined}
         />
         <SidebarInset className="min-h-0 overflow-hidden bg-background mac:bg-background/80 mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-28 mac:max-md:[&_header]:pl-28">
           <div className="flex min-h-0 flex-1">
@@ -1150,6 +1201,7 @@ export function SessionPage(props: SessionPageProps) {
                         // must come from the resolved workspace endpoint passed by
                         // SessionRoute, not from anything in `surface`.
                         {...props.surface!}
+                        showSuggestions={uiMode !== "chat"}
                         client={props.openworkServerClient!}
                         environmentClient={props.environmentClient}
                         workspaceId={props.runtimeWorkspaceId!}
@@ -1293,11 +1345,13 @@ export function SessionPage(props: SessionPageProps) {
                           {t("monolith.home.hint")}
                         </div>
                       </div>
-                      <MonolithSuggestions
-                        onPick={(prompt) =>
-                          props.sidebar.onCreateTaskWithPrompt?.(props.selectedWorkspaceId, prompt)
-                        }
-                      />
+                      {uiMode !== "chat" ? (
+                        <MonolithSuggestions
+                          onPick={(prompt) =>
+                            props.sidebar.onCreateTaskWithPrompt?.(props.selectedWorkspaceId, prompt)
+                          }
+                        />
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -1395,20 +1449,24 @@ export function SessionPage(props: SessionPageProps) {
             ) : null}
           </ResizablePanelGroup>
           <aside className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-border bg-background/95 px-1 py-2 text-muted-foreground mac:titlebar-no-drag">
-            {props.selectedSessionId ? (
+            {/* MONOLITH: Chat is a plain conversation — no rail at all. Cowork
+                keeps the Progress/Artifacts/Context task rail; Code swaps it
+                for the artifacts/file panel (terminal covers the rest). */}
+            {props.selectedSessionId && uiMode !== "chat" ? (
               <Button
                 variant="ghost"
                 size="icon-sm"
                 className={cn(
                   "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
-                  taskRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+                  (uiMode === "code" ? panelRailActive : taskRailActive) &&
+                    "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
                 )}
-                onClick={() => toggleCurrentSidePanel("task")}
-                title={t("monolith.rail.title")}
-                aria-label={t("monolith.rail.title")}
-                aria-pressed={taskRailActive}
+                onClick={() => toggleCurrentSidePanel(uiMode === "code" ? "panel" : "task")}
+                title={t(uiMode === "code" ? "monolith.rail.artifacts" : "monolith.rail.title")}
+                aria-label={t(uiMode === "code" ? "monolith.rail.artifacts" : "monolith.rail.title")}
+                aria-pressed={uiMode === "code" ? panelRailActive : taskRailActive}
               >
-                <ListChecks size={17} />
+                {uiMode === "code" ? <FileText size={17} /> : <ListChecks size={17} />}
               </Button>
             ) : null}
             {isElectronRuntime() ? (
@@ -1443,40 +1501,9 @@ export function SessionPage(props: SessionPageProps) {
                 <Mic2 size={17} />
               </Button>
             ) : null}
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className={cn(
-                "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
-                panelRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
-              )}
-              onClick={openArtifactRailPane}
-              title={hasArtifactTargets ? `Artifacts (${artifactTargetCount})` : "No artifacts yet"}
-              aria-label={hasArtifactTargets ? `Artifacts (${artifactTargetCount})` : "No artifacts yet"}
-              aria-pressed={panelRailActive}
-              disabled={!hasArtifactTargets}
-            >
-              <FileText size={17} />
-              {artifactTargetCount > 0 ? (
-                <span className="absolute right-0 top-0 flex min-w-3.5 translate-x-1 -translate-y-1 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-semibold leading-3 text-primary-foreground">
-                  {artifactTargetCount > 9 ? "9+" : artifactTargetCount}
-                </span>
-              ) : null}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className={cn(
-                "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
-                extensionsRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
-              )}
-              onClick={props.settingsSlot ? openExtensionsRailPane : props.onOpenSettings}
-              title="Extensions"
-              aria-label="Extensions"
-              aria-pressed={extensionsRailActive}
-            >
-              <Settings2 size={17} />
-            </Button>
+            {/* Artifacts + Extensions rail buttons removed per product spec —
+                artifacts live in the task rail's Artifacts card, extensions
+                live in Settings. */}
           </aside>
           </div>
         </SidebarInset>

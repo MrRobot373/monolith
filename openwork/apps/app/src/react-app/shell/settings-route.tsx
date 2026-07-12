@@ -73,7 +73,7 @@ import { AuthorizedFoldersPanel } from "@/react-app/domains/settings/panels/auth
 import { SettingsStack } from "@/react-app/domains/settings/settings-section";
 import { AdvancedView } from "@/react-app/domains/settings/pages/advanced-view";
 import { AppearanceView } from "@/react-app/domains/settings/pages/appearance-view";
-import { CloudAccountView } from "@/react-app/domains/settings/pages/cloud-account-view";
+import { MonolithAccountView } from "@/react-app/domains/settings/pages/monolith-account-view";
 import { CloudMarketplacesView } from "@/react-app/domains/settings/pages/cloud-marketplaces-view";
 import { CloudProvidersView } from "@/react-app/domains/settings/pages/cloud-providers-view";
 import { CloudWorkersView } from "@/react-app/domains/settings/pages/cloud-workers-view";
@@ -86,6 +86,8 @@ import { McpView } from "@/react-app/domains/settings/pages/mcp-view";
 import { RecoveryView } from "@/react-app/domains/settings/pages/recovery-view";
 import { MessagingView } from "@/react-app/domains/settings/pages/messaging-view";
 import { SkillsView } from "@/react-app/domains/settings/pages/skills-view";
+import { NotificationsView } from "@/react-app/domains/settings/pages/notifications-view";
+import { UsageView } from "@/react-app/domains/settings/pages/usage-view";
 import { UpdatesView } from "@/react-app/domains/settings/pages/updates-view";
 import { useDebugViewModel } from "@/react-app/domains/settings/state/debug-view-model";
 import { useMessagingViewProps } from "@/react-app/domains/settings/state/messaging-view-state";
@@ -1967,9 +1969,6 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
           <GeneralSettingsView
             onNavigateTab={(tab) => navigateSettingsPath(tab)}
             developerMode={developerMode}
-            onSendFeedback={() => platform.openLink(buildFeedbackUrl({ entrypoint: "settings" }))}
-            onJoinDiscord={() => platform.openLink("https://discord.gg/VEhNQXxYMB")}
-            onReportIssue={() => platform.openLink("https://github.com/different-ai/openwork/issues/new?template=bug.yml")}
           />
         );
       case "permissions":
@@ -2153,12 +2152,7 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
           />
         );
       case "cloud-account":
-        return (
-          <CloudAccountView
-            developerMode={developerMode}
-            session={denSession}
-          />
-        );
+        return <MonolithAccountView />;
       case "cloud-marketplaces":
         return (
           <CloudMarketplacesView
@@ -2244,6 +2238,10 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
             toggleHideTitlebar={() => setHideTitlebar((current) => !current)}
           />
         );
+      case "notifications":
+        return <NotificationsView />;
+      case "usage":
+        return <UsageView />;
       case "updates":
         return (
           <UpdatesView

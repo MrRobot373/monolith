@@ -193,6 +193,8 @@ export const SETTINGS_TAB_VALUES = [
   "environment",
   "advanced",
   "appearance",
+  "notifications",
+  "usage",
   "updates",
   "recovery",
   "debug",
