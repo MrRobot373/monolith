@@ -215,9 +215,11 @@ export function getGlobalSettingsTabs(developerMode: boolean, customerMode?: boo
   return tabs;
 }
 
+// MONOLITH: "cloud-workers" (remote-worker pairing — attach another OpenWork
+// desktop client via URL+token) removed from the visible nav. It's an
+// Electron-desktop concept that doesn't apply to this browser-only product.
 export const CLOUD_SETTINGS_TABS: SettingsTab[] = [
   "cloud-account",
-  "cloud-workers",
 ];
 
 /**

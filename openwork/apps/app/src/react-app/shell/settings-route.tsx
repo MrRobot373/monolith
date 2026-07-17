@@ -272,6 +272,8 @@ function parseSettingsPath(pathname: string): {
     case "updates":
     case "recovery":
     case "debug":
+    case "notifications":
+    case "usage":
       return { tab: head, redirectPath: null };
     case "cloud-account":
     case "cloud-marketplaces":

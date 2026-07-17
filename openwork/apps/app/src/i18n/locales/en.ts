@@ -1229,7 +1229,7 @@ export default {
   "settings.feedback_badge": "We read every message",
   "settings.feedback_desc": "Tell us what feels great and what feels rough. Feedback goes straight to the team and helps us prioritize what ships next.",
   "settings.feedback_title": "Help shape OpenWork",
-  "settings.group_cloud": "Cloud",
+  "settings.group_cloud": "Account",
   "settings.group_global": "Global",
   "settings.group_workspace": "Workspace",
   "settings.hide_titlebar": "Hide titlebar",
