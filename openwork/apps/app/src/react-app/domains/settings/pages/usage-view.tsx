@@ -3,6 +3,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Gauge, RefreshCw } from "lucide-react";
 
+import { monolithJson } from "@/app/lib/monolith-api";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { t } from "@/i18n";
@@ -23,9 +24,7 @@ type OrgUsageResponse = {
 };
 
 async function fetchUsage(): Promise<OrgUsageResponse> {
-  const response = await fetch("/__monolith/org/usage");
-  if (!response.ok) throw new Error(`${response.status}`);
-  return response.json() as Promise<OrgUsageResponse>;
+  return monolithJson<OrgUsageResponse>("/__monolith/org/usage");
 }
 
 type SpendRow = { spend?: number; model?: string; api_key?: string };

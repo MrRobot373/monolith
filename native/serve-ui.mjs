@@ -9,7 +9,14 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { createSupabaseRequestAuthenticator } from "../monolith-server/auth.mjs";
 import { createMonolithScheduler } from "../monolith-server/index.mjs";
+import {
+  createWorkspaceFileService,
+  createEngineWorkspaceResolver,
+} from "../monolith-server/workspace-files.mjs";
+import { createMonolithChat } from "../monolith-server/chat.mjs";
+import { createMcpCatalog } from "../monolith-server/mcp-catalog.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(HERE, ".env")); } catch { /* no .env yet */ }
@@ -24,6 +31,31 @@ const scheduler = createMonolithScheduler({
   token: process.env.OPENWORK_TOKEN || "",
   hostToken: process.env.OPENWORK_HOST_TOKEN || "",
   log: (...args) => console.log("[scheduler]", ...args),
+});
+const monolithAuth = createSupabaseRequestAuthenticator();
+
+// Code IDE plan P0: authorized workspace file API (tree/read/write/trash/search + ledger).
+const workspaceFiles = createWorkspaceFileService({
+  dataDir: path.join(HERE, "data"),
+  resolveWorkspaceRoot: createEngineWorkspaceResolver({
+    openworkUrl: `http://127.0.0.1:${process.env.OPENWORK_PORT || 8787}`,
+    token: process.env.OPENWORK_TOKEN || "",
+    hostToken: process.env.OPENWORK_HOST_TOKEN || "",
+  }),
+  log: (...args) => console.log("[workspace-files]", ...args),
+});
+
+// Chat/RAG plan P0: product-owned persistent chat + streaming orchestrator.
+const monolithChat = createMonolithChat({
+  dataDir: path.join(HERE, "data"),
+  log: (...args) => console.log("[chat]", ...args),
+});
+
+// Tools guide Tier 4: curated MCP catalog; enabled servers flow into every
+// workspace opencode.json via seed-opencode-config.mjs.
+const mcpCatalog = createMcpCatalog({
+  dataDir: path.join(HERE, "data"),
+  log: (...args) => console.log("[mcp-catalog]", ...args),
 });
 
 if (!fs.existsSync(path.join(ROOT, "index.html"))) {
@@ -45,6 +77,41 @@ const send = (res, status, body, headers = {}) => {
   res.writeHead(status, headers);
   res.end(body);
 };
+
+function envValue(...names) {
+  for (const name of names) {
+    const value = process.env[name];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function monolithRuntimeConfigScript() {
+  const config = {
+    supabaseUrl: envValue("VITE_SUPABASE_URL", "SUPABASE_URL"),
+    supabasePublishableKey: envValue(
+      "VITE_SUPABASE_PUBLISHABLE_KEY",
+      "SUPABASE_PUBLISHABLE_KEY",
+      "VITE_SUPABASE_ANON_KEY",
+      "SUPABASE_ANON_KEY",
+    ),
+    supabaseAnonKey: envValue("VITE_SUPABASE_ANON_KEY", "SUPABASE_ANON_KEY"),
+    requireSignin: envValue("VITE_MONOLITH_REQUIRE_SIGNIN", "MONOLITH_REQUIRE_AUTH"),
+  };
+  const json = JSON.stringify(config).replace(/</g, "\\u003c");
+  return `<script>window.__MONOLITH_RUNTIME_CONFIG__=${json};</script>`;
+}
+
+function readStaticResponseBody(file) {
+  const body = fs.readFileSync(file);
+  if (path.basename(file) !== "index.html") return body;
+  const html = body.toString("utf8");
+  const script = monolithRuntimeConfigScript();
+  return Buffer.from(
+    html.includes("</head>") ? html.replace("</head>", `${script}</head>`) : `${script}${html}`,
+    "utf8",
+  );
+}
 
 function readJsonBody(req, maxBytes = 1024 * 1024) {
   return new Promise((resolve, reject) => {
@@ -186,11 +253,28 @@ function revealDirectoryNative(folderPath) {
   });
 }
 
-http.createServer((req, res) => {
+function monolithAuthOptions(req, urlPath) {
+  const admin =
+    (req.method !== "GET" && urlPath === "/__monolith/org") ||
+    urlPath === "/__monolith/org/usage";
+  return { admin };
+}
+
+http.createServer(async (req, res) => {
   try {
     const urlPath = decodeURIComponent(new URL(req.url, "http://x").pathname);
 
+    if (
+      urlPath.startsWith("/__monolith/") &&
+      !(await monolithAuth.authorize(req, res, monolithAuthOptions(req, urlPath)))
+    ) {
+      return;
+    }
+
     if (scheduler.handle(req, res, urlPath)) return;
+    if (workspaceFiles.handle(req, res, urlPath)) return;
+    if (monolithChat.handle(req, res, urlPath)) return;
+    if (mcpCatalog.handle(req, res, urlPath)) return;
 
     if (req.method === "POST" && urlPath === "/__monolith/reveal-directory") {
       readJsonBody(req)
@@ -288,7 +372,7 @@ http.createServer((req, res) => {
     const cache = file.includes(`${path.sep}assets${path.sep}`)
       ? "public, max-age=31536000, immutable"
       : "no-cache";
-    send(res, 200, fs.readFileSync(file), { "content-type": type, "cache-control": cache });
+    send(res, 200, readStaticResponseBody(file), { "content-type": type, "cache-control": cache });
   } catch (e) {
     send(res, 500, "server error");
     console.error("[serve-ui]", e.message);

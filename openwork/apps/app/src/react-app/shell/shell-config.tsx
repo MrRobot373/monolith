@@ -40,8 +40,10 @@ export const DEFAULT_SHELL_CONFIG: ShellConfig = {
   appName: "MONOLITH",
   statusBar: true,
   sidebar: true,
-  docsButton: true,
-  feedbackButton: true,
+  // MONOLITH native is self-hosted. External OpenWork support links stay off
+  // unless an operator explicitly enables them from Shell settings.
+  docsButton: false,
+  feedbackButton: false,
   // MONOLITH: no "OpenWork Cloud" — this deployment has its own Supabase-backed
   // account system (Settings > Account). Disabling this also suppresses the
   // "OpenWork Models hosted frontier models" startup promo.
@@ -59,14 +61,26 @@ export const DEFAULT_SHELL_CONFIG: ShellConfig = {
 /* ------------------------------------------------------------------ */
 
 const STORAGE_KEY = "openwork.shell-config";
+const MONOLITH_NATIVE_DEFAULTS_VERSION = 2;
+
+type StoredShellConfig = Partial<ShellConfig> & {
+  monolithNativeDefaultsVersion?: number;
+};
 
 function readShellConfig(): ShellConfig {
   if (typeof window === "undefined") return DEFAULT_SHELL_CONFIG;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SHELL_CONFIG;
-    const parsed = JSON.parse(raw);
-    return { ...DEFAULT_SHELL_CONFIG, ...parsed };
+    const parsed = JSON.parse(raw) as StoredShellConfig;
+    const next: ShellConfig = { ...DEFAULT_SHELL_CONFIG, ...parsed };
+    if ((parsed.monolithNativeDefaultsVersion ?? 0) < MONOLITH_NATIVE_DEFAULTS_VERSION) {
+      next.docsButton = false;
+      next.feedbackButton = false;
+      next.cloudSignin = false;
+      writeShellConfig(next);
+    }
+    return next;
   } catch {
     return DEFAULT_SHELL_CONFIG;
   }
@@ -75,7 +89,13 @@ function readShellConfig(): ShellConfig {
 function writeShellConfig(config: ShellConfig): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...config,
+        monolithNativeDefaultsVersion: MONOLITH_NATIVE_DEFAULTS_VERSION,
+      }),
+    );
   } catch {
     // Ignore storage errors.
   }

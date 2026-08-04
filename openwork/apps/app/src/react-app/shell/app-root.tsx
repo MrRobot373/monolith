@@ -14,9 +14,13 @@ import {
   denSettingsChangedEvent,
   denSessionUpdatedEvent,
 } from "../../app/lib/den-session-events";
+import { isMonolithSignInRequired } from "../../app/lib/supabase";
+import { t } from "../../i18n";
 import { useDenAuth } from "../domains/cloud/den-auth-provider";
 import { ForcedSigninPage } from "../domains/cloud/forced-signin-page";
 import { OrgOnboardingPage } from "../domains/cloud/org-onboarding-page";
+import { useMonolithAuth } from "../domains/settings/cloud/monolith-auth";
+import { MonolithAccountView } from "../domains/settings/pages/monolith-account-view";
 import { NewProvidersListener } from "./new-providers-listener";
 import { useDesktopFontZoomBehavior } from "./font-zoom";
 import { LoadingOverlay } from "./loading-overlay";
@@ -33,6 +37,7 @@ import { SessionRoute } from "./session-route";
 import { SettingsRoute } from "./settings-route";
 import { ShellConfigProvider } from "./shell-config";
 import { WelcomeRoute } from "./welcome-route";
+import { ChatRoute } from "./chat-route";
 
 
 type DenSigninGateProps = {
@@ -139,6 +144,31 @@ function DenSigninGate({ children }: DenSigninGateProps) {
   return <>{children}</>;
 }
 
+function MonolithSigninGate({ children }: { children: ReactNode }) {
+  const monolithAuth = useMonolithAuth();
+  const requireSignin = isMonolithSignInRequired();
+
+  if (!requireSignin) return <>{children}</>;
+
+  if (monolithAuth.status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-dls-secondary">
+        {t("monolith.account.loading")}
+      </div>
+    );
+  }
+
+  if (monolithAuth.isSignedIn) return <>{children}</>;
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-8">
+      <div className="w-full max-w-md rounded-2xl border border-dls-border bg-dls-surface p-6 shadow-[var(--dls-shell-shadow)]">
+        <MonolithAccountView />
+      </div>
+    </div>
+  );
+}
+
 /**
  * Control actions for cloud auth. Placed inside OpenworkControlProvider so
  * the actions are available on every route (including /welcome and /signin).
@@ -242,85 +272,95 @@ export function AppRoot() {
           <DenAuthControlActions />
           <BrandThemeControlActions />
           <DenSigninGate>
-            <Routes>
-              <Route
-                path="/signin"
-                element={
-                  <DevProfiler id="SigninRoute">
-                    <ForcedSigninPage developerMode={false} />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/onboarding"
-                element={
-                  <DevProfiler id="OrgOnboarding">
-                    <OrgOnboardingPage />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/welcome"
-                element={
-                  <DevProfiler id="WelcomeRoute">
-                    <WelcomeRoute />
-                  </DevProfiler>
-                }
-              />
+            <MonolithSigninGate>
+              <Routes>
+                <Route
+                  path="/signin"
+                  element={
+                    <DevProfiler id="SigninRoute">
+                      <ForcedSigninPage developerMode={false} />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <DevProfiler id="OrgOnboarding">
+                      <OrgOnboardingPage />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/welcome"
+                  element={
+                    <DevProfiler id="WelcomeRoute">
+                      <WelcomeRoute />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/chat"
+                  element={
+                    <DevProfiler id="ChatRoute">
+                      <ChatRoute />
+                    </DevProfiler>
+                  }
+                />
 
-              <Route
-                path="/session"
-                element={
-                  <DevProfiler id="SessionRoute">
-                    <SessionRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/session/:sessionId"
-                element={
-                  <DevProfiler id="SessionRoute">
-                    <SessionRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/workspace/:workspaceId/session"
-                element={
-                  <DevProfiler id="SessionRoute">
-                    <SessionRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/workspace/:workspaceId/session/:sessionId"
-                element={
-                  <DevProfiler id="SessionRoute">
-                    <SessionRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/workspace/:workspaceId/settings/*"
-                element={
-                  <DevProfiler id="SettingsRoute">
-                    <SettingsRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/settings/*"
-                element={
-                  <DevProfiler id="SettingsRoute">
-                    <SettingsRoute />
-                  </DevProfiler>
-                }
-              />
-              {/* Default + fallback: land on the session view. Users open
-                  settings deliberately via the sidebar or command palette. */}
-              <Route path="/" element={<Navigate to="/session" replace />} />
-              <Route path="*" element={<Navigate to="/session" replace />} />
-            </Routes>
+                <Route
+                  path="/session"
+                  element={
+                    <DevProfiler id="SessionRoute">
+                      <SessionRoute />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/session/:sessionId"
+                  element={
+                    <DevProfiler id="SessionRoute">
+                      <SessionRoute />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/workspace/:workspaceId/session"
+                  element={
+                    <DevProfiler id="SessionRoute">
+                      <SessionRoute />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/workspace/:workspaceId/session/:sessionId"
+                  element={
+                    <DevProfiler id="SessionRoute">
+                      <SessionRoute />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/workspace/:workspaceId/settings/*"
+                  element={
+                    <DevProfiler id="SettingsRoute">
+                      <SettingsRoute />
+                    </DevProfiler>
+                  }
+                />
+                <Route
+                  path="/settings/*"
+                  element={
+                    <DevProfiler id="SettingsRoute">
+                      <SettingsRoute />
+                    </DevProfiler>
+                  }
+                />
+                {/* Default + fallback: land on the session view. Users open
+                    settings deliberately via the sidebar or command palette. */}
+                <Route path="/" element={<Navigate to="/session" replace />} />
+                <Route path="*" element={<Navigate to="/session" replace />} />
+              </Routes>
+            </MonolithSigninGate>
           </DenSigninGate>
         </OpenworkControlProvider>
         </AppMenuProvider>

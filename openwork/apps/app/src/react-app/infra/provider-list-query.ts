@@ -3,6 +3,7 @@ import { useQuery, type QueryClient } from "@tanstack/react-query";
 import type { Client, ModelRef, ProviderListItem } from "../../app/types";
 import { unwrap } from "../../app/lib/opencode";
 import { dispatchNewProviders } from "../../app/lib/provider-events";
+import { compareProviders } from "../../app/utils/providers";
 import type { ProviderListResponse } from "@opencode-ai/sdk/v2/client";
 
 export const PROVIDER_LIST_CACHE_MS = 5 * 60 * 1000;
@@ -84,6 +85,41 @@ export function isModelAvailableInConnectedProviders(
   return getConnectedProviderItems(value).some(
     (provider) => provider.id === model.providerID && Boolean(provider.models?.[model.modelID]),
   );
+}
+
+export function selectBestConnectedModel(
+  value: ProviderListResponse | null | undefined,
+  options?: {
+    isProviderAllowed?: (providerId: string) => boolean;
+  },
+): ModelRef | null {
+  const providers = getConnectedProviderItems(value)
+    .filter((provider) => options?.isProviderAllowed?.(provider.id) ?? true)
+    .toSorted(compareProviders);
+
+  for (const provider of providers) {
+    const preferredModelId = value?.default?.[provider.id];
+    const modelId = selectProviderModel(provider, preferredModelId);
+    if (modelId) {
+      return { providerID: provider.id, modelID: modelId };
+    }
+  }
+
+  return null;
+}
+
+function selectProviderModel(provider: ProviderListItem, preferredModelId?: string | null) {
+  const models = provider.models ?? {};
+  const preferred = preferredModelId?.trim();
+  if (preferred && models[preferred]) return preferred;
+
+  return Object.keys(models)
+    .filter((id) => id.trim().length > 0)
+    .sort((a, b) => {
+      const aLabel = models[a]?.name ?? a;
+      const bLabel = models[b]?.name ?? b;
+      return aLabel.localeCompare(bLabel);
+    })[0] ?? null;
 }
 
 export function getConnectedProviderSnapshotChange(input: {

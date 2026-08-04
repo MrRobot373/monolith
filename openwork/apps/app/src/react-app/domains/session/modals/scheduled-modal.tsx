@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, ExternalLink, Loader2, Pause, Play, Plus, Trash2, Zap } from "lucide-react";
 
 import type { WorkspaceSessionGroup } from "@/app/types";
+import { monolithJson } from "@/app/lib/monolith-api";
 import { t } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,15 +49,10 @@ type Schedule = {
 const BASE = "/__monolith/schedules";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(BASE + path, {
+  return monolithJson<T>(BASE + path, {
     ...init,
     headers: { "content-type": "application/json", ...(init?.headers || {}) },
   });
-  if (!response.ok) {
-    const body = await response.json().catch(() => null) as { error?: string } | null;
-    throw new Error(body?.error || `${response.status}`);
-  }
-  return response.json() as Promise<T>;
 }
 
 function dayName(day: number): string {

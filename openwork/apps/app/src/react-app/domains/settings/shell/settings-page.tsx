@@ -14,6 +14,7 @@ import {
   Info,
   Layout,
   Paintbrush,
+  Plug,
   Puzzle,
   RefreshCcw,
   ShieldCheck,
@@ -95,6 +96,8 @@ export function getSettingsTabIcon(tab: SettingsTab) {
       return Bell;
     case "usage":
       return Gauge;
+    case "mcp-catalog":
+      return Plug;
     case "updates":
       return RefreshCcw;
     case "recovery":
@@ -140,6 +143,8 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return t("monolith.notifications.title");
     case "usage":
       return t("monolith.usage.title");
+    case "mcp-catalog":
+      return t("monolith.mcp.title");
     case "updates":
       return t("settings.tab_updates");
     case "recovery":
@@ -187,6 +192,8 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return t("monolith.notifications.subtitle");
     case "usage":
       return t("monolith.usage.subtitle");
+    case "mcp-catalog":
+      return t("monolith.mcp.subtitle");
     case "updates":
       return t("settings.tab_description_updates");
     case "recovery":
@@ -210,7 +217,7 @@ export function getGlobalSettingsTabs(developerMode: boolean, customerMode?: boo
   // MONOLITH: "Updates" removed — it's Electron auto-updater UI and this is a
   // web-first deployment (native/serve-ui.mjs, Docker webui) with no in-app updater.
   // "notifications" and "usage" added (report #8/#9).
-  const tabs: SettingsTab[] = ["ai", "shell", "appearance", "notifications", "usage", "environment", "recovery"];
+  const tabs: SettingsTab[] = ["ai", "mcp-catalog", "shell", "appearance", "notifications", "usage", "environment", "recovery"];
   if (developerMode) tabs.push("debug");
   return tabs;
 }

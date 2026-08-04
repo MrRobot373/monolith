@@ -1,13 +1,12 @@
 /** @jsxImportSource react */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, BookOpen, Cloud, MessageCircleMore, Settings, Sparkles, X } from "lucide-react";
+import { ArrowRight, BookOpen, MessageCircleMore, Sparkles, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { t } from "@/i18n";
-import { buildDenAuthUrl, readDenBootstrapConfig } from "@/app/lib/den";
 import { usePlatform } from "../../../kernel/platform";
 import { useDenAuth } from "../../cloud/den-auth-provider";
 import { useControlAction, type OpenworkControlAction } from "../../../shell/control/control-provider";
@@ -265,9 +264,10 @@ export function StatusBar(props: StatusBarProps) {
     label: "Open OpenWork docs",
     description: "Open the documentation from the status bar.",
     sideEffect: "external",
+    disabled: !shellConfig.docsButton,
     targetRef: docsButtonRef,
     execute: () => platform.openLink(DOCS_URL),
-  }), [platform]);
+  }), [platform, shellConfig.docsButton]);
   useControlAction(docsControlAction);
 
   const feedbackControlAction = useMemo<OpenworkControlAction>(() => ({
@@ -275,9 +275,10 @@ export function StatusBar(props: StatusBarProps) {
     label: "Send feedback",
     description: "Open the OpenWork feedback surface from the status bar.",
     sideEffect: "external",
+    disabled: !shellConfig.feedbackButton,
     targetRef: feedbackButtonRef,
     execute: props.onSendFeedback,
-  }), [props.onSendFeedback]);
+  }), [props.onSendFeedback, shellConfig.feedbackButton]);
   useControlAction(feedbackControlAction);
 
   const settingsControlAction = useMemo<OpenworkControlAction>(() => ({
@@ -329,8 +330,23 @@ export function StatusBar(props: StatusBarProps) {
               </button>
             </div>
           ) : null}
-          {/* MONOLITH: Sign in, Docs, and Settings removed from the status bar.
-              Sign-in/account + Settings now live in the sidebar footer. */}
+          {/* MONOLITH: Sign-in/account + Settings live in the sidebar footer. */}
+          {shellConfig.docsButton ? (
+            <Button
+              ref={docsButtonRef}
+              className="text-muted-foreground gap-2"
+              variant="ghost"
+              size="xs"
+              onClick={() => platform.openLink(DOCS_URL)}
+              title={t("status.docs")}
+              aria-label={t("status.docs")}
+            >
+              <BookOpen className="size-3.5" />
+              <span>
+                {t("status.docs")}
+              </span>
+            </Button>
+          ) : null}
           {shellConfig.feedbackButton ? (
             <Button
               ref={feedbackButtonRef}

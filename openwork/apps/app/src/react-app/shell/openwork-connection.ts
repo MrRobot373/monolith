@@ -20,6 +20,25 @@ function hasUsableConnection(url: string, token: string) {
   return url.trim().length > 0 && token.trim().length > 0;
 }
 
+function readEnvOpenworkConnection() {
+  const deployment = typeof import.meta.env?.VITE_OPENWORK_DEPLOYMENT === "string"
+    ? import.meta.env.VITE_OPENWORK_DEPLOYMENT.trim()
+    : "";
+  const rawUrl = typeof import.meta.env?.VITE_OPENWORK_URL === "string"
+    ? import.meta.env.VITE_OPENWORK_URL.trim()
+    : "";
+  const token = typeof import.meta.env?.VITE_OPENWORK_TOKEN === "string"
+    ? import.meta.env.VITE_OPENWORK_TOKEN.trim()
+    : "";
+  const hostToken = typeof import.meta.env?.VITE_OPENWORK_HOST_TOKEN === "string"
+    ? import.meta.env.VITE_OPENWORK_HOST_TOKEN.trim()
+    : "";
+  const normalizedBaseUrl = normalizeOpenworkServerUrl(rawUrl) ?? "";
+  return deployment === "web" && hasUsableConnection(normalizedBaseUrl, token)
+    ? { normalizedBaseUrl, token, hostToken }
+    : null;
+}
+
 /**
  * Resolve the OpenWork server connection for routes that consume the server API.
  *
@@ -30,6 +49,21 @@ function hasUsableConnection(url: string, token: string) {
  */
 export async function resolveOpenworkConnection(): Promise<ResolvedOpenworkConnection> {
   let staleDesktopRuntimeBaseUrl = "";
+
+  if (!isDesktopRuntime()) {
+    const envConnection = readEnvOpenworkConnection();
+    if (envConnection) {
+      return {
+        normalizedBaseUrl: envConnection.normalizedBaseUrl,
+        resolvedToken: envConnection.token,
+        resolvedHostToken: isLoopbackOpenworkServerUrl(envConnection.normalizedBaseUrl)
+          ? envConnection.hostToken
+          : "",
+        hostInfo: null,
+        source: "stored-settings",
+      };
+    }
+  }
 
   if (isDesktopRuntime()) {
     try {

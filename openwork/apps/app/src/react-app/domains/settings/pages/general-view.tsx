@@ -6,6 +6,7 @@ import {
   FolderLock,
   Gauge,
   Paintbrush,
+  Plug,
   Puzzle,
   ShieldCheck,
   Sparkles,
@@ -30,6 +31,7 @@ const workspaceCards: { tab: SettingsTab; icon: typeof Sparkles; title: string; 
 
 const globalCards: { tab: SettingsTab; icon: typeof Sparkles; title: string; desc: string }[] = [
   { tab: "ai", icon: Sparkles, title: "AI Providers", desc: "Connect services that provide AI models." },
+  { tab: "mcp-catalog", icon: Plug, title: "MCP Servers", desc: "Connect tools like GitHub, Gmail, Excel, and Slack to your agent." },
   { tab: "cloud-account", icon: User, title: "Account", desc: "Sign in and manage your MONOLITH account." },
   { tab: "appearance", icon: Paintbrush, title: "Appearance", desc: "Theme, font size, and display." },
   { tab: "notifications", icon: Bell, title: "Notifications", desc: "Choose what you get notified about." },

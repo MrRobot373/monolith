@@ -91,6 +91,8 @@ export type CommandPaletteProps = {
   onOpenSettings: (route?: string) => void;
   /** Optional: open the full default-model picker. */
   onOpenModelPicker?: () => void;
+  /** Optional: open the MONOLITH smart-router chat. */
+  onOpenChat?: () => void;
   selectedModelLabel?: string;
   /** Optional — open a URL in the user's browser. Falls back to window.open. */
   onOpenUrl?: (url: string) => void;
@@ -109,6 +111,8 @@ export type CommandPaletteProps = {
   listAgents?: () => Promise<Agent[]>;
   selectedAgent?: string | null;
   onSelectAgent?: (agent: string | null) => void;
+  showDocsLink?: boolean;
+  showFeedbackLink?: boolean;
 };
 
 /**
@@ -178,6 +182,20 @@ export function CommandPalette(props: CommandPaletteProps) {
         setMode("sessions");
       },
     },
+    ...(props.onOpenChat
+      ? [{
+          id: "open-chat",
+          title: t("monolith.chat.palette_title"),
+          detail: t("monolith.chat.palette_detail"),
+          meta: t("monolith.chat.title"),
+          icon: <BrainCircuit className="size-4 text-primary" />,
+          searchText: "chat router auto route smart model small large ollama cost saving cheap",
+          action: () => {
+            props.onClose();
+            props.onOpenChat?.();
+          },
+        }]
+      : []),
     ...(props.onOpenModelPicker
       ? [{
           id: "models",
@@ -247,24 +265,28 @@ export function CommandPalette(props: CommandPaletteProps) {
     // missing after the React port. Each one mirrors one of the icons at
     // the bottom-right of the session surface (documentation / feedback)
     // plus every settings tab the user is likely to reach for.
-    {
-      id: "open-docs",
-      title: t("session.support_docs"),
-      meta: t("session.cmd_settings_meta"),
-      action: () => {
-        props.onClose();
-        openUrl("https://openwork.dev/docs");
-      },
-    },
-    {
-      id: "open-feedback",
-      title: t("session.support_feedback"),
-      meta: t("session.cmd_settings_meta"),
-      action: () => {
-        props.onClose();
-        openUrl("https://openwork.dev/feedback");
-      },
-    },
+    ...(props.showDocsLink
+      ? [{
+          id: "open-docs",
+          title: t("session.support_docs"),
+          meta: t("session.cmd_settings_meta"),
+          action: () => {
+            props.onClose();
+            openUrl("https://openwork.dev/docs");
+          },
+        }]
+      : []),
+    ...(props.showFeedbackLink
+      ? [{
+          id: "open-feedback",
+          title: t("session.support_feedback"),
+          meta: t("session.cmd_settings_meta"),
+          action: () => {
+            props.onClose();
+            openUrl("https://openwork.dev/feedback");
+          },
+        }]
+      : []),
     {
       id: "settings-skills",
       title: t("settings.tab_skills"),

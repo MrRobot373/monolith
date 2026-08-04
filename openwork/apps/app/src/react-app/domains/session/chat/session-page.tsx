@@ -6,6 +6,7 @@ import { Columns2, FileText, Globe, ListChecks, Mic2, Settings2, X, Zap } from "
 
 import { t } from "../../../../i18n";
 import { OPENWORK_EXTENSION_CATALOG } from "../../../../app/constants";
+import { monolithFetch } from "../../../../app/lib/monolith-api";
 import { type OpenworkServerClient, type OpenworkServerStatus } from "../../../../app/lib/openwork-server";
 import { getDisplaySessionTitle } from "../../../../app/lib/session-title";
 import type { BootPhase } from "../../../../app/lib/startup-boot";
@@ -827,7 +828,7 @@ export function SessionPage(props: SessionPageProps) {
     const workspaceId = props.selectedWorkspaceId.trim();
     if (!workspaceId) return;
     try {
-      const response = await fetch("/__monolith/dispatch", {
+      const response = await monolithFetch("/__monolith/dispatch", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ workspaceId, directory: props.selectedWorkspaceRoot }),

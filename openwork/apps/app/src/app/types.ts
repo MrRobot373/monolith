@@ -195,6 +195,7 @@ export const SETTINGS_TAB_VALUES = [
   "appearance",
   "notifications",
   "usage",
+  "mcp-catalog",
   "updates",
   "recovery",
   "debug",

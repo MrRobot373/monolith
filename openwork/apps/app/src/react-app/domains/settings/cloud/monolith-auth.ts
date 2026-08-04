@@ -5,7 +5,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 
-import { getSupabaseClient, isSupabaseConfigured } from "@/app/lib/supabase";
+import { getSupabaseClient, isMonolithSignInRequired, isSupabaseConfigured } from "@/app/lib/supabase";
 
 type AuthStatus = "not-configured" | "loading" | "signed-out" | "signed-in";
 
@@ -42,7 +42,10 @@ function ensureInitialized() {
     setState({ status: "not-configured", user: null });
     return;
   }
-  void client.auth.getSession().then(({ data }) => setState(sessionToState(data.session)));
+  void client.auth
+    .getSession()
+    .then(({ data }) => setState(sessionToState(data.session)))
+    .catch(() => setState({ status: "signed-out", user: null }));
   client.auth.onAuthStateChange((_event, session) => setState(sessionToState(session)));
 }
 
@@ -83,6 +86,7 @@ export function useMonolithAuth() {
     status: snapshot.status,
     user: snapshot.user,
     isConfigured: snapshot.status !== "not-configured",
+    isRequired: isMonolithSignInRequired(),
     isSignedIn: snapshot.status === "signed-in",
     signInWithPassword,
     signUpWithPassword,

@@ -88,6 +88,7 @@ import { MessagingView } from "@/react-app/domains/settings/pages/messaging-view
 import { SkillsView } from "@/react-app/domains/settings/pages/skills-view";
 import { NotificationsView } from "@/react-app/domains/settings/pages/notifications-view";
 import { UsageView } from "@/react-app/domains/settings/pages/usage-view";
+import { McpCatalogView } from "@/react-app/domains/settings/pages/mcp-catalog-view";
 import { UpdatesView } from "@/react-app/domains/settings/pages/updates-view";
 import { useDebugViewModel } from "@/react-app/domains/settings/state/debug-view-model";
 import { useMessagingViewProps } from "@/react-app/domains/settings/state/messaging-view-state";
@@ -121,6 +122,7 @@ import { useCheckDesktopRestriction, useDesktopConfig } from "@/react-app/domain
 import { useRestrictionNotice } from "@/react-app/domains/cloud/restriction-notice-provider";
 import { useCloudProviderAutoSync } from "@/react-app/domains/cloud/use-cloud-provider-auto-sync";
 import {
+  areOpenWorkModelsPromosDisabled,
   hasOpenWorkModelsProvider,
   hideOpenWorkModelsPromo,
   isOpenWorkModelsPromoHidden,
@@ -274,6 +276,7 @@ function parseSettingsPath(pathname: string): {
     case "debug":
     case "notifications":
     case "usage":
+    case "mcp-catalog":
       return { tab: head, redirectPath: null };
     case "cloud-account":
     case "cloud-marketplaces":
@@ -701,8 +704,9 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
   const openWorkModelsConnected =
     (cloudSession.isSignedIn && hasOpenWorkCloudProvider) ||
     hasOpenWorkModelsProvider(providerConnectedIds);
-  const showOpenWorkModelsSubscribe = !openWorkModelsConnected && !openWorkModelsPromoHidden;
-  const showOpenWorkModelsConnect = !openWorkModelsConnected && openWorkModelsPromoHidden;
+  const openWorkModelsDisabled = areOpenWorkModelsPromosDisabled();
+  const showOpenWorkModelsSubscribe = !openWorkModelsDisabled && !openWorkModelsConnected && !openWorkModelsPromoHidden;
+  const showOpenWorkModelsConnect = !openWorkModelsDisabled && !openWorkModelsConnected && openWorkModelsPromoHidden;
 
   useEffect(() => {
     const handlePromoChanged = () => setOpenWorkModelsPromoHidden(isOpenWorkModelsPromoHidden());
@@ -2244,6 +2248,8 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
         return <NotificationsView />;
       case "usage":
         return <UsageView />;
+      case "mcp-catalog":
+        return <McpCatalogView />;
       case "updates":
         return (
           <UpdatesView

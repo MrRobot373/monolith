@@ -17,6 +17,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useWorkspace } from "@/react-app/shell/workspace-provider";
+import { useShellConfig } from "@/react-app/shell/shell-config";
 import { usePlatform } from "@/react-app/kernel/platform";
 import { useCheckDesktopRestriction } from "@/react-app/domains/cloud/desktop-config-provider";
 import { useDenAuth } from "@/react-app/domains/cloud/den-auth-provider";
@@ -213,6 +214,7 @@ export function ModelSelect({
   const denAuth = useDenAuth();
   const navigate = useNavigate();
   const platform = usePlatform();
+  const { config: shellConfig } = useShellConfig();
 
   React.useEffect(() => {
     const handlePromoChanged = () => setPromoHidden(isOpenWorkModelsPromoHidden());
@@ -249,8 +251,8 @@ export function ModelSelect({
   );
 
   const showOpenWorkModelsPromo = React.useMemo(
-    () => !promoHidden && !hasOpenWorkModelsProvider(modelOptions.map((option) => option.providerID)),
-    [modelOptions, promoHidden],
+    () => shellConfig.cloudSignin && !promoHidden && !hasOpenWorkModelsProvider(modelOptions.map((option) => option.providerID)),
+    [modelOptions, promoHidden, shellConfig.cloudSignin],
   );
 
   const groups = React.useMemo(() => {

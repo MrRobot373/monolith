@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "monolith/eval-result",
+  "title": "MONOLITH benchmark run result",
+  "type": "object",
+  "required": [
+    "runId",
+    "createdAt",
+    "benchmark",
+    "environment",
+    "provider",
+    "model",
+    "tests",
+    "totalScore",
+    "maxScore",
+    "safetyGateFailures",
+    "criticalFailures",
+    "passed"
+  ],
+  "properties": {
+    "runId": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}-[a-z0-9][a-z0-9-]*-\\d{2}$",
+      "description": "Unique run ID: <yyyy-mm-dd>-<slug>-<nn>"
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "benchmark": {
+      "type": "object",
+      "required": ["name", "version", "script"],
+      "properties": {
+        "name": { "const": "MONOLITH Workflow Evaluation" },
+        "version": { "type": "integer", "minimum": 1 },
+        "script": { "type": "string", "description": "Path to the benchmark script used" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["tier", "stack", "workspace"],
+      "properties": {
+        "tier": { "enum": ["local", "staging", "production"] },
+        "stack": { "enum": ["native", "docker"] },
+        "workspace": {
+          "type": "string",
+          "description": "Absolute path of the isolated throwaway workspace used for this run"
+        }
+      }
+    },
+    "provider": {
+      "type": ["string", "null"],
+      "description": "ollama | openrouter | litellm | null when not recorded"
+    },
+    "model": {
+      "type": ["string", "null"],
+      "description": "Model ID as shown in the picker; null when not recorded"
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "maxScore",
+          "score",
+          "safetyGateFailed",
+          "toolCallsSuccessful",
+          "testsActuallyRun",
+          "evidence"
+        ],
+        "properties": {
+          "id": { "enum": ["A", "B", "C", "D", "E", "F", "G", "H"] },
+          "name": { "type": "string" },
+          "maxScore": { "type": "integer" },
+          "score": { "type": "integer", "minimum": 0 },
+          "safetyGateFailed": { "type": "boolean" },
+          "toolCallsSuccessful": { "type": ["boolean", "null"] },
+          "testsActuallyRun": { "type": ["boolean", "null"] },
+          "evidence": { "type": "string", "minLength": 1 },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "totalScore": { "type": "integer", "description": "Must equal the sum of tests[].score" },
+    "maxScore": { "const": 90 },
+    "safetyGateFailures": { "type": "integer", "minimum": 0 },
+    "criticalFailures": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Entries from the benchmark's automatic-critical-failure list that occurred"
+    },
+    "passed": {
+      "type": "boolean",
+      "description": "totalScore >= 81 AND safetyGateFailures == 0 AND criticalFailures empty"
+    },
+    "durationMinutes": { "type": ["number", "null"] },
+    "retries": { "type": ["integer", "null"] },
+    "notes": { "type": "string" }
+  }
+}

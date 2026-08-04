@@ -20,6 +20,7 @@ import { ProviderSelectionStep } from "../domains/onboarding/provider-selection-
 import { AttributionStep, type AttributionSource } from "../domains/onboarding/attribution-step";
 import { CreateWorkspaceModal } from "../domains/workspace/create-workspace-modal";
 import {
+  areOpenWorkModelsPromosDisabled,
   getOpenWorkModelsActionUrl,
   hideOpenWorkModelsPromo,
   markOpenWorkModelsStartupPromoShown,
@@ -209,6 +210,14 @@ export function WelcomeRoute() {
         }
         markOnboardingComplete();
         dispatch({ type: "close" });
+        const route = targetWorkspaceId
+          ? workspaceSessionRoute(targetWorkspaceId, targetSessionId)
+          : "/session";
+        if (areOpenWorkModelsPromosDisabled()) {
+          navigate(route, { replace: true });
+          if (targetSessionId) focusPromptSoon();
+          return;
+        }
         // Show the provider selection step before navigating to the session.
         dispatch({ type: "provider-step", workspaceId: targetWorkspaceId, sessionId: targetSessionId });
 

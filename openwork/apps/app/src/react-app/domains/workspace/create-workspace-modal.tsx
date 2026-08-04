@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { monolithFetch } from "@/app/lib/monolith-api";
 import { t } from "../../../i18n";
 import type { WorkspacePreset } from "../../../app/types";
 import { CreateWorkspaceLocalPanel } from "./create-workspace-local-panel";
@@ -43,7 +44,7 @@ import type {
 async function pickFolderThroughNativeWebBridge(): Promise<{ path: string | null; cancelled: boolean }> {
   if (typeof window === "undefined") return { path: null, cancelled: false };
   try {
-    const response = await fetch("/__monolith/pick-directory", { method: "POST" });
+    const response = await monolithFetch("/__monolith/pick-directory", { method: "POST" });
     if (response.status === 404 || response.status === 501) {
       return { path: null, cancelled: false };
     }

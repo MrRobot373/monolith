@@ -3,6 +3,7 @@ import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldCheck, Users, Wallet } from "lucide-react";
 
+import { monolithJson } from "@/app/lib/monolith-api";
 import { t } from "@/i18n";
 import {
   Dialog,
@@ -25,12 +26,10 @@ type OrgConfig = {
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch("/__monolith/org" + path, {
+  return monolithJson<T>("/__monolith/org" + path, {
     ...init,
     headers: { "content-type": "application/json", ...(init?.headers || {}) },
   });
-  if (!response.ok) throw new Error(`${response.status}`);
-  return response.json() as Promise<T>;
 }
 
 type AdminModalProps = {

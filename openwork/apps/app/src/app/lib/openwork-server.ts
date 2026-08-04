@@ -762,6 +762,9 @@ export function writeOpenworkServerSettings(next: OpenworkServerSettings): Openw
 export function hydrateOpenworkServerSettingsFromEnv() {
   if (typeof window === "undefined") return;
 
+  const envDeployment = typeof import.meta.env?.VITE_OPENWORK_DEPLOYMENT === "string"
+    ? import.meta.env.VITE_OPENWORK_DEPLOYMENT.trim()
+    : "";
   const envUrl = typeof import.meta.env?.VITE_OPENWORK_URL === "string"
     ? import.meta.env.VITE_OPENWORK_URL.trim()
     : "";
@@ -781,13 +784,14 @@ export function hydrateOpenworkServerSettingsFromEnv() {
     const current = readOpenworkServerSettings();
     const next: OpenworkServerSettings = { ...current };
     let changed = false;
+    const forceEnvConnection = envDeployment === "web" && Boolean(envUrl);
 
-    if (!current.urlOverride && envUrl) {
+    if (envUrl && (forceEnvConnection || !current.urlOverride)) {
       next.urlOverride = normalizeOpenworkServerUrl(envUrl) ?? undefined;
       changed = true;
     }
 
-    if (!current.portOverride && envPort) {
+    if (envPort && (forceEnvConnection || !current.portOverride)) {
       const parsed = Number(envPort);
       if (Number.isFinite(parsed) && parsed > 0) {
         next.portOverride = parsed;

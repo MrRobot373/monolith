@@ -16,6 +16,7 @@ import type {
 } from "@opencode-ai/sdk/v2/client";
 
 import { captureAnalyticsEvent, markTaskRunStart } from "@/app/lib/analytics";
+import { monolithFetch } from "@/app/lib/monolith-api";
 import { trackSessionActive, trackTaskStarted } from "@/app/lib/den-telemetry";
 import { createClient, unwrap } from "@/app/lib/opencode";
 import { abortSessionSafe, forkSession, listCommands, revertSession, setSessionArchived, shellInSession } from "@/app/lib/opencode-session";
@@ -170,6 +171,7 @@ import {
   getConnectedProviderItems,
   isModelAvailableInConnectedProviders,
   refreshProviderListQueries,
+  selectBestConnectedModel,
   useProviderListQuery,
 } from "@/react-app/infra/provider-list-query";
 
@@ -212,6 +214,10 @@ function describeTaskCreateError(error: unknown) {
 
 function taskCreateUnavailableToastId(workspaceId: string) {
   return `opencode-unavailable:${workspaceId}`;
+}
+
+function isSameModelRef(a: ModelRef | null | undefined, b: ModelRef | null | undefined) {
+  return Boolean(a && b && a.providerID === b.providerID && a.modelID === b.modelID);
 }
 
 function focusPromptSoon() {
@@ -623,6 +629,32 @@ export function SessionRoute() {
         )
       ),
   );
+  const modelRepairCandidate = useMemo(
+    () =>
+      selectBestConnectedModel(providerListQuery.data, {
+        isProviderAllowed: (providerId) =>
+          !isDesktopProviderBlocked({
+            providerId,
+            checkRestriction: checkDesktopRestriction,
+          }),
+      }),
+    [checkDesktopRestriction, providerListQuery.data],
+  );
+
+  useEffect(() => {
+    if (!selectedModelUnavailable || !modelRepairCandidate) return;
+    if (isSameModelRef(local.prefs.defaultModel, modelRepairCandidate)) return;
+
+    local.setPrefs((previous) => ({
+      ...previous,
+      defaultModel: modelRepairCandidate,
+      modelVariant: null,
+    }));
+    toast.info("Switched to an available model", {
+      description: resolveModelDisplayName(modelRepairCandidate.modelID),
+    });
+  }, [local, modelRepairCandidate, selectedModelUnavailable]);
+
   const hasUsableModel = Boolean(local.prefs.defaultModel && !selectedModelUnavailable);
   const canCreateTask = Boolean(
     opencodeClient && selectedWorkspaceId && !loading && !selectedWorkspaceError && !selectedModelUnavailable,
@@ -684,15 +716,21 @@ export function SessionRoute() {
       // so stale entries from a previous session don't appear.
       const hasCloudAuth = !!readDenSettings().authToken?.trim();
       const isCloudProvider = (id: string) => /^lpr_/i.test(id);
-      const all = hasCloudAuth
-        ? ((value.all ?? []) as ProviderListItem[])
-        : ((value.all ?? []) as ProviderListItem[]).filter(
-            (p) => !isCloudProvider(p.id ?? ""),
-          );
-      const connected = hasCloudAuth
-        ? (value.connected ?? [])
-        : (value.connected ?? []).filter((id) => !isCloudProvider(id));
+      const visibleProviderIds = new Set(
+        (hasCloudAuth
+          ? ((value.all ?? []) as ProviderListItem[])
+          : ((value.all ?? []) as ProviderListItem[]).filter(
+              (p) => !isCloudProvider(p.id ?? ""),
+            )
+        ).map((provider) => provider.id),
+      );
+      const all = ((value.all ?? []) as ProviderListItem[]).filter((provider) => visibleProviderIds.has(provider.id));
+      const connected = (value.connected ?? []).filter((id) => visibleProviderIds.has(id));
+      const defaults = Object.fromEntries(
+        Object.entries(value.default ?? {}).filter(([id]) => visibleProviderIds.has(id)),
+      );
       setProviders(all);
+      setProviderDefaults(defaults);
       setProviderConnectedIds(connected);
       // New-provider detection is handled globally by the provider auth
       // store's applyProviderListState, which fires dispatchNewProviders.
@@ -1066,7 +1104,7 @@ export function SessionRoute() {
     // native launcher's web bridge (native/serve-ui.mjs). Not available in
     // Docker — there's no host filesystem to open an Explorer window on.
     try {
-      const response = await fetch("/__monolith/reveal-directory", {
+      const response = await monolithFetch("/__monolith/reveal-directory", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ path }),
@@ -2029,6 +2067,7 @@ export function SessionRoute() {
       }}
       onOpenSession={(workspaceId, sessionId) => navigateToWorkspaceSession(workspaceId, sessionId)}
       onOpenSettings={(route) => handleOpenSettings(route ?? "/settings/general")}
+      onOpenChat={() => navigate("/chat")}
       onOpenModelPicker={() => {
         modelPicker.setQuery("");
         modelPicker.setRecentProviderIds(new Set());
@@ -2059,6 +2098,8 @@ export function SessionRoute() {
       listAgents={listAgents}
       selectedAgent={selectedAgent}
       onSelectAgent={setSelectedAgent}
+      showDocsLink={shellConfig.docsButton}
+      showFeedbackLink={shellConfig.feedbackButton}
     />
     <SessionSearchDialog
       open={sessionSearchOpen}

@@ -28,6 +28,15 @@ const viteEnv = {
   VITE_OPENWORK_PORT: OPENWORK_PORT,
   VITE_OPENWORK_TOKEN: process.env.OPENWORK_TOKEN || "",
   VITE_OPENWORK_HOST_TOKEN: process.env.OPENWORK_HOST_TOKEN || "",
+  VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "",
+  VITE_SUPABASE_PUBLISHABLE_KEY:
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    "",
+  VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "",
+  VITE_MONOLITH_REQUIRE_SIGNIN: process.env.VITE_MONOLITH_REQUIRE_SIGNIN || process.env.MONOLITH_REQUIRE_AUTH || "",
   // Neutralize phone-home. NOTE: an EMPTY posthog key falls back to OpenWork's
   // real default key in a production build (analytics.ts:31), so we set a non-empty
   // dummy key AND a black-hole host — nothing can reach PostHog. Belt: the built
@@ -75,7 +84,9 @@ const indexHtml = path.join(dist, "index.html");
 
 if (fs.existsSync(indexHtml)) {
   const analyticsSeed = `<script>try{var K="openwork.preferences",p=JSON.parse(localStorage.getItem(K)||"{}");if(p&&typeof p==="object"&&p.analyticsEnabled===undefined){p.analyticsEnabled=false;localStorage.setItem(K,JSON.stringify(p));}}catch(e){}</script>`;
-  const tokenSeed = `<script>try{var tKey="openwork.server.token",hKey="openwork.server.hostToken",expectedT="${process.env.OPENWORK_TOKEN || ""}",expectedH="${process.env.OPENWORK_HOST_TOKEN || ""}",currT=localStorage.getItem(tKey),currH=localStorage.getItem(hKey);if(expectedT&&(currT!==expectedT||currH!==expectedH)){localStorage.setItem(tKey,expectedT);if(expectedH){localStorage.setItem(hKey,expectedH);}else{localStorage.removeItem(hKey);}localStorage.removeItem("openwork.server.urlOverride");localStorage.removeItem("openwork.server.port");location.reload();}}catch(e){}</script>`;
+  const expectedOpenworkUrl = String(viteEnv.VITE_OPENWORK_URL || "").replace(/\/+$/, "");
+  const expectedOpencodeUrl = expectedOpenworkUrl ? `${expectedOpenworkUrl}/opencode` : "";
+  const tokenSeed = `<script>try{var tKey="openwork.server.token",hKey="openwork.server.hostToken",uKey="openwork.server.urlOverride",pKey="openwork.server.port",aKey="openwork.server.active",lKey="openwork.server.list",expectedT=${JSON.stringify(process.env.OPENWORK_TOKEN || "")},expectedH=${JSON.stringify(process.env.OPENWORK_HOST_TOKEN || "")},expectedU=${JSON.stringify(expectedOpenworkUrl)},expectedP=${JSON.stringify(OPENWORK_PORT)},expectedO=${JSON.stringify(expectedOpencodeUrl)},changed=false;if(expectedT&&localStorage.getItem(tKey)!==expectedT){localStorage.setItem(tKey,expectedT);changed=true;}if(expectedH){if(localStorage.getItem(hKey)!==expectedH){localStorage.setItem(hKey,expectedH);changed=true;}}else if(localStorage.getItem(hKey)){localStorage.removeItem(hKey);changed=true;}if(expectedU&&localStorage.getItem(uKey)!==expectedU){localStorage.setItem(uKey,expectedU);changed=true;}if(expectedP&&localStorage.getItem(pKey)!==expectedP){localStorage.setItem(pKey,expectedP);changed=true;}if(expectedO){var expectedList=JSON.stringify([expectedO]);if(localStorage.getItem(aKey)!==expectedO){localStorage.setItem(aKey,expectedO);changed=true;}if(localStorage.getItem(lKey)!==expectedList){localStorage.setItem(lKey,expectedList);changed=true;}}if(changed){location.reload();}}catch(e){}</script>`;
   let html = fs.readFileSync(indexHtml, "utf8");
   if (!html.includes("openwork.preferences")) {
     html = html.replace("</head>", `${analyticsSeed}${tokenSeed}</head>`);
