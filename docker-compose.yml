@@ -73,9 +73,14 @@ services:
   # Phase 2 replaces this single service with one container per user.
   openwork-host:
     build:
-      context: ./workspace-image
+      context: .
+      dockerfile: workspace-image/Dockerfile
     restart: unless-stopped
     environment:
+      # own (default) = our orchestrator on vendored opencode, no external
+      # binary. legacy = the old openwork-orchestrator prebuilt binary,
+      # kept one release as a rollback path.
+      MONOLITH_ENGINE: ${MONOLITH_ENGINE:-own}
       OPENWORK_DATA_DIR: /data/openwork-orchestrator
       OPENWORK_SIDECAR_DIR: /data/sidecars
       OPENWORK_WORKSPACE: /workspace
@@ -85,9 +90,14 @@ services:
       # Model gateway wiring (consumed by the entrypoint's opencode provider seed).
       MONOLITH_GATEWAY_URL: http://litellm:4000/v1
       MONOLITH_GATEWAY_KEY: ${OPENWORK_LITELLM_KEY:-${LITELLM_MASTER_KEY}}
+      # Read-only view of the sidecar's per-user MCP catalog store (see
+      # monolith_sidecar mount below) so seed-models.mjs can mirror enabled
+      # catalog servers into this workspace's opencode.json on boot.
+      MONOLITH_SIDECAR_DATA_DIR: /sidecar-data
     volumes:
       - openwork_workspace:/workspace
       - openwork_data:/data
+      - monolith_sidecar:/sidecar-data:ro
     # Not published to the host: the browser reaches the API only through Caddy
     # (same-origin, behind the login). Internal-only.
     expose:
@@ -110,6 +120,17 @@ services:
       LITELLM_URL: http://litellm:4000
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       DATA_DIR: /data
+      # Reach the compose ollama service (chat.mjs defaults to localhost, which
+      # is unreachable from this container). Required for the router's small tier.
+      OLLAMA_URL: http://ollama:11434/v1
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5-coder:7b}
+      # ---- Smart model router (cost-saving auto-routing) ----
+      MONOLITH_ROUTER_ENABLED: ${MONOLITH_ROUTER_ENABLED:-1}
+      MONOLITH_ROUTER_SMALL_MODEL: ${MONOLITH_ROUTER_SMALL_MODEL:-qwen2.5:0.5b}
+      # Blank large model auto-resolves to the LiteLLM gateway ('claude' alias)
+      # since LITELLM_URL is set above. Override to pin a different tier.
+      MONOLITH_ROUTER_LARGE_PROVIDER: ${MONOLITH_ROUTER_LARGE_PROVIDER:-litellm}
+      MONOLITH_ROUTER_LARGE_MODEL: ${MONOLITH_ROUTER_LARGE_MODEL:-claude}
     volumes:
       - ./monolith-server:/app:ro
       - monolith_sidecar:/data

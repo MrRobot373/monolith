@@ -16,6 +16,20 @@ openwork/apps/app/dist/
 .turbo/
 .pnpm-store/
 
+# Evaluation sandboxes are throwaway workspaces; results/ IS tracked
+evals/sandboxes/
+
+# Independence-program orchestrator: engine/opencode source IS tracked (vendored,
+# git-history stripped — see monolith-independence-program notes); its
+# node_modules is already covered by the generic rule above. Runtime state:
+.monolith-data/
+
+# Claude Code project tooling state (MCP config, skills cache) — local dev
+# environment, not MONOLITH product source.
+.mcp.json
+skills-lock.json
+.agents/
+
 # OS / editor cruft
 Thumbs.db
 .DS_Store

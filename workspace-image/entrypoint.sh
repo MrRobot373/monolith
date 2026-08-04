@@ -54,13 +54,52 @@ if [ -d /opt/monolith-seed/.opencode ]; then
   cp -rf /opt/monolith-seed/.opencode/skills/. "$WS/.opencode/skills/" 2>/dev/null || true
 fi
 
-exec openwork serve \
-  --workspace "$WS" \
-  --remote-access \
-  --openwork-port 8787 \
-  --opencode-host 127.0.0.1 \
-  --opencode-port 4096 \
-  --connect-host "${OPENWORK_CONNECT_HOST:-127.0.0.1}" \
-  --cors "*" \
-  --approval "${OPENWORK_APPROVAL_MODE:-manual}" \
-  --no-opencode-router
+# Seed/refresh the MONOLITH answer-discipline block in AGENTS.md so the
+# engine's DEFAULT (Cowork) agent gets the standing rules too. Managed between
+# markers; user content outside the markers is always preserved.
+AGENTS_MD="$WS/AGENTS.md"
+DISCIPLINE_START="<!-- MONOLITH:answer-discipline:start -->"
+DISCIPLINE_END="<!-- MONOLITH:answer-discipline:end -->"
+DISCIPLINE_BLOCK=/opt/monolith-seed/agents-discipline.md
+if [ -f "$DISCIPLINE_BLOCK" ]; then
+  echo "[monolith] seeding answer-discipline block -> $AGENTS_MD"
+  if [ -f "$AGENTS_MD" ] && grep -qF "$DISCIPLINE_START" "$AGENTS_MD"; then
+    awk -v s="$DISCIPLINE_START" -v e="$DISCIPLINE_END" -v f="$DISCIPLINE_BLOCK" '
+      $0==s { print; while ((getline line < f) > 0) print line; skip=1; next }
+      $0==e { skip=0; print; next }
+      !skip { print }' "$AGENTS_MD" > "$AGENTS_MD.tmp" && mv "$AGENTS_MD.tmp" "$AGENTS_MD"
+  else
+    { [ -s "$AGENTS_MD" ] && printf '\n'; printf '%s\n' "$DISCIPLINE_START"; cat "$DISCIPLINE_BLOCK"; printf '%s\n' "$DISCIPLINE_END"; } >> "$AGENTS_MD"
+  fi
+fi
+
+# Engine: our own orchestrator (default) or the legacy prebuilt binary as a
+# rollback path. Our orchestrator doesn't have a "remote access sharing link"
+# concept (--remote-access/--connect-host were openwork's own cloud-sharing
+# feature) — Caddy already owns exposure/auth for MONOLITH, so those flags
+# have no equivalent here and aren't needed.
+ENGINE_MODE="${MONOLITH_ENGINE:-own}"
+if [ "$ENGINE_MODE" = "legacy" ]; then
+  echo "[monolith] MONOLITH_ENGINE=legacy -> starting the openwork-orchestrator binary"
+  exec openwork serve \
+    --workspace "$WS" \
+    --remote-access \
+    --openwork-port 8787 \
+    --opencode-host 127.0.0.1 \
+    --opencode-port 4096 \
+    --connect-host "${OPENWORK_CONNECT_HOST:-127.0.0.1}" \
+    --cors "*" \
+    --approval "${OPENWORK_APPROVAL_MODE:-manual}" \
+    --no-opencode-router
+else
+  echo "[monolith] starting the MONOLITH orchestrator (our own engine on vendored opencode)"
+  export ORCH_PORT=8787
+  # 0.0.0.0, not 127.0.0.1: other containers (Caddy, webui, monolith-server)
+  # reach this over the Docker bridge network, which loopback can't answer.
+  export ORCH_HOST="${ORCH_HOST:-0.0.0.0}"
+  export OPENCODE_PORT=4096
+  export OPENCODE_DIR="${OPENCODE_DIR:-/opt/engine/opencode}"
+  export DATA_DIR="${MONOLITH_ORCH_DATA_DIR:-/data/orchestrator}"
+  export OPENWORK_WORKSPACE="$WS"
+  exec node /app/monolith-server/orchestrator.mjs
+fi

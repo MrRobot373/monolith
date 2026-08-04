@@ -1,18 +1,36 @@
-# MONOLITH workspace image — extends OpenWork's MIT-licensed orchestrator container.
-# One container serves a full, working OpenWork workspace UI at :8787/ui.
-# (Runtime uses the published `openwork-orchestrator` npm package — no fork needed
-#  for Phase 1. Branding that changes the UI itself comes later and builds from source.)
+# MONOLITH workspace image — our OWN orchestrator on vendored opencode (MIT),
+# not the closed prebuilt openwork-orchestrator binary. One container serves a
+# full, working OpenWork workspace UI at :8787/ui.
+# MONOLITH_ENGINE=legacy (entrypoint.sh) can still fall back to the old
+# openwork-orchestrator binary installed below, kept as a rollback path for one
+# release per the independence-program plan — not used by default.
 FROM node:22-bookworm-slim
 
-# Pinned to the current published `latest` on npm (matches OpenWork app 0.17.8).
+# Legacy-fallback pin only; MONOLITH_ENGINE=own (the default) ignores this.
 ARG OPENWORK_ORCHESTRATOR_VERSION=0.17.8
+# Pinned opencode release we vendor from source (MIT, github.com/sst/opencode).
+ARG OPENCODE_VERSION=v1.18.10
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl git tar unzip \
  && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g "openwork-orchestrator@${OPENWORK_ORCHESTRATOR_VERSION}"
+# Legacy-fallback binary (best-effort — MONOLITH_ENGINE=own never touches this).
+RUN npm install -g "openwork-orchestrator@${OPENWORK_ORCHESTRATOR_VERSION}" \
+ || echo "[warn] legacy openwork-orchestrator install failed (non-fatal; MONOLITH_ENGINE=own doesn't need it)"
+
+# Our own engine: bun + opencode vendored from source (same recipe as
+# native/setup.mjs). --ignore-scripts skips node-gyp native-module builds the
+# server doesn't need (mirrors a real Windows dev-time gotcha; harmless here too).
+RUN npm install -g bun
+RUN git clone --depth 1 --branch "${OPENCODE_VERSION}" https://github.com/sst/opencode /opt/engine/opencode \
+ && cd /opt/engine/opencode \
+ && bun install --ignore-scripts
+
+# Our orchestrator (monolith-server/orchestrator.mjs + orchestrator/*.mjs).
+COPY monolith-server/orchestrator.mjs /app/monolith-server/orchestrator.mjs
+COPY monolith-server/orchestrator/ /app/monolith-server/orchestrator/
 
 # --- Phase 3: agent capabilities --------------------------------------------
 # open-claude-code: a Claude Code-compatible coding agent (available as a CLI).
@@ -37,8 +55,14 @@ ENV OPENWORK_DATA_DIR=/data/openwork-orchestrator \
 # --- Phase 5: domain agents + skills (seeded into each workspace on boot) ----
 # Agent personas (Legal/Finance/Health/Research/Code) come from the repo; the
 # Legal & Finance skills come from Anthropic's open-source knowledge-work-plugins.
-COPY seed/ /opt/monolith-seed/
-COPY seed-models.mjs /opt/monolith-seed/seed-models.mjs
+COPY workspace-image/seed/ /opt/monolith-seed/
+COPY workspace-image/seed-models.mjs /opt/monolith-seed/seed-models.mjs
+# Tools guide Tier 3/4: the built-in web-search MCP server + the MCP catalog
+# module (for reading the sidecar's per-user enabled-servers store). Shared
+# source with the native path — copied, not duplicated by hand.
+COPY native/mcp/web-tools.mjs /opt/monolith-seed/mcp/web-tools.mjs
+COPY monolith-server/mcp-catalog.mjs /opt/monolith-seed/mcp-catalog.mjs
+COPY monolith-server/mcp-catalog-data.mjs /opt/monolith-seed/mcp-catalog-data.mjs
 RUN git clone --depth 1 https://github.com/anthropics/knowledge-work-plugins.git /tmp/kwp \
  && mkdir -p /opt/monolith-seed/.opencode/skills \
  && cp -r /tmp/kwp/legal/skills/.   /opt/monolith-seed/.opencode/skills/ 2>/dev/null || true \
@@ -50,7 +74,7 @@ RUN git clone --depth 1 https://github.com/anthropics/knowledge-work-plugins.git
 EXPOSE 8787
 VOLUME ["/workspace", "/data"]
 
-COPY entrypoint.sh /usr/local/bin/monolith-entrypoint
+COPY workspace-image/entrypoint.sh /usr/local/bin/monolith-entrypoint
 RUN chmod +x /usr/local/bin/monolith-entrypoint
 
 ENTRYPOINT ["/usr/local/bin/monolith-entrypoint"]

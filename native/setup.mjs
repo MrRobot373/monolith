@@ -37,15 +37,53 @@ if (!pnpmOk) {
   if (!pnpmOk) sh("npm", ["install", "-g", "pnpm@11.4.0"]);
 }
 
-// 3) OpenWork orchestrator (provides the `openwork` engine host command)
-if (spawnSync("openwork", ["--version"], { shell: true }).status !== 0) {
-  const r = sh("npm", ["install", "-g", `openwork-orchestrator@${ORCH}`]);
-  if (r.status !== 0) {
-    console.error("[setup] failed to install openwork-orchestrator. Check npm/network and retry.");
-    process.exit(1);
+// 3) Engine. Default = OUR orchestrator on vendored opencode (no external binary,
+// not subject to Windows Smart App Control blocking an unsigned prebuilt exe).
+// MONOLITH_ENGINE=legacy installs the old openwork-orchestrator binary instead.
+const engineMode = (process.env.MONOLITH_ENGINE || "own").trim().toLowerCase();
+if (engineMode === "legacy") {
+  if (spawnSync("openwork", ["--version"], { shell: true }).status !== 0) {
+    const r = sh("npm", ["install", "-g", `openwork-orchestrator@${ORCH}`]);
+    if (r.status !== 0) {
+      console.error("[setup] failed to install openwork-orchestrator. Check npm/network and retry.");
+      process.exit(1);
+    }
+  } else {
+    console.log("[setup] openwork orchestrator already installed.");
   }
 } else {
-  console.log("[setup] openwork orchestrator already installed.");
+  const opencodeDir = process.env.OPENCODE_DIR || path.join(HERE, "..", "engine", "opencode");
+  if (spawnSync("bun", ["--version"], { shell: true }).status !== 0) {
+    const r = sh("npm", ["install", "-g", "bun"]);
+    if (r.status !== 0) {
+      console.error("[setup] failed to install bun. Check npm/network and retry.");
+      process.exit(1);
+    }
+  } else {
+    console.log("[setup] bun already installed.");
+  }
+  if (!fs.existsSync(path.join(opencodeDir, "package.json"))) {
+    console.log(`[setup] cloning opencode (MIT) into ${opencodeDir}…`);
+    const r = sh("git", ["clone", "--depth", "1", "--branch", "v1.18.10", "https://github.com/sst/opencode", opencodeDir]);
+    if (r.status !== 0) {
+      console.error("[setup] failed to clone opencode. Check git/network and retry.");
+      process.exit(1);
+    }
+  } else {
+    console.log(`[setup] opencode already vendored at ${opencodeDir}.`);
+  }
+  if (!fs.existsSync(path.join(opencodeDir, "node_modules"))) {
+    // --ignore-scripts: skips native-module (node-gyp) build steps the server
+    // doesn't need — on Windows these can fail under a Defender file-lock and
+    // leave a partial, broken install (a real issue hit during development).
+    const r = sh("bun", ["install", "--ignore-scripts"], { cwd: opencodeDir });
+    if (r.status !== 0) {
+      console.error("[setup] bun install failed. Retry with: bun install --ignore-scripts --force  (in engine/opencode)");
+      process.exit(1);
+    }
+  } else {
+    console.log("[setup] opencode dependencies already installed.");
+  }
 }
 
 // 4) Build the UI

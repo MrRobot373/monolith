@@ -24,6 +24,10 @@ const SERVER_CONFIG = process.env.OPENWORK_SERVER_CONFIG || path.join(homedir(),
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5-coder:7b";
 const OLLAMA_TAGS = "http://localhost:11434/api/tags";
 const hasPoolKeys = Object.keys(process.env).some((k) => /^OLLAMA_KEY_\d+$/.test(k) && (process.env[k] || "").trim());
+const openRouterFreeOnly = /^(1|true|yes|on)$/i.test(process.env.OPENROUTER_FREE_ONLY || "0");
+const openRouterOnly = /^(1|true|yes|on)$/i.test(
+  process.env.OPENROUTER_ONLY || (openRouterFreeOnly ? "1" : "0"),
+);
 
 fs.mkdirSync(WS, { recursive: true });
 const dist = path.resolve(HERE, "..", "openwork", "apps", "app", "dist");
@@ -184,6 +188,9 @@ process.on("SIGTERM", shutdown);
 async function main() {
   ensureServerConfigIncludesPrimaryWorkspace();
 
+  if (openRouterOnly) {
+    console.log("[start] OpenRouter-only mode enabled; skipping Ollama and cloud pool setup.");
+  } else {
   // 1) Ollama up?
   let ollamaUp = false;
   try { ollamaUp = (await fetch(OLLAMA_TAGS)).ok; } catch {}
@@ -217,29 +224,57 @@ async function main() {
     console.log("[start] no cloud keys set — cloud pool disabled (local Ollama only).");
   }
 
-  // 4) Seed workspace opencode.json files (local + cloud providers, local default).
+  }
+
+  // 4) Seed workspace opencode.json files.
   const seedPaths = persistedLocalWorkspaces().map((workspace) => workspace.path);
   if (!seedPaths.some((workspacePath) => pathKey(workspacePath) === pathKey(WS))) seedPaths.unshift(WS);
   spawnSync(process.execPath, [path.join(HERE, "seed-opencode-config.mjs"), ...seedPaths], { stdio: "inherit" });
 
-  // 5) Engine: openwork-server + opencode. First run downloads the opencode binary.
-  console.log("[start] starting OpenWork engine (openwork serve)… first run downloads the opencode binary.");
-  launchCmd("engine", "openwork", [
-    "serve",
-    "--workspace", WS,
-    "--openwork-host", "127.0.0.1",
-    "--openwork-port", OPENWORK_PORT,
-    "--opencode-host", "127.0.0.1",
-    "--opencode-port", OPENCODE_PORT,
-    "--openwork-token", process.env.OPENWORK_TOKEN || "",
-    "--openwork-host-token", process.env.OPENWORK_HOST_TOKEN || "",
-    "--approval", process.env.OPENWORK_APPROVAL_MODE || "manual",
-  ], {
-    OPENCODE_MODELS_URL: process.env.OPENCODE_MODELS_URL || "https://models.dev/",
-  });
-  // Generous: the first-ever launch cold-starts a ~116MB server exe (Windows
-  // Defender scans it), which can take minutes; warm launches are seconds.
-  const engineOk = await waitFor(`http://127.0.0.1:${OPENWORK_PORT}/health`, "openwork engine", 300, 1000);
+  // 5) Engine. Default = OUR orchestrator (monolith-server/orchestrator.mjs), which
+  // runs the vendored opencode engine from source via bun — no prebuilt/unsigned
+  // binary, so it isn't subject to Windows Smart App Control blocking it.
+  // MONOLITH_ENGINE=legacy keeps the old openwork.exe path as a fallback.
+  const engineMode = (process.env.MONOLITH_ENGINE || "own").trim().toLowerCase();
+  if (engineMode === "legacy") {
+    console.log("[start] MONOLITH_ENGINE=legacy — starting OpenWork engine (openwork serve)… first run downloads the opencode binary.");
+    launchCmd("engine", "openwork", [
+      "serve",
+      "--workspace", WS,
+      "--openwork-host", "127.0.0.1",
+      "--openwork-port", OPENWORK_PORT,
+      "--opencode-host", "127.0.0.1",
+      "--opencode-port", OPENCODE_PORT,
+      "--openwork-token", process.env.OPENWORK_TOKEN || "",
+      "--openwork-host-token", process.env.OPENWORK_HOST_TOKEN || "",
+      "--approval", process.env.OPENWORK_APPROVAL_MODE || "manual",
+    ], {
+      OPENCODE_MODELS_URL: process.env.OPENCODE_MODELS_URL || "https://models.dev/",
+    });
+  } else {
+    const opencodeDir = process.env.OPENCODE_DIR || path.join(HERE, "..", "engine", "opencode");
+    if (!fs.existsSync(path.join(opencodeDir, "packages", "opencode", "src", "index.ts"))) {
+      console.error(
+        `[start] no vendored opencode found at ${opencodeDir}.\n` +
+        `        Run native\\setup.cmd first, or clone opencode there yourself, or set\n` +
+        `        MONOLITH_ENGINE=legacy in native\\.env to use the old openwork.exe instead.`,
+      );
+      shutdown();
+      return;
+    }
+    console.log("[start] starting the MONOLITH orchestrator (our own engine — no external binary)…");
+    launchNode("orchestrator", path.join(HERE, "..", "monolith-server", "orchestrator.mjs"), {
+      ORCH_PORT: OPENWORK_PORT,
+      OPENCODE_PORT,
+      OPENCODE_DIR: opencodeDir,
+      DATA_DIR: process.env.MONOLITH_ORCH_DATA_DIR || path.join(HERE, "..", ".monolith-data"),
+      OPENWORK_WORKSPACE: WS,
+      OPENCODE_MODELS_URL: process.env.OPENCODE_MODELS_URL || "https://models.dev/",
+    });
+  }
+  // Generous: cold starts (Defender scanning a fresh binary, or bun's first
+  // TypeScript transpile of opencode) can take minutes; warm launches are seconds.
+  const engineOk = await waitFor(`http://127.0.0.1:${OPENWORK_PORT}/health`, "engine", 300, 1000);
   await replayPersistedLocalWorkspaces();
 
   // 6) Serve the UI.
