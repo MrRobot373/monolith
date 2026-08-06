@@ -6,15 +6,16 @@
 // and drop the prebuilt openwork.exe entirely.
 //
 // Run: node monolith-server/orchestrator.mjs
-//   OPENCODE_DIR   path to vendored engine/opencode (default ../engine/opencode)
-//   ORCH_PORT      listen port (default 8787)
-//   DATA_DIR       registry/store dir (default ./.monolith-data)
-//   OPENWORK_WORKSPACE  seed + activate this workspace on boot
+//   MONOLITH_ENGINE_DIR  path to vendored engine/opencode (default ../engine/opencode)
+//   MONOLITH_PORT        listen port (default 8787)
+//   DATA_DIR              registry/store dir (default ./.monolith-data)
+//   MONOLITH_WORKSPACE   seed + activate this workspace on boot
 import http from "node:http";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { createOrchestratorAuth } from "./orchestrator/auth.mjs";
 import { createEngine } from "./orchestrator/engine.mjs";
 import { createWorkspaceRegistry } from "./orchestrator/workspaces.mjs";
 import { createOpencodeProxy } from "./orchestrator/opencode-proxy.mjs";
@@ -24,17 +25,24 @@ import { createWorkspaceRoutes } from "./orchestrator/workspace-routes.mjs";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 export function createOrchestrator(options = {}) {
-  const opencodeDir = options.opencodeDir || process.env.OPENCODE_DIR || path.resolve(HERE, "..", "engine", "opencode");
+  const opencodeDir = options.opencodeDir || process.env.MONOLITH_ENGINE_DIR || process.env.OPENCODE_DIR || path.resolve(HERE, "..", "engine", "opencode");
   const dataDir = options.dataDir || process.env.DATA_DIR || path.resolve(HERE, "..", ".monolith-data");
   // Default 127.0.0.1 (native/local dev — no reason to expose beyond the box).
   // In Docker, other containers reach this over the bridge network, not
-  // loopback, so entrypoint.sh sets ORCH_HOST=0.0.0.0 there.
-  const host = options.host || process.env.ORCH_HOST || "127.0.0.1";
-  const port = Number(options.port || process.env.ORCH_PORT || 8787);
+  // loopback, so entrypoint.sh sets MONOLITH_HOST=0.0.0.0 there.
+  const host = options.host || process.env.MONOLITH_HOST || process.env.ORCH_HOST || "127.0.0.1";
+  const port = Number(options.port || process.env.MONOLITH_PORT || process.env.ORCH_PORT || 8787);
   const log = options.log || ((...a) => console.log("[orchestrator]", ...a));
   fs.mkdirSync(dataDir, { recursive: true });
 
-  const enginePort = Number(options.opencodePort || process.env.OPENCODE_PORT || 4096);
+  const auth = createOrchestratorAuth({
+    clientToken: options.token ?? process.env.MONOLITH_TOKEN ?? process.env.OPENWORK_TOKEN,
+    hostToken: options.hostToken ?? process.env.MONOLITH_HOST_TOKEN ?? process.env.OPENWORK_HOST_TOKEN,
+    host,
+    log,
+  });
+
+  const enginePort = Number(options.opencodePort || process.env.MONOLITH_ENGINE_PORT || process.env.OPENCODE_PORT || 4096);
   const engine = createEngine({ opencodeDir, port: enginePort, log: (...a) => log(...a) });
   const registry = createWorkspaceRegistry({ dataDir, log });
   const proxy = createOpencodeProxy({ engine, registry, log });
@@ -42,7 +50,7 @@ export function createOrchestrator(options = {}) {
   const routes = createOrchestratorRoutes({ registry, engine, host, port });
 
   // Seed + activate the configured workspace (native launcher parity).
-  const seedWs = options.workspace || process.env.OPENWORK_WORKSPACE;
+  const seedWs = options.workspace || process.env.MONOLITH_WORKSPACE || process.env.OPENWORK_WORKSPACE;
   if (seedWs) registry.ensure(seedWs, { activate: true });
 
   function applyCors(res, req) {
@@ -67,6 +75,17 @@ export function createOrchestrator(options = {}) {
     const url = new URL(req.url, `http://${host}:${port}`);
     const urlPath = decodeURIComponent(url.pathname);
     const search = url.search.replace(/^\?/, "");
+
+    // Auth gate ahead of every route (see orchestrator/auth.mjs for why this
+    // has to sit here rather than in the individual route modules: the
+    // opencode reverse-proxy below hands the request straight to the engine).
+    const allowed = auth.check(req, urlPath);
+    if (!allowed.ok) {
+      log(`✗ ${allowed.status} ${req.method} ${urlPath} (${allowed.error})`);
+      res.writeHead(allowed.status, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: allowed.error }));
+      return;
+    }
 
     try {
       // 1) opencode reverse-proxy (the agentic core).
@@ -102,6 +121,8 @@ export function createOrchestrator(options = {}) {
   });
 
   async function start() {
+    const exposure = auth.exposureError();
+    if (exposure) throw new Error(exposure);
     // Kick the engine early so the first session isn't cold.
     engine.start().catch((e) => log(`engine start error: ${e.message}`));
     await new Promise((resolve) => server.listen(port, host, resolve));
