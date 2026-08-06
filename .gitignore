@@ -29,6 +29,8 @@ evals/sandboxes/
 .mcp.json
 skills-lock.json
 .agents/
+agent/
+.claude/
 
 # OS / editor cruft
 Thumbs.db

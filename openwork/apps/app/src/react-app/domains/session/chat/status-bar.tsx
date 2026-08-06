@@ -261,7 +261,7 @@ export function StatusBar(props: StatusBarProps) {
 
   const docsControlAction = useMemo<OpenworkControlAction>(() => ({
     id: "status.docs.open",
-    label: "Open OpenWork docs",
+    label: "Open MONOLITH docs",
     description: "Open the documentation from the status bar.",
     sideEffect: "external",
     disabled: !shellConfig.docsButton,
@@ -273,7 +273,7 @@ export function StatusBar(props: StatusBarProps) {
   const feedbackControlAction = useMemo<OpenworkControlAction>(() => ({
     id: "status.feedback.open",
     label: "Send feedback",
-    description: "Open the OpenWork feedback surface from the status bar.",
+    description: "Open the MONOLITH feedback surface from the status bar.",
     sideEffect: "external",
     disabled: !shellConfig.feedbackButton,
     targetRef: feedbackButtonRef,

@@ -12,9 +12,9 @@ const PORT = Number(process.env.PORT || 8790);
 
 const scheduler = createMonolithScheduler({
   dataDir: process.env.DATA_DIR || "/data",
-  openworkUrl: process.env.OPENWORK_URL || "http://openwork-host:8787",
-  token: process.env.OPENWORK_TOKEN || "",
-  hostToken: process.env.OPENWORK_HOST_TOKEN || "",
+  openworkUrl: process.env.MONOLITH_ENGINE_URL || process.env.OPENWORK_URL || "http://monolith-engine:8787",
+  token: process.env.MONOLITH_TOKEN || process.env.OPENWORK_TOKEN || "",
+  hostToken: process.env.MONOLITH_HOST_TOKEN || process.env.OPENWORK_HOST_TOKEN || "",
   litellmUrl: process.env.LITELLM_URL || "",
   litellmKey: process.env.LITELLM_MASTER_KEY || "",
   log: (...args) => console.log("[monolith-server]", ...args),
@@ -23,9 +23,9 @@ const monolithAuth = createSupabaseRequestAuthenticator();
 const workspaceFiles = createWorkspaceFileService({
   dataDir: process.env.DATA_DIR || "/data",
   resolveWorkspaceRoot: createEngineWorkspaceResolver({
-    openworkUrl: process.env.OPENWORK_URL || "http://openwork-host:8787",
-    token: process.env.OPENWORK_TOKEN || "",
-    hostToken: process.env.OPENWORK_HOST_TOKEN || "",
+    openworkUrl: process.env.MONOLITH_ENGINE_URL || process.env.OPENWORK_URL || "http://monolith-engine:8787",
+    token: process.env.MONOLITH_TOKEN || process.env.OPENWORK_TOKEN || "",
+    hostToken: process.env.MONOLITH_HOST_TOKEN || process.env.OPENWORK_HOST_TOKEN || "",
   }),
   log: (...args) => console.log("[workspace-files]", ...args),
 });

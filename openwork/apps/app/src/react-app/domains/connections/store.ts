@@ -318,7 +318,7 @@ export function createConnectionsStore(options: {
     });
 
     if (hasOpenworkTarget && !canTryOpenworkServer) {
-      throw new Error("OpenWork server cannot read MCP config for this workspace.");
+      throw new Error("MONOLITH cannot read MCP config for this workspace.");
     }
 
     if (!canTryOpenworkServer || !openworkClient || !openworkWorkspaceId) return null;
@@ -476,7 +476,7 @@ export function createConnectionsStore(options: {
     if (isRemoteWorkspace) {
       mutateState((current) => ({
         ...current,
-        mcpStatus: "OpenWork server unavailable. MCP config is read-only.",
+        mcpStatus: "MONOLITH unavailable. MCP config is read-only.",
         mcpServers: [],
         mcpStatuses: {},
       }));
@@ -603,7 +603,7 @@ export function createConnectionsStore(options: {
       await resolveWritableOpenworkTarget();
 
     if (isRemoteWorkspace && !canUseOpenworkServer) {
-      setStateField("mcpStatus", "OpenWork server unavailable. MCP config is read-only.");
+      setStateField("mcpStatus", "MONOLITH unavailable. MCP config is read-only.");
       finishPerf(options.developerMode(), "mcp.connect", "blocked", startedAt, {
         reason: "openwork-server-unavailable",
       });
@@ -611,7 +611,7 @@ export function createConnectionsStore(options: {
     }
 
     if (hasOpenworkTarget && !canUseOpenworkServer) {
-      setStateField("mcpStatus", "OpenWork server MCP config is read-only.");
+      setStateField("mcpStatus", "MONOLITH MCP config is read-only.");
       finishPerf(options.developerMode(), "mcp.connect", "blocked", startedAt, {
         reason: "openwork-server-read-only",
       });
@@ -1006,12 +1006,12 @@ export function createConnectionsStore(options: {
       await resolveWritableOpenworkTarget();
 
     if (isRemoteWorkspace && !canUseOpenworkServer) {
-      setStateField("mcpStatus", "OpenWork server unavailable. MCP auth is read-only.");
+      setStateField("mcpStatus", "MONOLITH unavailable. MCP auth is read-only.");
       return;
     }
 
     if (hasOpenworkTarget && !canUseOpenworkServer) {
-      setStateField("mcpStatus", "OpenWork server MCP auth is read-only.");
+      setStateField("mcpStatus", "MONOLITH MCP auth is read-only.");
       return;
     }
 
@@ -1080,7 +1080,7 @@ export function createConnectionsStore(options: {
         await openworkClient.removeMcp(openworkWorkspaceId, name);
       } else {
         if (hasOpenworkTarget) {
-          setStateField("mcpStatus", "OpenWork server MCP config is read-only.");
+          setStateField("mcpStatus", "MONOLITH MCP config is read-only.");
           return;
         }
         const projectDir = options.projectDir().trim();

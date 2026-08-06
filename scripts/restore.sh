@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 ARCHIVE="${1:?usage: scripts/restore.sh <backups/monolith-TIMESTAMP.tar.gz>}"
 PROJECT="monolith"
-VOLUMES=(openwork_workspace openwork_data litellm_pg ollama_models caddy_data)
+VOLUMES=(monolith_workspace monolith_data litellm_pg ollama_models caddy_data)
 
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 tar xzf "$ARCHIVE" -C "$TMP"

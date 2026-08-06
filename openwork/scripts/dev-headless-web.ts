@@ -226,9 +226,9 @@ const viteEnv = {
   ...process.env,
   HOST: viteHost,
   PORT: String(webPort),
-  VITE_OPENWORK_URL: process.env.VITE_OPENWORK_URL ?? openworkUrl,
-  VITE_OPENWORK_PORT: process.env.VITE_OPENWORK_PORT ?? String(openworkPort),
-  VITE_OPENWORK_TOKEN: process.env.VITE_OPENWORK_TOKEN ?? openworkToken,
+  VITE_MONOLITH_URL: process.env.VITE_MONOLITH_URL ?? openworkUrl,
+  VITE_MONOLITH_PORT: process.env.VITE_MONOLITH_PORT ?? String(openworkPort),
+  VITE_MONOLITH_TOKEN: process.env.VITE_MONOLITH_TOKEN ?? openworkToken,
 };
 const headlessEnv = {
   ...process.env,

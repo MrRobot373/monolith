@@ -268,7 +268,7 @@ export function ShellCustomizationView() {
                   id="shell-app-name"
                   className="h-8 text-xs"
                   value={config.appName}
-                  placeholder="OpenWork"
+                  placeholder="MONOLITH"
                   disabled
                   onChange={(event) => update({ appName: event.currentTarget.value || DEFAULT_SHELL_CONFIG.appName })}
                 />
@@ -343,7 +343,7 @@ export function ShellCustomizationView() {
 
         <ToggleRow
           label="Display notifications"
-          description="A bell in the header collecting updates from OpenWork Cloud and your workspaces."
+          description="A bell in the header collecting updates from your workspaces."
           checked={config.notifications}
           onChange={(v) => update({ notifications: v })}
         />

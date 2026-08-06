@@ -15,8 +15,8 @@ PASS="${3:-}"
 NET="monolith_default"
 
 getenv() { grep -m1 "^$1=" .env | cut -d= -f2- | tr -d '\r'; }
-OPENWORK_TOKEN="$(getenv OPENWORK_TOKEN)"
-OPENWORK_HOST_TOKEN="$(getenv OPENWORK_HOST_TOKEN)"
+MONOLITH_TOKEN="$(getenv MONOLITH_TOKEN || getenv OPENWORK_TOKEN)"
+MONOLITH_HOST_TOKEN="$(getenv MONOLITH_HOST_TOKEN || getenv OPENWORK_HOST_TOKEN)"
 LITELLM_MASTER_KEY="$(getenv LITELLM_MASTER_KEY)"
 BASE="$(getenv MONOLITH_BASE_DOMAIN)"; BASE="${BASE:-localhost}"
 HOST="${U}.${BASE}"
@@ -35,21 +35,21 @@ echo "  - gateway key minted (budget \$$BUDGET / 30d)"
 # 2) Per-user backend container (isolated workspace + data).
 docker rm -f "monolith-ws-$U" >/dev/null 2>&1 || true
 docker run -d --name "monolith-ws-$U" --network "$NET" --restart unless-stopped \
-  -v "openwork_ws_$U:/workspace" -v "openwork_data_$U:/data" \
-  -e OPENWORK_WORKSPACE=/workspace \
-  -e OPENWORK_DATA_DIR=/data/openwork-orchestrator -e OPENWORK_SIDECAR_DIR=/data/sidecars \
-  -e OPENWORK_TOKEN="$OPENWORK_TOKEN" -e OPENWORK_HOST_TOKEN="$OPENWORK_HOST_TOKEN" \
-  -e OPENWORK_APPROVAL_MODE=manual \
+  -v "monolith_ws_$U:/workspace" -v "monolith_data_$U:/data" \
+  -e MONOLITH_WORKSPACE=/workspace \
+  -e MONOLITH_ENGINE_DATA_DIR=/data/orchestrator -e MONOLITH_SIDECAR_DIR=/data/sidecars \
+  -e MONOLITH_TOKEN="$MONOLITH_TOKEN" -e MONOLITH_HOST_TOKEN="$MONOLITH_HOST_TOKEN" \
+  -e MONOLITH_APPROVAL_MODE=manual \
   -e MONOLITH_GATEWAY_URL="http://litellm:4000/v1" -e MONOLITH_GATEWAY_KEY="$KEY" \
-  monolith-openwork-host >/dev/null
+  monolith-engine >/dev/null
 echo "  - backend container: monolith-ws-$U"
 
 # 3) Per-user web UI baked with the user's subdomain (same-origin API).
 echo "  - building web UI (baked for http://$HOST) ..."
 docker build -q -t "monolith-webui-$U" -f webui/Dockerfile \
-  --build-arg VITE_OPENWORK_URL="http://$HOST" \
-  --build-arg VITE_OPENWORK_TOKEN="$OPENWORK_TOKEN" \
-  --build-arg VITE_OPENWORK_HOST_TOKEN="$OPENWORK_HOST_TOKEN" . >/dev/null
+  --build-arg VITE_MONOLITH_URL="http://$HOST" \
+  --build-arg VITE_MONOLITH_TOKEN="$MONOLITH_TOKEN" \
+  --build-arg VITE_MONOLITH_HOST_TOKEN="$MONOLITH_HOST_TOKEN" . >/dev/null
 docker rm -f "monolith-webui-c-$U" >/dev/null 2>&1 || true
 docker run -d --name "monolith-webui-c-$U" --network "$NET" --restart unless-stopped "monolith-webui-$U" >/dev/null
 echo "  - web UI container: monolith-webui-c-$U"

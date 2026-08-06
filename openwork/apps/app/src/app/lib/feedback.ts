@@ -1,8 +1,11 @@
-const ENV_FEEDBACK_URL = String(import.meta.env.VITE_OPENWORK_FEEDBACK_URL ?? "").trim();
-const ENV_APP_VERSION = String(import.meta.env.VITE_OPENWORK_APP_VERSION ?? "").trim();
+const ENV_FEEDBACK_URL = String(import.meta.env.VITE_MONOLITH_FEEDBACK_URL ?? "").trim();
+const ENV_APP_VERSION = String(import.meta.env.VITE_MONOLITH_APP_VERSION ?? "").trim();
 
-export const DEFAULT_FEEDBACK_URL =
-  ENV_FEEDBACK_URL || "https://openworklabs.com/feedback";
+// No baked-in default: the upstream OpenWork feedback endpoint
+// (openworklabs.com) is a third party we don't want live "Send feedback"
+// clicks silently routed to. Blank means the feedback entry point is
+// simply not shown until an operator sets VITE_MONOLITH_FEEDBACK_URL.
+export const DEFAULT_FEEDBACK_URL = ENV_FEEDBACK_URL || "";
 
 type FeedbackUrlOptions = {
   entrypoint: string;
@@ -82,6 +85,10 @@ function parseClientOsContext(): ClientOsContext {
 }
 
 export function buildFeedbackUrl(options: FeedbackUrlOptions): string {
+  // No feedback endpoint configured (see DEFAULT_FEEDBACK_URL) -> nothing to
+  // link to. Return "" rather than letting `new URL("")` throw; callers
+  // treat an empty string as "don't open anything."
+  if (!DEFAULT_FEEDBACK_URL) return "";
   const url = new URL(DEFAULT_FEEDBACK_URL);
   const osContext = parseClientOsContext();
 

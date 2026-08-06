@@ -37,7 +37,7 @@ function readPackageVersion(packagePath: string): string | null {
 }
 
 const buildAppVersion =
-  process.env.VITE_OPENWORK_APP_VERSION?.trim() ||
+  process.env.VITE_MONOLITH_APP_VERSION?.trim() ||
   readPackageVersion(desktopPackagePath) ||
   readPackageVersion(appPackagePath) ||
   "0.0.0";
@@ -79,7 +79,7 @@ export default defineConfig({
         JSON.stringify(v),
       ]),
     ),
-    "import.meta.env.VITE_OPENWORK_APP_VERSION": JSON.stringify(buildAppVersion),
+    "import.meta.env.VITE_MONOLITH_APP_VERSION": JSON.stringify(buildAppVersion),
   },
   plugins: [
     {

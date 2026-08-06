@@ -15,12 +15,12 @@ try { process.loadEnvFile(path.join(HERE, ".env")); } catch {
 }
 
 const isWin = process.platform === "win32";
-const OPENWORK_PORT = process.env.OPENWORK_PORT || "8787";
-const OPENCODE_PORT = process.env.OPENCODE_PORT || "4096";
+const MONOLITH_PORT = process.env.MONOLITH_PORT || process.env.OPENWORK_PORT || "8787";
+const MONOLITH_ENGINE_PORT = process.env.MONOLITH_ENGINE_PORT || process.env.OPENCODE_PORT || "4096";
 const UI_PORT = process.env.UI_PORT || "8080";
 const POOL_PORT = process.env.POOL_PORT || "11435";
-const WS = process.env.OPENWORK_WORKSPACE || path.join(HERE, "workspace");
-const SERVER_CONFIG = process.env.OPENWORK_SERVER_CONFIG || path.join(homedir(), ".config", "openwork", "server.json");
+const WS = process.env.MONOLITH_WORKSPACE || process.env.OPENWORK_WORKSPACE || path.join(HERE, "workspace");
+const SERVER_CONFIG = process.env.MONOLITH_SERVER_CONFIG || process.env.OPENWORK_SERVER_CONFIG || path.join(homedir(), ".config", "monolith", "server.json");
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "qwen2.5-coder:7b";
 const OLLAMA_TAGS = "http://localhost:11434/api/tags";
 const hasPoolKeys = Object.keys(process.env).some((k) => /^OLLAMA_KEY_\d+$/.test(k) && (process.env[k] || "").trim());
@@ -28,6 +28,19 @@ const openRouterFreeOnly = /^(1|true|yes|on)$/i.test(process.env.OPENROUTER_FREE
 const openRouterOnly = /^(1|true|yes|on)$/i.test(
   process.env.OPENROUTER_ONLY || (openRouterFreeOnly ? "1" : "0"),
 );
+
+// One-time migration: earlier builds stored the workspace registry under
+// ~/.config/openwork/server.json. If the new MONOLITH-named path doesn't
+// exist yet but the old one does, copy it over so existing installs don't
+// silently "lose" their registered workspaces on this rename.
+if (!fs.existsSync(SERVER_CONFIG)) {
+  const legacyServerConfig = path.join(homedir(), ".config", "openwork", "server.json");
+  if (fs.existsSync(legacyServerConfig)) {
+    fs.mkdirSync(path.dirname(SERVER_CONFIG), { recursive: true });
+    fs.copyFileSync(legacyServerConfig, SERVER_CONFIG);
+    console.log(`[start] migrated workspace registry: ${legacyServerConfig} -> ${SERVER_CONFIG}`);
+  }
+}
 
 fs.mkdirSync(WS, { recursive: true });
 const dist = path.resolve(HERE, "..", "openwork", "apps", "app", "dist");
@@ -142,14 +155,14 @@ async function replayPersistedLocalWorkspaces() {
   const primaryKey = pathKey(WS);
   const extras = persistedLocalWorkspaces().filter((workspace) => pathKey(workspace.path) !== primaryKey);
   if (!extras.length) return;
-  const hostToken = process.env.OPENWORK_HOST_TOKEN || "";
+  const hostToken = process.env.MONOLITH_HOST_TOKEN || process.env.OPENWORK_HOST_TOKEN || "";
   if (!hostToken) {
-    console.warn("[start] cannot replay extra local workspaces without OPENWORK_HOST_TOKEN.");
+    console.warn("[start] cannot replay extra local workspaces without MONOLITH_HOST_TOKEN.");
     return;
   }
   for (const workspace of extras) {
     try {
-      const response = await fetch(`http://127.0.0.1:${OPENWORK_PORT}/workspaces/local`, {
+      const response = await fetch(`http://127.0.0.1:${MONOLITH_PORT}/workspaces/local`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -237,22 +250,26 @@ async function main() {
   // MONOLITH_ENGINE=legacy keeps the old openwork.exe path as a fallback.
   const engineMode = (process.env.MONOLITH_ENGINE || "own").trim().toLowerCase();
   if (engineMode === "legacy") {
-    console.log("[start] MONOLITH_ENGINE=legacy — starting OpenWork engine (openwork serve)… first run downloads the opencode binary.");
+    console.log("[start] MONOLITH_ENGINE=legacy — starting the legacy engine binary (openwork serve)… first run downloads the opencode binary.");
+    // NOTE: these --openwork-* flag names and the OPENCODE_MODELS_URL env var
+    // are the prebuilt legacy binary's OWN fixed CLI/config contract — not
+    // ours to rename. We just read our values in from MONOLITH_-named env
+    // vars first, falling back to the old names for existing .env files.
     launchCmd("engine", "openwork", [
       "serve",
       "--workspace", WS,
       "--openwork-host", "127.0.0.1",
-      "--openwork-port", OPENWORK_PORT,
+      "--openwork-port", MONOLITH_PORT,
       "--opencode-host", "127.0.0.1",
-      "--opencode-port", OPENCODE_PORT,
-      "--openwork-token", process.env.OPENWORK_TOKEN || "",
-      "--openwork-host-token", process.env.OPENWORK_HOST_TOKEN || "",
-      "--approval", process.env.OPENWORK_APPROVAL_MODE || "manual",
+      "--opencode-port", MONOLITH_ENGINE_PORT,
+      "--openwork-token", process.env.MONOLITH_TOKEN || process.env.OPENWORK_TOKEN || "",
+      "--openwork-host-token", process.env.MONOLITH_HOST_TOKEN || process.env.OPENWORK_HOST_TOKEN || "",
+      "--approval", process.env.MONOLITH_APPROVAL_MODE || process.env.OPENWORK_APPROVAL_MODE || "manual",
     ], {
-      OPENCODE_MODELS_URL: process.env.OPENCODE_MODELS_URL || "https://models.dev/",
+      OPENCODE_MODELS_URL: process.env.MONOLITH_MODELS_URL || process.env.OPENCODE_MODELS_URL || "https://models.dev/",
     });
   } else {
-    const opencodeDir = process.env.OPENCODE_DIR || path.join(HERE, "..", "engine", "opencode");
+    const opencodeDir = process.env.MONOLITH_ENGINE_DIR || process.env.OPENCODE_DIR || path.join(HERE, "..", "engine", "opencode");
     if (!fs.existsSync(path.join(opencodeDir, "packages", "opencode", "src", "index.ts"))) {
       console.error(
         `[start] no vendored opencode found at ${opencodeDir}.\n` +
@@ -264,17 +281,21 @@ async function main() {
     }
     console.log("[start] starting the MONOLITH orchestrator (our own engine — no external binary)…");
     launchNode("orchestrator", path.join(HERE, "..", "monolith-server", "orchestrator.mjs"), {
-      ORCH_PORT: OPENWORK_PORT,
-      OPENCODE_PORT,
-      OPENCODE_DIR: opencodeDir,
+      MONOLITH_PORT,
+      MONOLITH_ENGINE_PORT,
+      MONOLITH_ENGINE_DIR: opencodeDir,
       DATA_DIR: process.env.MONOLITH_ORCH_DATA_DIR || path.join(HERE, "..", ".monolith-data"),
-      OPENWORK_WORKSPACE: WS,
-      OPENCODE_MODELS_URL: process.env.OPENCODE_MODELS_URL || "https://models.dev/",
+      MONOLITH_WORKSPACE: WS,
+      // OPENCODE_MODELS_URL is read by the vendored opencode engine itself
+      // (packages/core/src/flag/flag.ts) — it's a true external constraint,
+      // not our naming, so the child process still needs it under this exact
+      // name. MONOLITH_MODELS_URL is the operator-facing override for it.
+      OPENCODE_MODELS_URL: process.env.MONOLITH_MODELS_URL || process.env.OPENCODE_MODELS_URL || "https://models.dev/",
     });
   }
   // Generous: cold starts (Defender scanning a fresh binary, or bun's first
   // TypeScript transpile of opencode) can take minutes; warm launches are seconds.
-  const engineOk = await waitFor(`http://127.0.0.1:${OPENWORK_PORT}/health`, "engine", 300, 1000);
+  const engineOk = await waitFor(`http://127.0.0.1:${MONOLITH_PORT}/health`, "engine", 300, 1000);
   await replayPersistedLocalWorkspaces();
 
   // 6) Serve the UI.

@@ -211,15 +211,15 @@ export function AdvancedRuntimeMigrationSection(props: AdvancedRuntimeMigrationS
   return (
     <LayoutSection>
       <LayoutSectionHeader>
-        <LayoutSectionTitle>OpenCode config sources</LayoutSectionTitle>
+        <LayoutSectionTitle>Engine config sources</LayoutSectionTitle>
         <LayoutSectionDescription>
-          Inspect what OpenWork controls at runtime versus what belongs to your workspace config. This works through the OpenWork server and does not require the OpenCode engine to be healthy.
+          Inspect what MONOLITH controls at runtime versus what belongs to your workspace config. This works through MONOLITH and does not require the engine to be healthy.
         </LayoutSectionDescription>
       </LayoutSectionHeader>
 
       <LayoutSectionItem>
         <LayoutSectionItemHeader>
-          <LayoutSectionItemTitle>Move OpenWork-managed config</LayoutSectionItemTitle>
+          <LayoutSectionItemTitle>Move MONOLITH-managed config</LayoutSectionItemTitle>
           <LayoutSectionItemDescription>
             Moves older OpenWork-owned runtime keys from `.opencode/openwork.json` and safe OpenWork-managed keys from `opencode.jsonc` into the runtime database.
           </LayoutSectionItemDescription>
@@ -251,7 +251,7 @@ export function AdvancedRuntimeMigrationSection(props: AdvancedRuntimeMigrationS
         {props.configStatus ? (
           <div className="space-y-3 rounded-xl border border-gray-6 bg-gray-1/60 p-3 text-xs text-gray-10">
             <div className="space-y-2 rounded-xl border border-blue-6/50 bg-blue-2/40 p-3">
-              <div className="font-medium text-gray-12">Effective injected OpenCode config</div>
+              <div className="font-medium text-gray-12">Effective injected engine config</div>
               <div className="text-[11px] text-gray-9">
                 This is the OpenWork-built config object injected through the server-managed `OPENCODE_CONFIG` file. It includes OpenWork defaults plus runtime DB values and is rewritten on every runtime config change.
               </div>
@@ -266,14 +266,14 @@ export function AdvancedRuntimeMigrationSection(props: AdvancedRuntimeMigrationS
             {props.configStatus.sources ? (
               <div className="space-y-3">
                 <div>
-                  <div className="font-medium text-gray-12">OpenCode source breakdown</div>
+                  <div className="font-medium text-gray-12">Engine source breakdown</div>
                   <div className="text-[11px] text-gray-9">
-                    OpenCode also reads its own project and global config files. OpenWork injects the runtime config separately; for OpenWork-managed keys, the injected config is the source to inspect.
+                    The engine also reads its own project and global config files. MONOLITH injects the runtime config separately; for MONOLITH-managed keys, the injected config is the source to inspect.
                   </div>
                 </div>
                 <RuntimeConfigSourceBlock
                   title="Project opencode config"
-                  description="Workspace-level OpenCode config owned by the user/project."
+                  description="Workspace-level engine config owned by the user/project."
                   path={props.configStatus.sources.projectOpencode.path}
                   exists={props.configStatus.sources.projectOpencode.exists}
                   keys={props.configStatus.sources.projectOpencode.keys}
@@ -281,21 +281,21 @@ export function AdvancedRuntimeMigrationSection(props: AdvancedRuntimeMigrationS
                 />
                 <RuntimeConfigSourceBlock
                   title="Global opencode config"
-                  description="User-level OpenCode config under ~/.config/opencode."
+                  description="User-level engine config under ~/.config/opencode."
                   path={props.configStatus.sources.globalOpencode.path}
                   exists={props.configStatus.sources.globalOpencode.exists}
                   keys={props.configStatus.sources.globalOpencode.keys}
                   config={props.configStatus.sources.globalOpencode.config}
                 />
                 <RuntimeConfigSourceBlock
-                  title="OpenWork runtime DB"
-                  description="OpenWork-managed runtime values stored outside workspace files."
+                  title="MONOLITH runtime DB"
+                  description="MONOLITH-managed runtime values stored outside workspace files."
                   keys={props.configStatus.sources.runtimeDatabase.keys}
                   config={props.configStatus.sources.runtimeDatabase.config}
                 />
                 <RuntimeConfigSourceBlock
-                  title="OpenWork injected config"
-                  description="The object OpenWork injects into OpenCode at runtime."
+                  title="MONOLITH injected config"
+                  description="The object MONOLITH injects into the engine at runtime."
                   keys={props.configStatus.sources.injected.keys}
                   config={props.configStatus.sources.injected.config}
                 />
@@ -306,7 +306,7 @@ export function AdvancedRuntimeMigrationSection(props: AdvancedRuntimeMigrationS
               <div>Stored keys: {formatKeys(props.configStatus.runtimeKeys)}</div>
             </div>
             <div>
-              <div className="font-medium text-gray-12">Legacy OpenWork metadata</div>
+              <div className="font-medium text-gray-12">Legacy MONOLITH metadata</div>
               <div className="break-all">{props.configStatus.legacyOpenwork.path}</div>
               {props.configStatus.legacyOpenwork.error ? (
                 <div className="text-amber-11">{props.configStatus.legacyOpenwork.error}; fix this file before moving legacy config.</div>

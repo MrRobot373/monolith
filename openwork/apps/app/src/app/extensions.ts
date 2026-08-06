@@ -153,13 +153,13 @@ export const BUILT_IN_OPENWORK_EXTENSION_MANIFESTS: OpenWorkExtensionManifest[] 
   {
     schemaVersion: 1,
     id: "openwork-browser",
-    name: "OpenWork Browser",
+    name: "MONOLITH Browser",
     description: "Automate the built-in browser panel that stays visible inside OpenWork.",
     source: { format: "openwork-builtin", origin: "builtin", trusted: true },
     icon: { src: "/openwork-mark.svg" },
-    composer: { prompt: "Use the OpenWork Browser extension to " },
+    composer: { prompt: "Use the MONOLITH Browser extension to " },
     setup: {
-      instructions: "OpenWork Browser is ready by default in desktop workspaces.",
+      instructions: "MONOLITH Browser is ready by default in desktop workspaces.",
     },
     resources: [
       {
@@ -172,7 +172,7 @@ export const BUILT_IN_OPENWORK_EXTENSION_MANIFESTS: OpenWorkExtensionManifest[] 
     contributions: [
       { type: "settings-panel", ref: "openwork.browser.settings", location: "settings-detail" },
       { type: "session-side-panel", ref: "openwork.browser.panel", location: "session-right-pane" },
-      { type: "composer-prompt", prompt: "Use the OpenWork Browser extension to ", location: "composer" },
+      { type: "composer-prompt", prompt: "Use the MONOLITH Browser extension to ", location: "composer" },
     ],
     enablement: [
       { type: "toggle-enabled", ref: "openwork-browser", label: "Enabled" },
@@ -236,7 +236,7 @@ export const BUILT_IN_OPENWORK_EXTENSION_MANIFESTS: OpenWorkExtensionManifest[] 
     icon: { src: "/ext-openai.svg" },
     composer: { prompt: "Use the OpenAI Image Gen extension to " },
     setup: {
-      instructions: "Add an OpenAI API key, then agents can generate image artifacts through OpenWork extension actions.",
+      instructions: "Add an OpenAI API key, then agents can generate image artifacts through MONOLITH extension actions.",
       primaryCta: "Enable image generation",
       secondaryCta: "Generate test image",
       requiredEnv: ["OPENAI_API_KEY"],
@@ -261,13 +261,13 @@ export const BUILT_IN_OPENWORK_EXTENSION_MANIFESTS: OpenWorkExtensionManifest[] 
     schemaVersion: 1,
     id: "openwork-voice",
     name: "Voice Mode",
-    description: "Talk to OpenWork through a Realtime voice panel that drives the same semantic UI controls as OpenWork UI MCP.",
+    description: "Talk to MONOLITH through a Realtime voice panel that drives the same semantic UI controls as MONOLITH UI MCP.",
     preview: true,
     source: { format: "openwork-builtin", origin: "builtin", trusted: true },
     icon: { src: "/openwork-mark.svg" },
     composer: { prompt: "Use Voice Mode to " },
     setup: {
-      instructions: "Voice Mode uses OpenAI Realtime. Save an OpenAI API key in OpenWork env vars, then open the session rail panel and speak or send a typed voice command.",
+      instructions: "Voice Mode uses OpenAI Realtime. Save an OpenAI API key in MONOLITH env vars, then open the session rail panel and speak or send a typed voice command.",
       primaryCta: "Save OpenAI key",
       secondaryCta: "Test Realtime",
       requiredEnv: ["OPENAI_REALTIME_API_KEY", "OPENAI_API_KEY"],
@@ -297,13 +297,13 @@ export const BUILT_IN_OPENWORK_EXTENSION_MANIFESTS: OpenWorkExtensionManifest[] 
     schemaVersion: 1,
     id: "google-workspace",
     name: "Google Workspace",
-    description: "Let OpenWork help with meetings, selected Drive files, and Gmail drafts.",
+    description: "Let MONOLITH help with meetings, selected Drive files, and Gmail drafts.",
     preview: true,
     source: { format: "openwork-builtin", origin: "builtin", trusted: true },
     icon: { simpleIconSlug: "google" },
     composer: { prompt: "Use Google Workspace to " },
     setup: {
-      instructions: "Connect your Google account to use Calendar, Drive, and Gmail drafts in OpenWork.",
+      instructions: "Connect your Google account to use Calendar, Drive, and Gmail drafts in MONOLITH.",
       primaryCta: "Connect Google Workspace",
       secondaryCta: "Test connection",
       testActionRef: "openwork.googleWorkspace.testConnection",
@@ -335,7 +335,7 @@ export const BUILT_IN_OPENWORK_EXTENSION_MANIFESTS: OpenWorkExtensionManifest[] 
     icon: { src: "/ext-ollama.svg" },
     composer: { prompt: "Use the Ollama extension to " },
     setup: {
-      instructions: "Run Ollama locally, choose or pull a model, then add it as an OpenCode provider.",
+      instructions: "Run Ollama locally, choose or pull a model, then add it as a provider.",
       primaryCta: "Add Ollama model",
       secondaryCta: "Pull model",
     },

@@ -25,7 +25,7 @@
 	file_server
 }
 
-# ---- OpenWork workspace (work.<domain>) -------------------------------------
+# ---- MONOLITH workspace (work.<domain>) --------------------------------------
 # API paths are protected by the engine's own bearer token (basic auth would
 # collide with the app's Authorization: Bearer header). The SPA is behind login.
 http://work.localhost {
@@ -41,7 +41,7 @@ http://work.localhost {
 	}
 	@api path /health* /workspaces* /workspace/* /opencode/* /event* /files* /session* /host/*
 	handle @api {
-		reverse_proxy openwork-host:8787
+		reverse_proxy engine:8787
 	}
 	handle {
 		basic_auth {

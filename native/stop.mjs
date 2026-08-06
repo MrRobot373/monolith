@@ -9,8 +9,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 try { process.loadEnvFile(path.join(HERE, ".env")); } catch {}
 
 const ports = [
-  process.env.OPENWORK_PORT || "8787",
-  process.env.OPENCODE_PORT || "4096",
+  process.env.MONOLITH_PORT || process.env.OPENWORK_PORT || "8787",
+  process.env.MONOLITH_ENGINE_PORT || process.env.OPENCODE_PORT || "4096",
   process.env.UI_PORT || "8080",
   process.env.POOL_PORT || "11435",
 ];

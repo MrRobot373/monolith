@@ -134,7 +134,7 @@ function safeJson(value: unknown) {
 }
 
 function humanToolLabel(toolName?: string) {
-  if (!toolName) return "OpenWork action";
+  if (!toolName) return "MONOLITH action";
   return TOOL_LABELS[toolName] ?? toolName.replace(/_/g, " ");
 }
 
@@ -260,7 +260,7 @@ async function requestMacMicrophoneAccess() {
 
 async function executeOpenWorkTool(name: string, args: Record<string, unknown>) {
   const control = window.__openworkControl;
-  if (!control) return { ok: false, error: "OpenWork control surface is not available." };
+  if (!control) return { ok: false, error: "MONOLITH control surface is not available." };
 
   if (name === "openwork_snapshot") return { ok: true, snapshot: control.snapshot() };
   if (name === "openwork_list_actions") return { ok: true, actions: control.listActions() };
@@ -393,7 +393,7 @@ export function VoicePanel(props: VoicePanelProps) {
       statusText: text ?? (
         nextStatus === "connecting" ? "Connecting to OpenAI Realtime..." :
           nextStatus === "listening" ? "Listening. Ask OpenWork to act." :
-            nextStatus === "speaking" ? "OpenWork is speaking..." :
+            nextStatus === "speaking" ? "MONOLITH is speaking..." :
               nextStatus === "muted" ? "Connected, microphone muted." :
                 nextStatus === "error" ? "Voice Mode needs attention." :
                   "Ready for voice control."
@@ -528,7 +528,7 @@ export function VoicePanel(props: VoicePanelProps) {
 
   const connectRealtime = useCallback(async (audioInput = true) => {
     const client = props.client;
-    if (!client) throw new Error("OpenWork host connection is not ready.");
+    if (!client) throw new Error("MONOLITH connection is not ready.");
     if (audioInput && !navigator.mediaDevices?.getUserMedia) throw new Error("Microphone capture is unavailable in this runtime.");
 
     disconnectRealtime(true);
@@ -848,7 +848,7 @@ export function VoicePanel(props: VoicePanelProps) {
                 <CardTitle>Host connection required</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                Voice Mode needs the local OpenWork server so it can mint short-lived Realtime client secrets without exposing your API key to the renderer.
+                Voice Mode needs local MONOLITH so it can mint short-lived Realtime client secrets without exposing your API key to the renderer.
               </CardContent>
             </Card>
           ) : null}

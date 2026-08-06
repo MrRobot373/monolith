@@ -21,17 +21,17 @@ function hasUsableConnection(url: string, token: string) {
 }
 
 function readEnvOpenworkConnection() {
-  const deployment = typeof import.meta.env?.VITE_OPENWORK_DEPLOYMENT === "string"
-    ? import.meta.env.VITE_OPENWORK_DEPLOYMENT.trim()
+  const deployment = typeof import.meta.env?.VITE_MONOLITH_DEPLOYMENT === "string"
+    ? import.meta.env.VITE_MONOLITH_DEPLOYMENT.trim()
     : "";
-  const rawUrl = typeof import.meta.env?.VITE_OPENWORK_URL === "string"
-    ? import.meta.env.VITE_OPENWORK_URL.trim()
+  const rawUrl = typeof import.meta.env?.VITE_MONOLITH_URL === "string"
+    ? import.meta.env.VITE_MONOLITH_URL.trim()
     : "";
-  const token = typeof import.meta.env?.VITE_OPENWORK_TOKEN === "string"
-    ? import.meta.env.VITE_OPENWORK_TOKEN.trim()
+  const token = typeof import.meta.env?.VITE_MONOLITH_TOKEN === "string"
+    ? import.meta.env.VITE_MONOLITH_TOKEN.trim()
     : "";
-  const hostToken = typeof import.meta.env?.VITE_OPENWORK_HOST_TOKEN === "string"
-    ? import.meta.env.VITE_OPENWORK_HOST_TOKEN.trim()
+  const hostToken = typeof import.meta.env?.VITE_MONOLITH_HOST_TOKEN === "string"
+    ? import.meta.env.VITE_MONOLITH_HOST_TOKEN.trim()
     : "";
   const normalizedBaseUrl = normalizeOpenworkServerUrl(rawUrl) ?? "";
   return deployment === "web" && hasUsableConnection(normalizedBaseUrl, token)

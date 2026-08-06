@@ -110,7 +110,13 @@ const IMAGE_COMPRESS_QUALITY = 0.82;
 const IMAGE_COMPRESS_TARGET_BYTES = 1_500_000;
 const FILE_URL_RE = /^file:\/\//i;
 const HTTP_URL_RE = /^https?:\/\//i;
-const DEFAULT_AGENT_NAME = "openwork";
+// Upstream OpenWork assumed a project's own default agent would literally be
+// named "openwork". OpenCode's actual hardcoded default is "build" (MONOLITH
+// gives it its own disciplined prompt via config — see seed-opencode-config.mjs
+// — but its NAME can't be changed, since OpenCode picks it as default by that
+// exact string). Filtering on the real default name here is what keeps it out
+// of the agent picker/mention list instead of leaking as a bare "build" entry.
+const DEFAULT_AGENT_NAME = "build";
 
 function isNonDefaultAgent(agent: Agent) {
   return agent.name !== DEFAULT_AGENT_NAME;
