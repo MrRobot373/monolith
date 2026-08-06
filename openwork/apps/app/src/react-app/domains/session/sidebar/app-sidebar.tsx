@@ -106,6 +106,8 @@ import { useBrandLogoUrl } from "../../cloud/brand-theme";
 import { MonolithMark } from "../../../design-system/monolith-mark";
 import { WorkspaceIcon } from "../../../design-system/workspace-icon";
 import { getSessionActivityStatusLabel, type SessionActivityStatus } from "../status/session-activity-store";
+import { activityStatusToOrbPreset } from "../status/activity-orb-state";
+import { ThinkingOrb } from "thinking-orbs";
 
 
 interface SessionStatusIndicatorProps {
@@ -122,18 +124,20 @@ function SessionStatusIndicator({ className, status, isStreaming, isActive }: Se
   const title = activityTitle ?? (isStreaming ? t("workspace_list.session_streaming") : t("workspace_list.session_active"));
 
   if (isStreaming) {
+    // Same state -> orb mapping as the chat surface, so a session reads the
+    // same in the list as it does when open. The orb is strictly monochrome
+    // by design, so the old sky/red tints don't apply to it — the per-state
+    // animation (e.g. "connecting" for waiting) carries that signal instead.
+    const preset = activityStatusToOrbPreset(
+      isSessionActivityStatus(status) ? status : "thinking",
+    ) ?? { state: "working" as const, speed: 1 };
     return (
       <span
-        className={cn(
-          "flex size-3.5 shrink-0 items-center justify-center",
-          status === "waiting" && "text-sky-9",
-          status === "error" && "text-red-9",
-          className,
-        )}
+        className={cn("flex size-5 shrink-0 items-center justify-center", className)}
         title={title}
         aria-label={title}
       >
-        <Loader2 className="size-3.5 animate-spin" />
+        <ThinkingOrb state={preset.state} size={20} speed={preset.speed} aria-hidden="true" />
       </span>
     );
   }
