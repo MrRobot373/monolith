@@ -99,6 +99,24 @@ export function createMonolithScheduler(options) {
     fs.writeFileSync(storePath, JSON.stringify(store, null, 2) + "\n");
   }
 
+  // Same identity helper the chat and MCP-catalog stores use. Falls back to
+  // "local" when auth is off (native single-user), which collapses every
+  // caller into one owner — the intended behaviour there.
+  function actorOf(req) {
+    return req?.monolithUser?.email || req?.monolithUser?.id || "local";
+  }
+
+  /**
+   * Schedules created before ownership existed have no `createdBy`. Those stay
+   * visible to everyone rather than becoming orphaned and unreachable — a
+   * deliberate backward-compatibility choice, since silently hiding a user's
+   * existing schedules (and with them, their running automation) would be
+   * worse than leaving legacy rows shared.
+   */
+  function canAccess(schedule, actor) {
+    return !schedule.createdBy || schedule.createdBy === actor;
+  }
+
   function authHeaders() {
     const headers = { "content-type": "application/json" };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -323,9 +341,10 @@ export function createMonolithScheduler(options) {
 
     const respond = async () => {
       const store = loadStore();
+      const actor = actorOf(req);
 
       if (req.method === "GET" && !id) {
-        sendJson(res, 200, { schedules: store.schedules });
+        sendJson(res, 200, { schedules: store.schedules.filter((entry) => canAccess(entry, actor)) });
         return;
       }
 
@@ -338,6 +357,7 @@ export function createMonolithScheduler(options) {
         }
         schedule.id = crypto.randomBytes(8).toString("hex");
         schedule.createdAt = nowMs();
+        schedule.createdBy = actor;
         schedule.runs = [];
         schedule.nextRunAt = schedule.enabled ? computeNextRun(schedule.cadence) : null;
         store.schedules.push(schedule);
@@ -347,7 +367,10 @@ export function createMonolithScheduler(options) {
       }
 
       const schedule = store.schedules.find((entry) => entry.id === id);
-      if (!schedule) {
+      // A schedule owned by someone else is reported as absent rather than
+      // forbidden, so the response can't be used to enumerate other users'
+      // schedule IDs.
+      if (!schedule || !canAccess(schedule, actor)) {
         sendJson(res, 404, { ok: false, error: "schedule not found" });
         return;
       }
@@ -369,6 +392,8 @@ export function createMonolithScheduler(options) {
       }
 
       if (req.method === "DELETE") {
+        // Guarded by the canAccess() check above, so this can only remove a
+        // schedule the caller owns (or a legacy ownerless one).
         store.schedules = store.schedules.filter((entry) => entry.id !== id);
         saveStore(store);
         sendJson(res, 200, { ok: true });
