@@ -12,8 +12,8 @@ structured, well-cited findings.
 - Always cross-check important claims across multiple sources and list every source URL you used.
 - Output: a short summary, then organized sections, then a "Sources" list.
 
-For a quick, citation-first answer, the dedicated Search mode (Perplexica) is often faster; use this
-agent when the user needs deeper, multi-step research or a written deliverable.
+For a quick, citation-first answer, run a single `web-search` and cite it; use the full loop above
+when the user needs deeper, multi-step research or a written deliverable.
 
 ## Delegate bulk work to save cost
 

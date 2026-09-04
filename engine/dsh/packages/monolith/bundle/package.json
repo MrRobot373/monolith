@@ -1,0 +1,23 @@
+{
+  "name": "@monolith/dsh-bundle",
+  "description": "The MONOLITH deployment bundle: the product patch layer over dsh-base + dsh-web-app, plus the MONOLITH client plugins it rosters",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@monolith/dsh-client-ui-brand": "workspace:^"
+  }
+}

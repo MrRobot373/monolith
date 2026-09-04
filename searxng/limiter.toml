@@ -1,7 +1,0 @@
-# Bot-detection / rate-limit tuning. The limiter itself is disabled in
-# settings.yml (server.limiter: false); this file just needs to stay
-# schema-valid for the current searxng image. The previous keys
-# (`botdetection.enabled`, `ip_limit.link_token_ip`) were removed upstream
-# and crashed the container at startup.
-[botdetection.ip_limit]
-link_token = false

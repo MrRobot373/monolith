@@ -18,17 +18,24 @@ import {
 import { AppProviders } from "./react-app/shell/providers";
 import { AppRoot } from "./react-app/shell/app-root";
 import { startDeepLinkBridge } from "./react-app/shell/startup-deep-links";
+import { PENDING_PROMPT_KEY } from "./react-app/domains/home/pending-prompt";
 import "./app/index.css";
 
-// MONOLITH: the hub launcher deep-links a domain agent via ?agent=<name>.
-// Persist it into prefs before React mounts so route redirects can't strip it.
+// MONOLITH: the hub launcher deep-links a domain agent via ?agent=<name>, and
+// its search bar carries the typed question as ?q=<text>. Persist both before
+// React mounts so route redirects can't strip them.
 try {
-  const a = new URLSearchParams(window.location.search).get("agent");
+  const params = new URLSearchParams(window.location.search);
+  const a = params.get("agent");
   if (a && a.trim()) {
     const KEY = "openwork.preferences";
     const prefs = JSON.parse(window.localStorage.getItem(KEY) || "{}");
     prefs.selectedAgent = a.trim();
     window.localStorage.setItem(KEY, JSON.stringify(prefs));
+  }
+  const q = params.get("q");
+  if (q && q.trim()) {
+    window.sessionStorage.setItem(PENDING_PROMPT_KEY, q.trim());
   }
 } catch {
   /* ignore */

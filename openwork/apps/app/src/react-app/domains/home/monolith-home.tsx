@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import { useState, type ComponentType } from "react";
+
 import {
   ArrowUp,
   BarChart3,
@@ -13,6 +14,7 @@ import {
 
 import { t } from "../../../i18n";
 import { MonolithMark } from "../../design-system/monolith-mark";
+import { takePendingPrompt } from "./pending-prompt";
 
 type Suggestion = {
   id: string;
@@ -60,7 +62,8 @@ type MonolithStartComposerProps = {
  * `onCreateTaskWithPrompt`, after which the full composer takes over.
  */
 export function MonolithStartComposer({ workspaceName, disabled, onStart }: MonolithStartComposerProps) {
-  const [text, setText] = useState("");
+  // MONOLITH: prefill a question handed over by the hub's search bar (?q=).
+  const [text, setText] = useState(takePendingPrompt);
 
   const submit = () => {
     const prompt = text.trim();

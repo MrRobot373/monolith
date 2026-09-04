@@ -55,8 +55,6 @@
     <div class="brand"><span class="dot"></span><span id="brand">MONOLITH</span></div>
     <nav class="nav">
       <a href="#" class="active">🏠 <span>Home</span></a>
-      <a id="discoverLink" href="#">🧭 <span>Discover</span></a>
-      <a id="libraryLink" href="#">📚 <span>Library</span></a>
       <div class="label">Modes</div>
       <div id="sideModes"></div>
     </nav>
@@ -87,23 +85,19 @@
 
   document.getElementById('brand').textContent = cfg.product || 'MONOLITH';
   document.title = cfg.product || 'MONOLITH';
-  document.getElementById('discoverLink').href = cfg.searchBase + '/discover';
-  document.getElementById('libraryLink').href = cfg.searchBase + '/library';
 
   const icons = {
-    "Research":"🔍","Law":"⚖️","Doctor / Health":"❤️","Finance":"📊",
-    "Deep Research":"📖","Code":"💻","Cowork":"🧩","Agent":"⚡"
+    "Research":"📖","Code":"💻","Cowork":"🧩","Agent":"⚡"
   };
   const target = m =>
-    m.engine === 'search'
-      ? cfg.searchBase + '/'
-      : cfg.openworkBase + (m.agent ? '/?agent=' + encodeURIComponent(m.agent) : '/');
+    cfg.openworkBase + (m.agent ? '/?agent=' + encodeURIComponent(m.agent) : '/');
 
-  // Search bar -> Vane
+  // Search bar -> the research agent, with the question prefilled in the composer.
   document.getElementById('searchForm').addEventListener('submit', e => {
     e.preventDefault();
     const q = document.getElementById('q').value.trim();
-    window.location.href = cfg.searchBase + '/' + (q ? '?q=' + encodeURIComponent(q) : '');
+    window.location.href =
+      cfg.openworkBase + '/?agent=research' + (q ? '&q=' + encodeURIComponent(q) : '');
   });
 
   // Cards

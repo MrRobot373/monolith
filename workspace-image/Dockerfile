@@ -53,8 +53,7 @@ ENV MONOLITH_ENGINE_DATA_DIR=/data/orchestrator \
     MONOLITH_WORKSPACE=/workspace
 
 # --- Phase 5: domain agents + skills (seeded into each workspace on boot) ----
-# Agent personas (Legal/Finance/Health/Research/Code) come from the repo; the
-# Legal & Finance skills come from Anthropic's open-source knowledge-work-plugins.
+# Agent personas (Chat/Research/Code) come from the repo.
 COPY workspace-image/seed/ /opt/monolith-seed/
 COPY workspace-image/seed-models.mjs /opt/monolith-seed/seed-models.mjs
 # Tools guide Tier 3/4: the built-in web-search MCP server + the MCP catalog
@@ -63,12 +62,6 @@ COPY workspace-image/seed-models.mjs /opt/monolith-seed/seed-models.mjs
 COPY native/mcp/web-tools.mjs /opt/monolith-seed/mcp/web-tools.mjs
 COPY monolith-server/mcp-catalog.mjs /opt/monolith-seed/mcp-catalog.mjs
 COPY monolith-server/mcp-catalog-data.mjs /opt/monolith-seed/mcp-catalog-data.mjs
-RUN git clone --depth 1 https://github.com/anthropics/knowledge-work-plugins.git /tmp/kwp \
- && mkdir -p /opt/monolith-seed/.opencode/skills \
- && cp -r /tmp/kwp/legal/skills/.   /opt/monolith-seed/.opencode/skills/ 2>/dev/null || true \
- && cp -r /tmp/kwp/finance/skills/. /opt/monolith-seed/.opencode/skills/ 2>/dev/null || true \
- && rm -rf /tmp/kwp \
- || echo "[warn] knowledge-work-plugins clone failed; domain agents still work without their skills"
 # ----------------------------------------------------------------------------
 
 EXPOSE 8787

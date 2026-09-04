@@ -1,3 +1,4 @@
+import os
 import sys
 import urllib.request
 import urllib.parse
@@ -89,11 +90,14 @@ def main():
     query = " ".join(sys.argv[1:])
     results = []
 
-    # 1. Try Local Docker SearXNG (if in Docker stack)
-    try:
-        results = search_searxng(query, "http://searxng:8080")
-    except Exception:
-        pass
+    # 1. Try a self-hosted SearXNG named by SEARXNG_URL (same knob the
+    #    monolith-web MCP uses; the stack no longer ships a SearXNG service).
+    endpoint = os.environ.get("SEARXNG_URL", "").strip().rstrip("/")
+    if endpoint:
+        try:
+            results = search_searxng(query, endpoint)
+        except Exception:
+            pass
 
     # 2. Try Localhost SearXNG (if running natively but with local SearXNG)
     if not results:
