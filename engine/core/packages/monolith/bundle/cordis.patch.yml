@@ -166,3 +166,16 @@
 # path, one place spend is accounted.
 - id: llm-deepseek
   disabled: true
+
+# ── product: task registry ───────────────────────────────────────────────
+
+# Walking skeleton for Master Plan Phase 1 (see
+# docs/adr/0002-task-project-run-ownership-on-engine-core.md). A Task groups
+# Run attempts (each an existing engine Session id) under a Project (an
+# existing engine Workspace record) — no new HTTP API, no parallel server,
+# just another row on this same product-delta patch. Depends on the shipped
+# storageDomain service, which monolith-base already mounts for
+# monolith-workspace.
+- insert:
+    - id: product-tasks
+      name: '@monolith/product-workspace'

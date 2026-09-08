@@ -1,0 +1,45 @@
+{
+  "name": "@monolith/product-workspace",
+  "description": "Task registry (ctx.productTasks): durable product Task records grouping Run attempts (engine Sessions) over a Project (an engine Workspace record)",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/storage-domain": "workspace:^",
+    "@monolith/workspace": "workspace:^"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/storage": "workspace:^",
+    "@monolith/storage-domain": "workspace:^",
+    "@monolith/workspace": "workspace:^"
+  }
+}
