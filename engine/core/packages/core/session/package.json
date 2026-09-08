@@ -1,0 +1,63 @@
+{
+  "name": "@monolith/session",
+  "description": "Event-sourced session store for the MONOLITH",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/core/session"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./chunk-rows": {
+      "types": "./lib/types/chunk-rows.d.ts",
+      "default": "./lib/types/chunk-rows.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json",
+    "./surface": {
+      "types": "./lib/types/surface.d.ts",
+      "default": "./lib/types/surface.js"
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/scope": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/invariants": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/typert-registry": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/llm": "workspace:^",
+    "@monolith/brand": "workspace:^",
+    "@monolith/util-values": "workspace:^"
+  }
+}

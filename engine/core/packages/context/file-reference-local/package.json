@@ -1,0 +1,51 @@
+{
+  "name": "@monolith/file-reference-local",
+  "description": "Local-filesystem ctx.fileReferences provider with bounded fuzzy indexes",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/context/file-reference-local"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./search": {
+      "types": "./lib/types/search.d.ts",
+      "default": "./lib/types/search.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

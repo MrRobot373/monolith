@@ -1,0 +1,39 @@
+{
+  "name": "@monolith/cmdline",
+  "description": "Immutable command-line handoff from a monolith launcher to any app plugin that injects cmdlineArgs",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/boot/cmdline"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "commander": "^15.0.0",
+    "@monolith/cordis": "workspace:^"
+  }
+}

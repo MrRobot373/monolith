@@ -1,0 +1,86 @@
+{
+  "name": "@monolith/experimental-agent-team",
+  "description": "Implicit-root Agent Teams roster, durable peer mailbox, and shared task DAG",
+  "version": "0.1.2-rc.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/experimental/agent-team"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client.d.ts",
+      "default": "./lib/types/client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-loop": "workspace:^",
+    "@monolith/agent-loop-testkit": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-persistence-jsonl": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/subagent-fork-in-process": "workspace:^",
+    "@monolith/subagent-spawn-in-process": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^"
+  }
+}

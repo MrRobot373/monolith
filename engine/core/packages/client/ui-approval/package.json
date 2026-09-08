@@ -1,0 +1,70 @@
+{
+  "name": "@monolith/client-ui-approval",
+  "description": "Approval composer takeover over the scoped Remote Event waterfall",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-approval"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/api-remotes",
+        "@monolith/api-session-controller",
+        "@monolith/client-locale",
+        "@monolith/client-ui-conversation",
+        "@monolith/client-ui-renderer",
+        "@monolith/client-ui-session"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/api-remotes": "workspace:^",
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-ui-conversation": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

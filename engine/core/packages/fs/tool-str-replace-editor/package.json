@@ -1,0 +1,53 @@
+{
+  "name": "@monolith/tool-str-replace-editor",
+  "description": "Model-facing view, create, literal replace, and line insert tool over the Harness filesystem service",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/fs/tool-str-replace-editor"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/fs": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/fs": "workspace:^",
+    "@monolith/fs-local": "workspace:^",
+    "@monolith/fs-observation-policy": "workspace:^",
+    "@monolith/fs-sandbox": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  }
+}

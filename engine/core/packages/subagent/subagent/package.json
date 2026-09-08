@@ -1,0 +1,136 @@
+{
+  "name": "@monolith/subagent",
+  "description": "Abstract subagent seam (ctx.subagents): named-provider registry for delegating to child agents",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/subagent/subagent"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./internal": {
+      "types": "./lib/types/internal.d.ts",
+      "default": "./lib/types/internal.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client.d.ts",
+      "default": "./lib/types/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/util-values": "workspace:^",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/attachment": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-projection-cache": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/user-approval": "workspace:^",
+    "@monolith/util-time": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@monolith/agent-presets": {
+      "optional": true
+    },
+    "@monolith/sandbox": {
+      "optional": true
+    },
+    "@monolith/sandbox-policy": {
+      "optional": true
+    },
+    "@monolith/session-persistence": {
+      "optional": true
+    },
+    "@monolith/session-projection": {
+      "optional": true
+    },
+    "@monolith/session-projection-cache": {
+      "optional": true
+    },
+    "@monolith/session-query": {
+      "optional": true
+    },
+    "@monolith/jobs": {
+      "optional": true
+    },
+    "@monolith/user-approval": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/attachment": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-projection-cache": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/storage": "workspace:^",
+    "@monolith/storage-domain": "workspace:^",
+    "@monolith/storage-json": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/user-approval": "workspace:^",
+    "@monolith/util-time": "workspace:^"
+  }
+}

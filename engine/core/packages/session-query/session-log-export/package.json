@@ -1,0 +1,80 @@
+{
+  "name": "@monolith/session-log-export",
+  "description": "Web Session-log export command and shared download dialog",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/session-query/session-log-export"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^",
+    "fflate": "^0.8.2",
+    "@monolith/brand": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-persistence": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/attachment": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-store": "workspace:^",
+    "@monolith/client-ui-commands": "workspace:^",
+    "@monolith/client-ui-conversation": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/commands": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/client-locale",
+        "@monolith/client-ui-commands",
+        "@monolith/client-ui-conversation",
+        "@monolith/client-ui-renderer",
+        "@monolith/client-ui-session"
+      ],
+      "platform": "web"
+    }
+  }
+}

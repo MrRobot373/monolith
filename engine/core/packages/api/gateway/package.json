@@ -1,0 +1,73 @@
+{
+  "name": "@monolith/api-gateway",
+  "description": "Typert Remote Host dispatcher and Client API endpoint",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/api/gateway"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/typert-registry",
+        "@monolith/client-connection"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/deque": "workspace:^",
+    "@monolith/timeout": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "ws": "^8.21.0",
+    "@monolith/typert-protocol": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/host-webserver": "workspace:^",
+    "@monolith/typert-registry": "workspace:^",
+    "@monolith/util-crypto": "workspace:^",
+    "@types/ws": "^8.18.1",
+    "@monolith/cordis": "workspace:^",
+    "zod": "^4.4.3"
+  }
+}

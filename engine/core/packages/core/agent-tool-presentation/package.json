@@ -1,0 +1,45 @@
+{
+  "name": "@monolith/agent-tool-presentation",
+  "description": "Agent-plane presentation selector: composes one agent's tools as PTC mode, native, or both",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/core/agent-tool-presentation"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/code-runtime": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "@monolith/workflow-worker-thread",
+  "description": "worker-thread workflow engine: executes model-written orchestration scripts off the host event loop, bridging agent() calls back to ctx.subagents",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/workflow/workflow-worker-thread"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./worker": {
+      "types": "./lib/types/worker.d.ts",
+      "default": "./lib/worker.cjs"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/worker.cjs",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/workflow": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/util-values": "workspace:^",
+    "@monolith/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-loop": "workspace:^",
+    "@monolith/agent-loop-testkit": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/subagent-spawn-in-process": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/workflow": "workspace:^",
+    "tsx": "^4.19.2",
+    "@monolith/http-proxy": "workspace:^"
+  }
+}

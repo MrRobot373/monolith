@@ -1,0 +1,69 @@
+{
+  "name": "@monolith/client-ui-schedule",
+  "description": "Read-only active Schedule catalog in the Web Session header",
+  "version": "0.1.2-rc.1",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/client-locale",
+        "@monolith/client-ui-conversation",
+        "@monolith/client-ui-primitives"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-schedule"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-test-runtime": "workspace:^",
+    "@monolith/client-ui-conversation": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/schedule": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.0",
+    "@monolith/cordis": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

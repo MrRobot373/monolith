@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling==1.30.1"]
+build-backend = "hatchling.build"
+
+[project]
+name = "monolith-runtime-bin"
+version = "0.0.0.dev0"
+description = "Bundled monolith CLI runtime for the MONOLITH Python SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "MONOLITH" }]
+
+[project.urls]
+Homepage = "https://github.com/MrRobot373/monolith"
+Documentation = "https://github.com/MrRobot373/monolith/blob/master/python/sdk-runtime/README.md"
+Issues = "https://github.com/MrRobot373/monolith/issues"
+Source = "https://github.com/MrRobot373/monolith"
+
+[project.scripts]
+monolith = "monolith_runtime:main"
+
+# Include the injected monolith executable and sidecars; exclude the dev-only node closure.
+[tool.hatch.build]
+artifacts = ["src/monolith_runtime/runtime/monolith-sdk-runtime-*"]
+exclude = ["src/monolith_runtime/runtime/node"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/monolith_runtime"]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+
+[tool.hatch.build.targets.sdist.hooks.custom]

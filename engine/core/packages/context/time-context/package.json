@@ -1,0 +1,65 @@
+{
+  "name": "@monolith/time-context",
+  "description": "Opt-in durable per-step context with the current time and elapsed time",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/context/time-context"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/util-values": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-loop": "workspace:^",
+    "@monolith/agent-loop-testkit": "workspace:^",
+    "@monolith/app-boot": "workspace:^",
+    "@monolith/bash-local": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/loader-smoke": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-checkpoint-policy": "workspace:^",
+    "@monolith/session-persistence-jsonl": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/subprocess-local": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^"
+  }
+}

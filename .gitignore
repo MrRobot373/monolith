@@ -28,9 +28,9 @@ evals/sandboxes/
 # environment, not MONOLITH product source.
 .mcp.json
 skills-lock.json
-.agents/
-agent/
-.claude/
+/.agents/
+/agent/
+/.claude/
 
 # OS / editor cruft
 Thumbs.db

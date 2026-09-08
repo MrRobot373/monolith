@@ -1,0 +1,47 @@
+{
+  "name": "@monolith/sandbox-local",
+  "description": "Local process-sandbox backends for the MONOLITH sandbox seam: bwrap, the npm-distributed landlock-run launcher, macOS Seatbelt, or the Windows ACL restricted-token runner — functionally probed, fail-closed",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/sandbox/sandbox-local"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/session": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/sandbox-windows-acl": "workspace:^",
+    "@monolith/util-values": "workspace:^",
+    "@monolith/node-addon-landlock-run": "workspace:^",
+    "@monolith/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/session": "workspace:^"
+  }
+}

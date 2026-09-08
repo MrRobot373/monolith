@@ -1,0 +1,63 @@
+{
+  "name": "@monolith/client-ui-layout",
+  "description": "Shell plugin: three-column AppFrame with drag handles, ctx.layout viewing-state service (navigation + panels)",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-layout"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/client-locale",
+        "@monolith/client-ui-renderer",
+        "@monolith/client-ui-session",
+        "@monolith/client-ui-theme"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-store": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/client-ui-theme": "workspace:^",
+    "@types/react": "~18.3.1",
+    "@monolith/cordis": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

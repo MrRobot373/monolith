@@ -1,0 +1,74 @@
+{
+  "name": "@monolith/client-ui-settings-general",
+  "description": "Settings ownerless-copy and product onboarding plugin: the General section, shell trigger/header chrome content, settings dictionaries, and the versioned welcome notice",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-settings-general"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/client-ui-settings",
+        "@monolith/client-locale",
+        "@monolith/client-connection",
+        "@monolith/api-remotes",
+        "@monolith/client-ui-sidebar"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^",
+    "clsx": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/api-remotes": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-store": "workspace:^",
+    "@monolith/client-test-runtime": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-settings": "workspace:^",
+    "@monolith/client-ui-sidebar": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/settings": "workspace:^"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

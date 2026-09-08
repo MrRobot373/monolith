@@ -1,0 +1,42 @@
+{
+  "name": "@monolith/experimental-code-runtime-python",
+  "description": "CPython subprocess implementation of the MONOLITH code-execution seam",
+  "version": "0.1.2-rc.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/experimental/code-runtime-python"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "py/**/*.py",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/code-runtime": "workspace:^",
+    "@monolith/timeout": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/util-values": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/code-runtime": "workspace:^",
+    "@monolith/timeout": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/util-values": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "private": true
+}

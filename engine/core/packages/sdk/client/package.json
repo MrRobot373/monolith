@@ -1,0 +1,43 @@
+{
+  "name": "@monolith/sdk-client",
+  "description": "TypeScript client SDK for driving a MONOLITH runtime subprocess over stdio JSON-RPC: the MONOLITH high-level turns API and the lower-level HarnessClient",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/sdk/client"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/cli": "workspace:*"
+  },
+  "peerDependencies": {
+    "@monolith/llm": "workspace:^",
+    "@monolith/sdk-protocol": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/llm": "workspace:^",
+    "@monolith/sdk-protocol": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

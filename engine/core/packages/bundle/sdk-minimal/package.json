@@ -1,0 +1,73 @@
+{
+  "name": "@monolith/sdk-minimal",
+  "description": "The standalone minimal SDK profile bundle: JSON-RPC, one DeepSeek adapter, persistent shell, editor, and JSONL sessions",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/bundle/sdk-minimal"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "monolith": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@monolith/cordis-plugin-timer": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-loop": "workspace:^",
+    "@monolith/deepseek-llm-api-extensions": "workspace:^",
+    "@monolith/fs-local": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/jobs-local": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/llm-deepseek": "workspace:^",
+    "@monolith/llm-retry": "workspace:^",
+    "@monolith/plugin-package-inventory-deepseek": "workspace:^",
+    "@monolith/sandbox-local": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/sdk-app": "workspace:^",
+    "@monolith/sdk-jsonrpc-server": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-log-deepseek": "workspace:^",
+    "@monolith/session-persistence-jsonl": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-title": "workspace:^",
+    "@monolith/subprocess-local": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/terminal": "workspace:^",
+    "@monolith/terminal-bash": "workspace:^",
+    "@monolith/tool-bash-persistent": "workspace:^",
+    "@monolith/tool-pwsh-persistent": "workspace:^",
+    "@monolith/tool-str-replace-editor": "workspace:^",
+    "@monolith/tools": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^"
+  }
+}

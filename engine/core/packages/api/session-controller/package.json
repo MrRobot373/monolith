@@ -1,0 +1,147 @@
+{
+  "name": "@monolith/api-session-controller",
+  "description": "Session Remote commands, cold reads, and live control transport",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/api/session-controller"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./remote-events": {
+      "types": "./lib/types/remote-events.d.ts",
+      "default": "./lib/types/remote-events.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "external": [
+        "@monolith/api-gateway/client"
+      ],
+      "inject": [
+        "@monolith/api-gateway"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/deque": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-default-model": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/api-gateway": "workspace:^",
+    "@monolith/attachment": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/native-command": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-projection-cache": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/session-title": "workspace:^",
+    "@monolith/skill": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/typert-registry": "workspace:^",
+    "@monolith/util-time": "workspace:^",
+    "@monolith/util-workspace-path": "workspace:^",
+    "@monolith/workspace": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@monolith/jobs": {
+      "optional": true
+    },
+    "@monolith/session-persistence": {
+      "optional": true
+    },
+    "@monolith/session-projection-cache": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-default-model": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/api-gateway": "workspace:^",
+    "@monolith/attachment": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/client-store": "workspace:^",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/native-command": "workspace:^",
+    "@monolith/permission-presets": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-projection-cache": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/session-title": "workspace:^",
+    "@monolith/skill": "workspace:^",
+    "@monolith/storage": "workspace:^",
+    "@monolith/storage-domain": "workspace:^",
+    "@monolith/storage-json": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/typert-registry": "workspace:^",
+    "@monolith/util-crypto": "workspace:^",
+    "@monolith/util-time": "workspace:^",
+    "@monolith/util-workspace-path": "workspace:^",
+    "@monolith/workspace": "workspace:^"
+  }
+}

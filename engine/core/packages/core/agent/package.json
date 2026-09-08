@@ -1,0 +1,60 @@
+{
+  "name": "@monolith/agent",
+  "description": "Agent interface, registry, initiator scope, and event vocabulary for the MONOLITH",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/core/agent"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/typert-registry": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  }
+}

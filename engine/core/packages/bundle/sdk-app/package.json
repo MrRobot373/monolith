@@ -1,0 +1,49 @@
+{
+  "name": "@monolith/sdk-app",
+  "description": "The monolith SDK profile bundle: stdio JSON-RPC serving and process lifecycle over monolith-base",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/bundle/sdk-app"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "monolith": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@monolith/cmdline": "workspace:^",
+    "@monolith/sdk-jsonrpc-server": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "commander": "^15.0.0"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

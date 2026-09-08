@@ -1,0 +1,62 @@
+{
+  "name": "@monolith/tool-terminal",
+  "description": "Six model-facing persistent PTY tools with owner isolation and generic background-job integration",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/terminal/tool-terminal"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/terminal": "workspace:^",
+    "@monolith/output-retention": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/terminal": "workspace:^",
+    "@monolith/terminal-bash": "workspace:^",
+    "@monolith/output-retention": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/subprocess-local": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/jobs-local": "workspace:^",
+    "@monolith/tool-jobs": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  }
+}

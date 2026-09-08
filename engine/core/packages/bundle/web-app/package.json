@@ -1,0 +1,127 @@
+{
+  "name": "@monolith/web-app",
+  "description": "The monolith browser-surface bundle: the web patch layer over monolith-base plus the runtime glue plugin (frontend dist serving, web-surface prompt, bash runtime variables, URL line)",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/bundle/web-app"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./startup": {
+      "types": "./lib/types/startup.d.ts",
+      "default": "./lib/startup.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/startup.js",
+    "cordis.patch.yml",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "monolith": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/tool-subagent": "workspace:^",
+    "@monolith/api-remotes": "workspace:^",
+    "@monolith/app-boot": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/client-hmr": "workspace:^",
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-modules": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-agent-preset": "workspace:^",
+    "@monolith/client-ui-attachment": "workspace:^",
+    "@monolith/client-ui-approval": "workspace:^",
+    "@monolith/client-ui-brand-official": "workspace:^",
+    "@monolith/client-ui-commands": "workspace:^",
+    "@monolith/client-ui-chat": "workspace:^",
+    "@monolith/client-ui-conversation": "workspace:^",
+    "@monolith/client-ui-cordis": "workspace:^",
+    "@monolith/client-ui-deliverables": "workspace:^",
+    "@monolith/client-ui-directory-picker-browse": "workspace:^",
+    "@monolith/client-ui-directory-picker-native": "workspace:^",
+    "@monolith/client-ui-message-feedback": "workspace:^",
+    "@monolith/client-ui-goal": "workspace:^",
+    "@monolith/client-ui-layout": "workspace:^",
+    "@monolith/client-ui-model-selection": "workspace:^",
+    "@monolith/client-ui-settings-models": "workspace:^",
+    "@monolith/client-ui-settings-plugin-inventory": "workspace:^",
+    "@monolith/client-ui-permission-presets": "workspace:^",
+    "@monolith/client-ui-plan": "workspace:^",
+    "@monolith/client-ui-schedule": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/client-ui-settings-plugins": "workspace:^",
+    "@monolith/client-ui-user-questions": "workspace:^",
+    "@monolith/client-ui-settings": "workspace:^",
+    "@monolith/client-ui-settings-general": "workspace:^",
+    "@monolith/client-ui-sidebar": "workspace:^",
+    "@monolith/client-ui-skill": "workspace:^",
+    "@monolith/client-ui-input-trigger": "workspace:^",
+    "@monolith/client-ui-reference": "workspace:^",
+    "@monolith/client-ui-subagent": "workspace:^",
+    "@monolith/client-ui-jobs": "workspace:^",
+    "@monolith/client-ui-theme": "workspace:^",
+    "@monolith/client-ui-tool": "workspace:^",
+    "@monolith/client-ui-workflow-run": "workspace:^",
+    "@monolith/client-ui-trajectory": "workspace:^",
+    "@monolith/client-ui-workspace": "workspace:^",
+    "@monolith/cmdline": "workspace:^",
+    "@monolith/code-runtime-worker-thread": "workspace:^",
+    "@monolith/cordis-client-runner": "workspace:^",
+    "@monolith/cordis-host-runner": "workspace:^",
+    "@monolith/web-frontend": "workspace:^",
+    "@monolith/host-frontend-static": "workspace:^",
+    "@monolith/host-directory-picker-auto": "workspace:^",
+    "@monolith/host-directory-picker-browse": "workspace:^",
+    "@monolith/host-directory-picker-native": "workspace:^",
+    "@monolith/host-plugin-inventory": "workspace:^",
+    "@monolith/host-webserver": "workspace:^",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/file-reference-local": "workspace:^",
+    "@monolith/launch-environment": "workspace:^",
+    "@monolith/message-feedback": "workspace:^",
+    "@monolith/session-reference": "workspace:^",
+    "@monolith/session-log-export": "workspace:^",
+    "@monolith/session-stats": "workspace:^",
+    "@monolith/session-turn-outline": "workspace:^",
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/api-settings-controller": "workspace:^",
+    "@monolith/api-workspace-controller": "workspace:^",
+    "@monolith/subprocess": "workspace:^",
+    "@monolith/workspace": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "commander": "^15.0.0",
+    "open": "^11.0.0"
+  },
+  "peerDependencies": {
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/shell-env": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/shell-env": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "name": "@monolith/token-meter",
+  "description": "Replay-aware token measurement service (ctx.tokenMeter) for the MONOLITH",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/llm/token-meter"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client.d.ts",
+      "default": "./lib/types/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/compaction": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/llm-retry": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/util-values": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/compaction": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/llm-retry": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  }
+}

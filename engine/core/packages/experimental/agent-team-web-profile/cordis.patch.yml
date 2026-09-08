@@ -1,0 +1,6 @@
+# Private Agent Teams Web layer. Apply after monolith-web-app and the host-side
+# monolith-agent-team-profile so the browser mounts only when the Team service is present.
+
+- insert:
+    - id: ui-agent-team
+      name: '@monolith/experimental-client-ui-agent-team'

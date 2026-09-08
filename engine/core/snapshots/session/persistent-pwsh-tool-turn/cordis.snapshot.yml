@@ -1,0 +1,95 @@
+# Keyless replay counterpart to persistent-pwsh.cordis.yml.
+- id: llm-deepseek
+  name: '@monolith/llm-deepseek'
+  disabled: true
+
+- insert:
+    - id: llm-replay
+      name: '@monolith/llm-replay'
+      config:
+        providers:
+          - id: deepseek-official
+            name: DeepSeek
+            models:
+              - id: deepseek-v4-pro
+
+- insert:
+    - id: terminal
+      name: '@monolith/terminal'
+
+- id: sandbox-policy
+  name: '@monolith/sandbox-policy'
+  config:
+    mode: danger-full-access
+    workspaceRoot: !!js process.cwd()
+
+- id: subprocess
+  name: '@monolith/subprocess-local'
+
+- insert:
+    - id: terminal-pwsh
+      name: '@monolith/terminal-bash'
+      config:
+        shellDialect: pwsh
+        timeoutMs: 30000
+
+- id: agent-default-model
+  name: '@monolith/agent-default-model'
+  config:
+    provider: deepseek-official
+    model: deepseek-v4-pro
+
+- id: session-persistence-jsonl
+  name: '@monolith/session-persistence-jsonl'
+  config:
+    root: !!js monolithHomePath('sessions')
+    compression: none
+
+- id: agent-instructions
+  name: '@monolith/agent-instructions'
+  disabled: true
+
+- id: system-prompt
+  name: '@monolith/system-prompt'
+  config:
+    persona: You are a concise snapshot agent working in {{cwd}}.
+
+- id: tool-jobs
+  name: '@monolith/tool-jobs'
+  disabled: true
+
+- id: goal
+  name: '@monolith/goal'
+  disabled: true
+
+- id: goal-round-driver
+  name: '@monolith/goal-round-driver'
+  disabled: true
+
+- id: command-goal
+  name: '@monolith/command-goal'
+  disabled: true
+
+- id: tool-goal
+  name: '@monolith/tool-goal'
+  disabled: true
+
+- id: skill
+  name: '@monolith/skill'
+  disabled: true
+
+- id: skill-filesystem
+  name: '@monolith/skill-filesystem'
+  disabled: true
+
+- id: tool-skill
+  name: '@monolith/tool-skill'
+  disabled: true
+
+- id: tool-bash
+  name: '@monolith/tool-bash'
+  disabled: true
+
+- insert:
+    - id: tool-pwsh-persistent
+      name: '@monolith/tool-pwsh-persistent'

@@ -1,0 +1,60 @@
+{
+  "name": "@monolith/experimental-inspector",
+  "description": "Experimental cross-realm CDP hub for Host debugging and Client Runtime inspection",
+  "version": "0.1.2-rc.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/experimental/inspector"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/util-crypto": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "ws": "^8.21.0"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/client-modules": "workspace:^",
+    "@monolith/host-webserver": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/host-webserver": "workspace:^",
+    "@types/ws": "^8.18.1",
+    "playwright": "^1.49.0",
+    "tsx": "^4.19.2"
+  }
+}

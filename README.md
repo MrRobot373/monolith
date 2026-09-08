@@ -8,9 +8,9 @@ models via Ollama).
 Assembled from open-source projects; built on the **MIT-licensed core of
 [OpenWork](https://github.com/different-ai/openwork)**.
 
-> **Status:** built and verified end-to-end on Docker. The engine is mid-migration onto
-> **[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)** — see
-> [engine/dsh/packages/monolith/](engine/dsh/packages/monolith/) for the MONOLITH delta and the
+> **Status:** built and verified end-to-end on Docker. The engine is mid-migration onto the
+> MONOLITH agent runtime in [engine/core/](engine/core/) — see
+> [engine/core/packages/monolith/](engine/core/packages/monolith/) for the product delta and the
 > deployment story that replaces the layout below.
 
 ---
@@ -89,7 +89,10 @@ openwork/              # upstream reference clone (webui builds the UI from here
 ## Licensing
 
 Uses only the **MIT core** of OpenWork (the FSL `openwork/ee` "den" platform is deliberately unused).
-DeepSeek Harness is MIT. Not legal advice — confirm before selling.
+The agent runtime in `engine/core/` is MIT; its upstream notices are retained in
+[engine/core/LICENSE](engine/core/LICENSE) and
+[engine/core/THIRD_PARTY_NOTICES.md](engine/core/THIRD_PARTY_NOTICES.md), as the licence requires.
+Not legal advice — confirm before selling.
 
 ## Notes / production follow-ups
 - **One password, per-host prompt:** login is HTTP Basic, so browsers prompt once per host

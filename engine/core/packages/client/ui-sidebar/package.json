@@ -1,0 +1,71 @@
+{
+  "name": "@monolith/client-ui-sidebar",
+  "description": "Sidebar plugin: session multi-level tree, search, grouping, state dots",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-sidebar"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/api-workspace-controller",
+        "@monolith/client-ui-renderer",
+        "@monolith/client-ui-layout",
+        "@monolith/client-ui-session",
+        "@monolith/client-ui-workspace",
+        "@monolith/client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "clsx": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/api-workspace-controller": "workspace:^",
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-test-runtime": "workspace:^",
+    "@monolith/client-ui-layout": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^",
+    "@monolith/client-ui-workspace": "workspace:^",
+    "@types/react": "~18.3.1",
+    "@monolith/cordis": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}
