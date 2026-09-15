@@ -3,8 +3,9 @@
  * attempts, over the domain data form. Walking-skeleton implementation for
  * Master Plan Phase 1 Day 4 (verify a new product package composes into the
  * bundle and boots) and Day 5 (a Task survives navigation/reload) — see
- * `docs/adr/0002-task-project-run-ownership-on-engine-core.md` Decisions 1-2
- * and 6. Modeled directly on `@monolith/workspace`'s registry shape.
+ * ADR 0002 (Task/Project/Run ownership on `engine/core`, in the MONOLITH
+ * repository's root `docs/adr` directory) Decisions 1-2 and 6. Modeled
+ * directly on `@monolith/workspace`'s registry shape.
  * @module @monolith/product-workspace
  */
 
@@ -13,6 +14,7 @@ import { Context, Service } from '@monolith/cordis'
 import type { SessionId } from '@monolith/session'
 import type { DomainGlobal, KvTable } from '@monolith/storage-domain'
 import type { WorkspaceId } from '@monolith/workspace'
+import { taskRunStatusProjectionDefinition } from './run-status.ts'
 import { taskDomainSpec } from './spec.ts'
 import type { TaskDomainState, TaskRecord } from './spec.ts'
 import type { Task, TaskId as TaskIdBrand, TaskPolicy } from './types.ts'
@@ -20,6 +22,8 @@ import type { Task, TaskId as TaskIdBrand, TaskPolicy } from './types.ts'
 export type { Task, TaskPolicy } from './types.ts'
 export { taskDomainSpec } from './spec.ts'
 export type { TaskDomainState, TaskRecord } from './spec.ts'
+export { taskRunStatusProjectionDefinition } from './run-status.ts'
+export type { PendingApproval, RunStatus, TaskRunStatusProjection } from './run-status.ts'
 
 /** Identifies one Task record (see `src/types.ts` for the brand rationale). */
 export type TaskId = TaskIdBrand
@@ -84,7 +88,7 @@ const toTask = (id: TaskId, record: TaskRecord): Task => ({
  * yet implemented). Hardening this is F03 scope, not this walking skeleton.
  */
 export class TaskRegistry extends Service {
-  static inject = ['storageDomain']
+  static inject = ['storageDomain', 'sessionProjections']
 
   private table?: KvTable<TaskId, TaskRecord>
   private global?: DomainGlobal<TaskDomainState>
@@ -95,13 +99,14 @@ export class TaskRegistry extends Service {
     super(ctx, 'productTasks')
   }
 
-  /** Open the domain and load its current state. */
+  /** Open the domain, load its current state, and register the Run-status unit. */
   protected async [Service.init](): Promise<void> {
     const domain = await this.ctx.storageDomain.open(taskDomainSpec)
     this.ctx.effect(() => () => domain.close(), 'productTasks.domainClose')
     this.table = domain.table('tasks')
     this.global = domain.global
     this.state = domain.global.get()
+    this.ctx.sessionProjections.register(taskRunStatusProjectionDefinition)
   }
 
   /**

@@ -27,6 +27,12 @@
       "path": "../../core/session"
     },
     {
+      "path": "../../session/session-projection"
+    },
+    {
+      "path": "../../interaction/user-approval"
+    },
+    {
       "path": "../../workspace/workspace"
     },
     {

@@ -3,7 +3,8 @@
  * the `Task`/`TaskPolicy` consumer interfaces. Types only, matching the
  * `@monolith/workspace` package's own `types.ts` convention.
  *
- * See `docs/adr/0002-task-project-run-ownership-on-engine-core.md`: a Task is
+ * See ADR 0002 (Task/Project/Run ownership on `engine/core`, in the MONOLITH
+ * repository's root `docs/adr` directory): a Task is
  * a new product record grouping Run attempts, where each Run is one
  * `engine/core` Session (never a new execution concept of its own), and a
  * Task's `workspaceId` addresses the existing `@monolith/workspace` record

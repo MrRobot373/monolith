@@ -83,7 +83,7 @@ addressed by a generated `TaskId`, referencing `WorkspaceId` and an ordered `Ses
 
 ## Decision 3: Task status is a session-projection unit, not a polled or hand-rolled state machine
 
-Register one `ProjectionDefinition` (key `product/task-run-status`) per the active Run's
+Register one `ProjectionDefinition` per the active Run's
 session, folding durable session events (`turn/start`, `turn/end`, `tool/result`,
 `agent/turn-stopping`'s durable trace, session-end/error facts) into the closed status
 vocabulary from §5.5: `Draft | Queued | Running | Waiting for input | Waiting for review |
@@ -92,6 +92,24 @@ Completed | Failed | Cancelled | Interrupted`. The `wire.view` becomes the Task/
 polling loop, no product-side event bus, and it inherits the seam's own reload guarantee: a
 carrier reads a consistent `snapshot()` cut keyed by `asOfSeq`, so a reloading browser gets the
 current state rather than replaying the whole log itself.
+
+**Implemented** as `packages/monolith/product-workspace/src/run-status.ts`, registered by
+`TaskRegistry` on start. Two corrections to this decision's sketch, made against the code rather
+than the plan:
+
+- The key is `taskRunStatus`, not `product/task-run-status`: every projection key the engine
+  registers is a camelCase identifier, and a product key that alone carried a slash would read as
+  a different kind of thing rather than as one more unit on the same registry.
+- The unit derives the seven states a session log proves — `queued`, `running`,
+  `waiting-for-input`, `completed`, `failed`, `cancelled`, `interrupted` — and deliberately not
+  `Draft` or `Waiting for review`. A Draft Task has no Run to project, and a review decision is a
+  product record that outlives any single Session (Decision 4's own `submitDecision` split says
+  so). Both are Task-level, assembled by the controller over this unit's value; deriving them here
+  would mean inventing facts the log does not carry.
+
+`waiting-for-input` folds the `approval/asked`/`approval/decided` pair, whose ids pair one to one,
+rather than observing the live approval waterfall: a status that only a running process knows is a
+status a reload loses.
 
 ## Decision 4: Command surface = a new `api/product-task-controller` package, shaped like `workspace-controller`
 
@@ -190,7 +208,7 @@ declare function follow(taskId: TaskId): AsyncIterable<
 ## Consequences
 
 - Phase 1 tickets get concrete targets: **F03** = `product-workspace` package (Decision 1+2);
-  **F04** = the `product/task-run-status` projection unit (Decision 3); **F05** = wiring Task
+  **F04** = the `taskRunStatus` projection unit (Decision 3); **F05** = wiring Task
   policy resolution onto `sandboxPolicy` + `permission-presets` (Decision 5); the controller
   half of F03/F04 = `api/product-task-controller` (Decision 4).
 - ADR 0001's mode table is superseded for anything running on `engine/core`; its task-result

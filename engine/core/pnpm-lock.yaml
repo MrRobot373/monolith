@@ -6519,12 +6519,18 @@ importers:
       '@monolith/session':
         specifier: workspace:^
         version: link:../../core/session
+      '@monolith/session-projection':
+        specifier: workspace:^
+        version: link:../../session/session-projection
       '@monolith/storage':
         specifier: workspace:^
         version: link:../../storage/storage
       '@monolith/storage-domain':
         specifier: workspace:^
         version: link:../../storage/storage-domain
+      '@monolith/user-approval':
+        specifier: workspace:^
+        version: link:../../interaction/user-approval
       '@monolith/workspace':
         specifier: workspace:^
         version: link:../../workspace/workspace

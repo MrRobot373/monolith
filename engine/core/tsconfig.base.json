@@ -313,6 +313,8 @@
       "@monolith/plan-mode": ["./packages/plan/plan-mode/src"],
       "@monolith/plan-mode/invariant": ["./packages/plan/plan-mode/src/invariant.ts"],
       "@monolith/plugin-package-inventory-deepseek": ["./packages/llm/plugin-package-inventory-deepseek/src"],
+      "@monolith/product-workspace": ["./packages/monolith/product-workspace/src"],
+      "@monolith/product-workspace/types": ["./packages/monolith/product-workspace/src/types.ts"],
       "@monolith/pwsh-sandbox": ["./packages/shell/pwsh-sandbox/src"],
       "@monolith/repeat-tool-reminder": ["./packages/guard/repeat-tool-reminder/src"],
       "@monolith/sandbox": ["./packages/sandbox/sandbox/src"],

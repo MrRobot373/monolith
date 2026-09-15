@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { Context } from '@monolith/cordis'
 import Storage from '@monolith/storage'
 import { DomainFacility } from '@monolith/storage-domain'
-import { SessionId } from '@monolith/session'
+import SessionStore, { SessionId } from '@monolith/session'
+import SessionProjectionRegistry from '@monolith/session-projection'
 import { WorkspaceId } from '@monolith/workspace'
 import { MemoryMediaPool, MemoryStorageBackend } from '../../../storage/storage-domain/tests/helpers/memory-backend.ts'
 import TaskRegistry, { TaskId, TaskNotFoundError } from '../src/index.ts'
@@ -19,6 +20,10 @@ async function harness() {
   const pool = new MemoryMediaPool()
   const ctx = new Context()
   await ctx.plugin(Storage)
+  // The registry also owns the taskRunStatus projection unit, so the
+  // projection registry it registers into is part of its composition.
+  await ctx.plugin(SessionStore)
+  await ctx.plugin(SessionProjectionRegistry)
   ctx.storage.backend.register('memory', new MemoryStorageBackend(pool))
   const facility = new DomainFacility(ctx, { backend: 'memory', routes: {} })
   ctx.storage.mount('domain', facility)
@@ -72,8 +77,9 @@ describe('TaskRegistry', () => {
     await registry.appendRun(task.id, runB)
 
     const updated = registry.getTask(task.id)
-    expect(updated?.runs).toEqual([runA, runB])
-    expect(updated?.updatedAt >= task.updatedAt).toBe(true)
+    if (updated === undefined) throw new Error('appendRun lost the task record')
+    expect(updated.runs).toEqual([runA, runB])
+    expect(updated.updatedAt >= task.updatedAt).toBe(true)
   })
 
   it('rejects appendRun for an unknown task', async () => {
@@ -88,6 +94,8 @@ describe('TaskRegistry', () => {
 
     const ctxA = new Context()
     await ctxA.plugin(Storage)
+    await ctxA.plugin(SessionStore)
+    await ctxA.plugin(SessionProjectionRegistry)
     ctxA.storage.backend.register('memory', backend)
     const facilityA = new DomainFacility(ctxA, { backend: 'memory', routes: {} })
     ctxA.storage.mount('domain', facilityA)
@@ -105,6 +113,8 @@ describe('TaskRegistry', () => {
     await fiberA.dispose()
     const ctxB = new Context()
     await ctxB.plugin(Storage)
+    await ctxB.plugin(SessionStore)
+    await ctxB.plugin(SessionProjectionRegistry)
     ctxB.storage.backend.register('memory', backend)
     const facilityB = new DomainFacility(ctxB, { backend: 'memory', routes: {} })
     ctxB.storage.mount('domain', facilityB)

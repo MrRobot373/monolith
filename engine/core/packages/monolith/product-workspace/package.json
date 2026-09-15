@@ -28,7 +28,9 @@
     "@monolith/brand": "workspace:^",
     "@monolith/cordis": "workspace:^",
     "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
     "@monolith/storage-domain": "workspace:^",
+    "@monolith/user-approval": "workspace:^",
     "@monolith/workspace": "workspace:^"
   },
   "dependencies": {
@@ -38,8 +40,10 @@
     "@monolith/brand": "workspace:^",
     "@monolith/cordis": "workspace:^",
     "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
     "@monolith/storage": "workspace:^",
     "@monolith/storage-domain": "workspace:^",
+    "@monolith/user-approval": "workspace:^",
     "@monolith/workspace": "workspace:^"
   }
 }
