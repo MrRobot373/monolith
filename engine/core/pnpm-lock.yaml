@@ -675,6 +675,43 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
 
+  packages/api/product-task-controller:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@monolith/api-session-controller':
+        specifier: workspace:^
+        version: link:../session-controller
+      '@monolith/brand':
+        specifier: workspace:^
+        version: link:../../util/brand
+      '@monolith/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@monolith/product-workspace':
+        specifier: workspace:^
+        version: link:../../monolith/product-workspace
+      '@monolith/session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@monolith/session-projection':
+        specifier: workspace:^
+        version: link:../../session/session-projection
+      '@monolith/storage':
+        specifier: workspace:^
+        version: link:../../storage/storage
+      '@monolith/storage-domain':
+        specifier: workspace:^
+        version: link:../../storage/storage-domain
+      '@monolith/typert-protocol':
+        specifier: workspace:^
+        version: link:../../typert/protocol
+      '@monolith/workspace':
+        specifier: workspace:^
+        version: link:../../workspace/workspace
+
   packages/api/remotes:
     dependencies:
       '@monolith/deque':
@@ -6497,12 +6534,30 @@ importers:
 
   packages/monolith/bundle:
     dependencies:
+      '@monolith/api-product-task-controller':
+        specifier: workspace:^
+        version: link:../../api/product-task-controller
       '@monolith/client-ui-brand':
         specifier: workspace:^
         version: link:../ui-brand
+      '@monolith/client-ui-directory-picker-browse':
+        specifier: workspace:^
+        version: link:../../client/ui-directory-picker-browse
+      '@monolith/host-directory-picker-browse':
+        specifier: workspace:^
+        version: link:../../host/directory-picker-browse
+      '@monolith/mcp-client':
+        specifier: workspace:^
+        version: link:../../mcp/mcp-client
       '@monolith/product-workspace':
         specifier: workspace:^
         version: link:../product-workspace
+      '@monolith/schedule':
+        specifier: workspace:^
+        version: link:../../schedule/schedule
+      '@monolith/time-context':
+        specifier: workspace:^
+        version: link:../../context/time-context
 
   packages/monolith/product-workspace:
     dependencies:

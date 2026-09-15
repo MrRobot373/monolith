@@ -18,7 +18,13 @@
     }
   },
   "dependencies": {
+    "@monolith/api-product-task-controller": "workspace:^",
     "@monolith/client-ui-brand": "workspace:^",
-    "@monolith/product-workspace": "workspace:^"
+    "@monolith/client-ui-directory-picker-browse": "workspace:^",
+    "@monolith/host-directory-picker-browse": "workspace:^",
+    "@monolith/mcp-client": "workspace:^",
+    "@monolith/product-workspace": "workspace:^",
+    "@monolith/schedule": "workspace:^",
+    "@monolith/time-context": "workspace:^"
   }
 }

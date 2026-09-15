@@ -179,3 +179,11 @@
 - insert:
     - id: product-tasks
       name: '@monolith/product-workspace'
+
+# The Task command surface (ADR 0002 Decision 4). It rides the Connection/
+# Gateway transport the browser already holds open — one more Remote namespace
+# beside session/workspace/settings, not a second server. Every execution verb
+# it serves delegates to the Session controller, so this row must sit after
+# the web-app layer that mounts that controller.
+    - id: product-task-controller
+      name: '@monolith/api-product-task-controller'

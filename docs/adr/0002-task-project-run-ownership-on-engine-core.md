@@ -130,6 +130,26 @@ Session and outlives the approval waterfall's request/response pairing.
 No new HTTP API, no second WebSocket: this rides the existing Connection/Gateway transport
 `api/README.md` already documents, per §4's explicit instruction.
 
+**Partly implemented** as `packages/api/product-task-controller`, mounted by the product bundle.
+`startTask`, `cancelRun`, `resumeTask` and `inspectTask` are served, plus a `listTasks` this
+sketch did not name but every Project view needs. Two additions the code forced, neither a
+departure from the decision:
+
+- Every execution verb **delegates to `ctx.sessionController`** rather than driving `ctx.agents`.
+  Decision 2 says a Run *is* one engine Session; that lifecycle already has an owner, and a
+  second caller into the agent registry would be exactly the parallel run-execution concept this
+  ADR rules out. The controller injects `sessionController`, so a composition without it serves
+  no Task namespace rather than creating Task records for Runs it cannot start.
+- Idempotency stores the **in-flight Promise**, not the settled result, so two concurrent
+  retransmissions of one request await a single execution. A start that *fails* releases its key:
+  it produced no Task, so the request never took effect and the caller may retry. The map is
+  process-lifetime; a duplicate spanning a Host restart needs the key on the durable Task record.
+
+`submitDecision` and `follow(taskId)` are **not** served yet. `submitDecision` needs the
+task-level review record described above, which does not exist; `follow` needs a
+baseline-plus-increments generation over Decision 3's change feed, and callers poll `inspectTask`
+until it lands.
+
 ## Decision 5: Mode/policy — reframe ADR 0001 Decision 1 around the engine's real vocabulary
 
 ADR 0001's three-tier mode table does not survive contact with `engine/core` as a single

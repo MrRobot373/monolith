@@ -1,7 +1,10 @@
 /**
- * Public type vocabulary of the product Task record: the `TaskId` brand and
- * the `Task`/`TaskPolicy` consumer interfaces. Types only, matching the
- * `@monolith/workspace` package's own `types.ts` convention.
+ * Public type vocabulary of the product Task record and the Run-status
+ * projection: the `TaskId` brand, the `Task`/`TaskPolicy` consumer
+ * interfaces, and the projected `RunStatus` value. Types only, matching the
+ * `@monolith/workspace` package's own `types.ts` convention, so a browser
+ * consumer reads this vocabulary without the Host cordis merges the package
+ * root carries.
  *
  * See ADR 0002 (Task/Project/Run ownership on `engine/core`, in the MONOLITH
  * repository's root `docs/adr` directory): a Task is
@@ -14,10 +17,68 @@
 
 import type { Branded } from '@monolith/brand'
 import type { SessionId } from '@monolith/session'
+import type { ApprovalRequestId } from '@monolith/user-approval/types'
 import type { WorkspaceId } from '@monolith/workspace'
 
 /** Identifies one Task record. A generated uuid, stable for the Task's life. */
 export type TaskId = Branded<'TaskId'>
+
+/**
+ * A Run's status: the subset of the plan's §5.5 task-status vocabulary that a
+ * session log proves. `queued` covers a Session that exists but has opened no
+ * turn; `interrupted` is the engine's own crash-orphaned turn closer, not a
+ * product guess about a missing process. `Draft` and `Waiting for review` are
+ * absent by construction — see `src/run-status.ts` for why neither is
+ * derivable from a log.
+ */
+export type RunStatus =
+  | 'queued'
+  | 'running'
+  | 'waiting-for-input'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'interrupted'
+
+/** One approval question the Run is blocked on, awaiting an answer. */
+export interface PendingApproval {
+  /** Pairs with the `approval/decided` event that resolves this question. */
+  readonly id: ApprovalRequestId
+
+  /** The tool the question is about, for the "waiting on" line the UI renders. */
+  readonly toolName: string
+}
+
+/**
+ * One Run's projected status. Serves as both the host fold state and the
+ * client view: every field is client-visible, so the unit holds no internal
+ * bookkeeping the view would have to hide.
+ */
+export interface TaskRunStatusProjection {
+  /** Current status, derived from the events folded so far. */
+  readonly status: RunStatus
+
+  /** The turn this status describes; null before the Run's first turn opens. */
+  readonly turn: number | null
+
+  /**
+   * `kind` of the turn-end reason that closed the last turn; null while a turn
+   * is open or before the first one. Carries the exact reason behind a coarse
+   * `completed`/`failed` status — `max-tokens` distinguishes truncated output
+   * from a clean finish, `blocked` a policy rejection from a crash.
+   */
+  readonly endReason: string | null
+
+  /**
+   * Approval questions awaiting an answer, oldest first. The array type stays
+   * mutable because the projection seam infers the unit's state from its zod
+   * schema, whose parse output is mutable; the fold never writes through it.
+   */
+  readonly pendingApprovals: PendingApproval[]
+
+  /** Operations denied by an approval answerer over this Run's life. */
+  readonly blockedActions: number
+}
 
 /**
  * A Task's resolved access policy, pinned at Task creation (ADR 0002 Decision
