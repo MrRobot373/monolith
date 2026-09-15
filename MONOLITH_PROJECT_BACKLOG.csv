@@ -1,0 +1,33 @@
+﻿ID,Priority,Ticket / acceptance,Dependencies,Size
+F01,P0,Reproduce target profile; document one launch command and required environment,—,M
+F02,P0,Build old/new capability and data migration matrix,F01,S
+F03,P0,Define project/task/run ownership and controller operations,F02,M
+F04,P0,Map task status from durable events; reload and double-submit checks,F03,M
+F05,P0,Host access presets with effective-capability reporting and negative tests,"F01,F03",L
+F06,P0 shared,Default-deny admin and migrate ownerless schedules; stable owner IDs,F03,M
+F07,P0 shared,Remove privileged credentials from client build inputs; bundle scan,F01,M
+F08,P1,Artifact version registry plus authorized inspect/download,"F03,F05",M
+U01,P1,Shared navigation and Cowork/Code header on existing shell,"F01,F03",M
+U02,P1,Setup health and provider/workspace selection,F01,M
+U03,P1,"Task activity, review, stop/retry and interrupted UI","F04,U01",M
+U04,P1,Artifact previews and versions with unsupported-format state,"F08,U03",M
+C01,P1,File tree/search/editor with protected and large-file states,"F05,U01",L
+C02,P1,Revision-safe diff review and dirty editor conflict workflow,"C01,F08",L
+C03,P1,Terminal/test/Git evidence panel; preserve existing changes,C02,M
+E01,P1,"Expert manifest registry, validation and version pinning","F03,F05",M
+E02,P1,Safe template duplication and expert configuration form,"E01,U01",M
+D01,P1,Pin and evaluate DOC-AI worker adapter on fixture documents,F01,M
+D02,P1,Findings/anchors/review decisions and selected-fix export,"D01,E01,F08",L
+K01,P1,Scoped source ingest/versioning with extraction failure recovery,"F03,F08",L
+K02,P1,"Full-text retrieval, source links and evidence logging",K01,M
+K03,P1,"Editable memory, provenance, expiry and deletion invalidation","K02,E01",M
+M01,P1,"Unify model/connection catalog, explicit routing and local-only policy","F01,F05",M
+O01,P0 shared,Organization ownership across APIs/streams/artifacts/retrieval,"F03,F06,F07",L
+O02,P1,Target native/Docker builds and clean-install smoke,"F01,F02",L
+O03,P1,Complete backup inventory and isolated restore drill,"F08,O02",M
+Q01,P1,Automate product smoke fixtures and wire CI gates,"F04,F05,F08",M
+A01,P2,Durable workflow queue with leases and interrupted recovery,"F04,E01",L
+A02,P2,Timezone-aware schedules and review-aware automation UI,"A01,U03",M
+S01,P2,"MR.LAW scoped workflow, source resolver and reviewed evaluation","E01,K02,O01 for shared use",L
+S02,P2,DR.AI extraction confirmation and reviewed explanation workflow,"E01,K02,O01 for shared use",L
+G01,P3,Backlinks and optional provenance-aware local graph,K03,M
