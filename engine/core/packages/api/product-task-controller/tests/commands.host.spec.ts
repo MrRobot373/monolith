@@ -17,7 +17,7 @@ import { Context } from '@monolith/cordis'
 import Storage from '@monolith/storage'
 import { DomainFacility } from '@monolith/storage-domain'
 import SessionStore, { SessionId } from '@monolith/session'
-import type { Session } from '@monolith/session'
+import type { Session, SessionEvent, SessionHeader, SessionLogOffset } from '@monolith/session'
 import SessionProjectionRegistry from '@monolith/session-projection'
 import TaskRegistry from '@monolith/product-workspace'
 import { WorkspaceId } from '@monolith/workspace'
@@ -76,10 +76,46 @@ class SessionControllerDouble {
   }
 }
 
+/**
+ * Serves stored logs for Runs whose Session is not live — the state every Run
+ * is in after a Host restart.
+ */
+class SessionQueryDouble {
+  private readonly logs = new Map<string, {
+    session: SessionHeader
+    inheritedEventCount: SessionLogOffset
+    events: readonly SessionEvent[]
+  }>()
+
+  constructor(private readonly ctx: Context) {}
+
+  /** Record a cold Run's log by building it on a throwaway live Session. */
+  store(runId: SessionId, build: (session: Session) => void): void {
+    const source = this.ctx.sessions.create(SessionId(`${runId}-source`))
+    build(source)
+    this.logs.set(runId, {
+      session: source.header,
+      inheritedEventCount: source.inheritedEventCount,
+      events: source.snapshotEvents(),
+    })
+  }
+
+  readSession(sessionId: SessionId): Promise<{
+    session: SessionHeader
+    inheritedEventCount: SessionLogOffset
+    events: readonly SessionEvent[]
+  }> {
+    const stored = this.logs.get(sessionId)
+    if (stored === undefined) return Promise.reject(new Error(`no stored log for "${sessionId}"`))
+    return Promise.resolve(stored)
+  }
+}
+
 interface Harness {
   ctx: Context
   commands: ProductTaskCommands
   sessionController: SessionControllerDouble
+  sessionQuery: SessionQueryDouble
 }
 
 /** Boot the real registry/projection composition over an in-memory backend. */
@@ -98,7 +134,9 @@ async function harness(): Promise<Harness> {
   // The double stands in for the Host service the commands delegate to; only
   // the four verbs exercised here are implemented.
   ctx.provide('sessionController', sessionController as unknown as Context['sessionController'])
-  return { ctx, commands: new ProductTaskCommands(ctx), sessionController }
+  const sessionQuery = new SessionQueryDouble(ctx)
+  ctx.provide('sessionQuery', sessionQuery as unknown as Context['sessionQuery'])
+  return { ctx, commands: new ProductTaskCommands(ctx), sessionController, sessionQuery }
 }
 
 function startRequest(overrides: Partial<StartTaskRequest> = {}): StartTaskRequest {
@@ -280,7 +318,7 @@ describe('ProductTaskCommands.inspectTask', () => {
       policy: POLICY,
     })
 
-    expect(env.commands.inspectTask({ taskId: task.id }).status).toEqual({
+    expect((await env.commands.inspectTask({ taskId: task.id })).status).toEqual({
       status: 'draft',
       endReason: null,
       awaitingApproval: [],
@@ -293,16 +331,43 @@ describe('ProductTaskCommands.inspectTask', () => {
     const session = env.ctx.sessions.get(started.runId) as Session
     session.append('turn/start', { turn: 1 })
 
-    expect(env.commands.inspectTask({ taskId: started.task.taskId }).status).toMatchObject({
+    expect((await env.commands.inspectTask({ taskId: started.task.taskId })).status).toMatchObject({
       status: 'running',
       runId: started.runId,
     })
 
     session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
 
-    expect(env.commands.inspectTask({ taskId: started.task.taskId }).status).toMatchObject({
+    expect((await env.commands.inspectTask({ taskId: started.task.taskId })).status).toMatchObject({
       status: 'completed',
       endReason: 'completed',
+    })
+  })
+
+  it('reads a cold Run from its stored log instead of reporting queued', async () => {
+    // Regression, caught by driving the real app: after a Host restart no
+    // Session is live, and falling back to `queued` reported a Task that had
+    // run and been cancelled as one that never started — the status silently
+    // regressing across exactly the restart the durable record exists to
+    // survive.
+    const env = await harness()
+    const task = await env.ctx.productTasks.createTask({
+      workspaceId: WORKSPACE,
+      mode: 'code',
+      title: 'Ran before the restart',
+      policy: POLICY,
+    })
+    const coldRun = SessionId('cold-run')
+    await env.ctx.productTasks.appendRun(task.id, coldRun)
+    env.sessionQuery.store(coldRun, (session) => {
+      session.append('turn/start', { turn: 1 })
+      session.append('turn/end', { turn: 1, reason: { kind: 'aborted', reason: { kind: 'legacy' } } })
+    })
+
+    expect((await env.commands.inspectTask({ taskId: task.id })).status).toMatchObject({
+      status: 'cancelled',
+      runId: coldRun,
+      endReason: 'aborted',
     })
   })
 
@@ -312,7 +377,7 @@ describe('ProductTaskCommands.inspectTask', () => {
     failed.append('turn/start', { turn: 1 })
     failed.append('turn/end', { turn: 1, reason: { kind: 'error', error: { message: 'boom', code: 'UNKNOWN' } } })
 
-    expect(env.commands.inspectTask({ taskId: started.task.taskId }).status.status).toBe('failed')
+    expect((await env.commands.inspectTask({ taskId: started.task.taskId })).status.status).toBe('failed')
 
     const resumed = await env.commands.resumeTask({
       idempotencyKey: 'retry-1',
@@ -320,7 +385,7 @@ describe('ProductTaskCommands.inspectTask', () => {
       request: 'try again',
     })
 
-    expect(env.commands.inspectTask({ taskId: started.task.taskId }).status).toMatchObject({
+    expect((await env.commands.inspectTask({ taskId: started.task.taskId })).status).toMatchObject({
       status: 'queued',
       runId: resumed.runId,
     })

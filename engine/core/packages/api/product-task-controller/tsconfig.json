@@ -37,6 +37,9 @@
     },
     {
       "path": "../session-controller/tsconfig.host.json"
+    },
+    {
+      "path": "../../session-query/session-query"
     }
   ]
 }

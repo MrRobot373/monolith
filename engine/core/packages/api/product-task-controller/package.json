@@ -53,6 +53,7 @@
     "@monolith/product-workspace": "workspace:^",
     "@monolith/session": "workspace:^",
     "@monolith/session-projection": "workspace:^",
+    "@monolith/session-query": "workspace:^",
     "@monolith/typert-protocol": "workspace:^",
     "@monolith/workspace": "workspace:^"
   },
@@ -63,6 +64,7 @@
     "@monolith/product-workspace": "workspace:^",
     "@monolith/session": "workspace:^",
     "@monolith/session-projection": "workspace:^",
+    "@monolith/session-query": "workspace:^",
     "@monolith/storage": "workspace:^",
     "@monolith/storage-domain": "workspace:^",
     "@monolith/typert-protocol": "workspace:^",

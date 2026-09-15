@@ -44,7 +44,16 @@ export class ProductTaskController extends TypertRemoteService {
    * here delegates to it, so a composition without it must not serve a Task
    * namespace that could create records for Runs it cannot start.
    */
-  static inject = ['typert', 'productTasks', 'sessionController', 'sessions', 'sessionProjections']
+  static inject = [
+    'typert',
+    'productTasks',
+    'sessionController',
+    'sessions',
+    'sessionProjections',
+    // Cold Runs: after a Host restart a Task's Session is not live, and its
+    // status has to come from the stored log rather than regress to `queued`.
+    'sessionQuery',
+  ]
 
   private readonly commands: ProductTaskCommands
 
@@ -90,7 +99,7 @@ export class ProductTaskController extends TypertRemoteService {
    * @returns the Task projection and its current status.
    */
   @Remote('inspectTask')
-  inspectTask(request: InspectTaskRequest): InspectTaskValue {
+  inspectTask(request: InspectTaskRequest): Promise<InspectTaskValue> {
     return this.commands.inspectTask(request)
   }
 

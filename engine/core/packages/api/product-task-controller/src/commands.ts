@@ -13,7 +13,9 @@
 import { randomUUID } from 'node:crypto'
 import type { Context } from '@monolith/cordis'
 import { brandString } from '@monolith/brand'
+import { SessionLogOffset } from '@monolith/session'
 import type { SessionId } from '@monolith/session'
+import type {} from '@monolith/session-query'
 import type { SessionRequestId } from '@monolith/api-session-controller'
 import type { Task, TaskRunStatusProjection } from '@monolith/product-workspace'
 import { TaskId } from '@monolith/product-workspace'
@@ -171,9 +173,9 @@ export class ProductTaskCommands {
    * @param request - the Task to inspect.
    * @returns the Task projection and its current status.
    */
-  inspectTask(request: InspectTaskRequest): InspectTaskValue {
+  async inspectTask(request: InspectTaskRequest): Promise<InspectTaskValue> {
     const task = this.requireTask(request.taskId)
-    return { task: taskView(task), status: this.statusOf(task) }
+    return { task: taskView(task), status: await this.statusOf(task) }
   }
 
   /**
@@ -188,21 +190,19 @@ export class ProductTaskCommands {
   /**
    * Resolve a Task's status from its active Run's projection.
    *
-   * A Task with no Run is `draft`; a Task whose Run's Session is not loaded
-   * reports the same `queued` the projection serves for an unopened log,
-   * because an unloaded Session has no events to have moved past it.
+   * A Task with no Run is `draft`. A live Run reads the registry's current
+   * cut. A Run whose Session is not live is read from its stored log and
+   * folded through the same unit: after a Host restart the Session is cold,
+   * and reporting a Task that ran and was cancelled as `queued` would be the
+   * status silently regressing across exactly the restart the durable record
+   * exists to survive.
    */
-  private statusOf(task: Task): TaskStatusView {
+  private async statusOf(task: Task): Promise<TaskStatusView> {
     const runId = task.runs.at(-1)
     if (runId === undefined) {
       return { status: 'draft', endReason: null, awaitingApproval: [], blockedActions: 0 }
     }
-    const session = this.ctx.sessions.get(runId)
-    if (session === undefined) {
-      return { status: 'queued', runId, endReason: null, awaitingApproval: [], blockedActions: 0 }
-    }
-    const projected = this.ctx.sessionProjections
-      .snapshot(session).values.taskRunStatus as TaskRunStatusProjection
+    const projected = await this.projectedStatus(runId)
     return {
       status: projected.status,
       runId,
@@ -210,6 +210,25 @@ export class ProductTaskCommands {
       awaitingApproval: projected.pendingApprovals.map(pending => pending.toolName),
       blockedActions: projected.blockedActions,
     }
+  }
+
+  private async projectedStatus(runId: SessionId): Promise<TaskRunStatusProjection> {
+    const live = this.ctx.sessions.get(runId)
+    if (live !== undefined) {
+      return this.ctx.sessionProjections.snapshot(live).values.taskRunStatus as TaskRunStatusProjection
+    }
+    // `readSession` balances an interrupted turn in memory, so a Run whose
+    // Host died mid-turn folds to `interrupted` here rather than staying
+    // stuck at whatever the last durable event happened to be.
+    const stored = await this.ctx.sessionQuery.readSession(runId)
+    const { snapshot } = this.ctx.sessionProjections.restore(
+      {},
+      stored.events,
+      SessionLogOffset(0),
+      stored.session,
+      stored.inheritedEventCount,
+    )
+    return snapshot.values.taskRunStatus as TaskRunStatusProjection
   }
 
   private prompt(sessionId: SessionId, text: string): Promise<unknown> {

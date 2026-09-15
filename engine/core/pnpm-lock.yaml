@@ -699,6 +699,9 @@ importers:
       '@monolith/session-projection':
         specifier: workspace:^
         version: link:../../session/session-projection
+      '@monolith/session-query':
+        specifier: workspace:^
+        version: link:../../session-query/session-query
       '@monolith/storage':
         specifier: workspace:^
         version: link:../../storage/storage
