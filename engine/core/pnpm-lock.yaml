@@ -677,10 +677,16 @@ importers:
 
   packages/api/product-task-controller:
     dependencies:
+      '@monolith/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
       zod:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@monolith/agent':
+        specifier: workspace:^
+        version: link:../../core/agent
       '@monolith/api-session-controller':
         specifier: workspace:^
         version: link:../session-controller
@@ -690,9 +696,18 @@ importers:
       '@monolith/cordis':
         specifier: workspace:^
         version: link:../../../vendor/cordis
+      '@monolith/permission-presets':
+        specifier: workspace:^
+        version: link:../../interaction/permission-presets
       '@monolith/product-workspace':
         specifier: workspace:^
         version: link:../../monolith/product-workspace
+      '@monolith/sandbox-policy':
+        specifier: workspace:^
+        version: link:../../sandbox/sandbox-policy
+      '@monolith/scope':
+        specifier: workspace:^
+        version: link:../../core/scope
       '@monolith/session':
         specifier: workspace:^
         version: link:../../core/session
@@ -708,6 +723,12 @@ importers:
       '@monolith/storage-domain':
         specifier: workspace:^
         version: link:../../storage/storage-domain
+      '@monolith/system-prompt':
+        specifier: workspace:^
+        version: link:../../core/system-prompt
+      '@monolith/tools':
+        specifier: workspace:^
+        version: link:../../core/tools
       '@monolith/typert-protocol':
         specifier: workspace:^
         version: link:../../typert/protocol

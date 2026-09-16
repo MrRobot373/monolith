@@ -94,6 +94,8 @@ export class TaskRegistry extends Service {
   private global?: DomainGlobal<TaskDomainState>
   private state?: TaskDomainState
   private operationTail: Promise<void> = Promise.resolve()
+  /** Run id → owning Task. Rebuilt from the durable records at start. */
+  private readonly runOwners = new Map<SessionId, TaskId>()
 
   constructor(ctx: Context) {
     super(ctx, 'productTasks')
@@ -106,6 +108,11 @@ export class TaskRegistry extends Service {
     this.table = domain.table('tasks')
     this.global = domain.global
     this.state = domain.global.get()
+    for (const id of this.state.taskIds) {
+      const record = this.table.get(id)
+      if (record === undefined) continue
+      for (const runId of record.runs) this.runOwners.set(runId, id)
+    }
     this.ctx.sessionProjections.register(taskRunStatusProjectionDefinition)
   }
 
@@ -182,7 +189,18 @@ export class TaskRegistry extends Service {
         updatedAt: new Date().toISOString(),
       }
       await table.put(taskId, updated)
+      this.runOwners.set(runId, taskId)
     })
+  }
+
+  /**
+   * Find the Task one Run belongs to.
+   * @param runId - a Run's Session id.
+   * @returns the owning Task, or `undefined` when the Session is not a Run.
+   */
+  taskOfRun(runId: SessionId): Task | undefined {
+    const taskId = this.runOwners.get(runId)
+    return taskId === undefined ? undefined : this.getTask(taskId)
   }
 
   private requireTable(): KvTable<TaskId, TaskRecord> {

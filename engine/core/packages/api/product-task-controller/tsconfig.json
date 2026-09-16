@@ -40,6 +40,24 @@
     },
     {
       "path": "../../session-query/session-query"
+    },
+    {
+      "path": "../../core/agent"
+    },
+    {
+      "path": "../../sandbox/sandbox-policy"
+    },
+    {
+      "path": "../../interaction/permission-presets"
+    },
+    {
+      "path": "../../core/tools"
+    },
+    {
+      "path": "../../core/scope"
+    },
+    {
+      "path": "../../core/system-prompt"
     }
   ]
 }

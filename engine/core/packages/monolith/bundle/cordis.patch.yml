@@ -187,3 +187,14 @@
 # the web-app layer that mounts that controller.
     - id: product-task-controller
       name: '@monolith/api-product-task-controller'
+      config:
+        # Withheld from a Run whose Task pins allowNetwork: false. These are
+        # the reaching tools THIS deployment mounts: the native pair, plus the
+        # MCP web server's namespaced tools from the mcp-web row above. A tool
+        # added here that the composition does not mount is logged and skipped,
+        # so trimming the roster does not brick a Run.
+        networkTools:
+          - web_search
+          - web_fetch
+          - mcp__monolithweb__search
+          - mcp__monolithweb__fetch

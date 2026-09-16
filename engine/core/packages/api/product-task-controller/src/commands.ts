@@ -20,6 +20,7 @@ import type { SessionRequestId } from '@monolith/api-session-controller'
 import type { Task, TaskRunStatusProjection } from '@monolith/product-workspace'
 import { TaskId } from '@monolith/product-workspace'
 import { RemoteError } from '@monolith/typert-protocol'
+import { applyTaskPolicy, assertPresetKnown, effectivePolicyOf } from './policy.ts'
 import type {
   CancelRunRequest,
   CancelRunValue,
@@ -32,6 +33,7 @@ import type {
   StartTaskRequest,
   StartTaskValue,
   TaskIdempotencyKey,
+  TaskPolicyView,
   TaskStatusView,
   TaskView,
 } from './types.ts'
@@ -113,6 +115,9 @@ export class ProductTaskCommands {
   }
 
   private async runStartTask(request: StartTaskRequest): Promise<StartTaskValue> {
+    // Before any durable write: a Task whose policy cannot bind is a Task that
+    // must never exist, and both the record and its Session outlive the throw.
+    assertPresetKnown(this.ctx, request.policy.approvalPresetId)
     const title = request.title?.trim() === undefined || request.title.trim() === ''
       ? derivedTitle(request.request)
       : request.title.trim()
@@ -125,6 +130,10 @@ export class ProductTaskCommands {
     })
     const { sessionId } = await this.ctx.sessionController.create({ workspaceId: request.workspaceId })
     await this.ctx.productTasks.appendRun(task.id, sessionId)
+    // Before the prompt: the knobs must be on the log before the agent can
+    // take a turn under them, or the Run's first tool call would resolve the
+    // deployment default rather than this Task's pinned policy.
+    this.bindPolicy(sessionId, request.policy)
     await this.prompt(sessionId, request.request)
     return { task: this.requireTaskView(task.id), runId: sessionId, started: true }
   }
@@ -164,6 +173,10 @@ export class ProductTaskCommands {
     // completed" answerable from the forked log.
     const { sessionId } = await this.ctx.sessionController.fork({ sessionId: previousRun })
     await this.ctx.productTasks.appendRun(taskId, sessionId)
+    // A fork inherits the failed Run's knob events, but the Task's pinned
+    // policy is still the authority: re-binding keeps a retry under the policy
+    // the Task was created with rather than whatever the prior attempt drifted to.
+    this.bindPolicy(sessionId, this.requireTask(taskId).policy)
     await this.prompt(sessionId, request.request)
     return { task: this.requireTaskView(taskId), runId: sessionId, started: true }
   }
@@ -175,7 +188,18 @@ export class ProductTaskCommands {
    */
   async inspectTask(request: InspectTaskRequest): Promise<InspectTaskValue> {
     const task = this.requireTask(request.taskId)
-    return { task: taskView(task), status: await this.statusOf(task) }
+    const status = await this.statusOf(task)
+    const runId = task.runs.at(-1)
+    const session = runId === undefined ? undefined : this.ctx.sessions.get(runId)
+    return {
+      task: taskView(task),
+      status,
+      // Only a live Run can be asked what it is running under; a cold one is
+      // reported without an effective policy rather than with a guess.
+      ...session === undefined
+        ? {}
+        : { effectivePolicy: effectivePolicyOf(this.ctx, session, task.policy.allowNetwork) },
+    }
   }
 
   /**
@@ -229,6 +253,20 @@ export class ProductTaskCommands {
       stored.inheritedEventCount,
     )
     return snapshot.values.taskRunStatus as TaskRunStatusProjection
+  }
+
+  /**
+   * Bind a Task's pinned policy to one Run's session.
+   *
+   * The session must be live: `sessionController.create`/`fork` publish it
+   * before returning, so this runs against a session the store already holds.
+   */
+  private bindPolicy(sessionId: SessionId, policy: TaskPolicyView): void {
+    const session = this.ctx.sessions.get(sessionId)
+    if (session === undefined) {
+      throw new Error(`product-task: session "${sessionId}" is not live immediately after creation`)
+    }
+    applyTaskPolicy(this.ctx, session, policy)
   }
 
   private prompt(sessionId: SessionId, text: string): Promise<unknown> {

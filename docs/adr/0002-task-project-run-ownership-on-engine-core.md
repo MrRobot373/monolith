@@ -172,6 +172,31 @@ conceptually as the shape a Run's projection view should expose, but its authori
 projection," matching this plan's "every model-visible fact must be reconstructable from the
 log" invariant.
 
+**Implemented** as `packages/api/product-task-controller/src/policy.ts`, bound at Run start by
+`startTask` and re-bound by `resumeTask`. The three axes land in three different places, which is
+the decision's whole point:
+
+- `sandboxMode` becomes a durable `sandbox/mode` event through the policy package's own
+  `setSandboxMode`. Nothing in the product layer touches a tool: every confining capability
+  already resolves that fold per call, so the mode binds by being on the log.
+- `approvalPresetId` is applied through `permissionPresets.set`, and a name the deployment does
+  not define is rejected **before** the Task record or its Session exists — both are durable by
+  the time a policy would bind, so discovering the typo later would leave an unpromptable Task
+  behind on every attempt.
+- `allowNetwork` is a `tools.restrict({ deny })` on the Run's agent scope, driven by a
+  deployment-configured `networkTools` list because which tools reach the network depends on what
+  a composition mounts. A tool restriction lives only as long as its agent, so it is re-applied on
+  every `agent/created` from the durable Task record; applying it once at `startTask` would hand
+  network access back to every Run resumed after a restart.
+
+A Task pinning a file mode its approval preset does not carry reads as the effective preset
+`custom` — the engine's own word for knobs matching no table entry, and the honest answer rather
+than an error, because the Task's file policy is the authority on that axis.
+
+`inspectTask` reports an `effectivePolicy` read back from the session's knobs rather than echoing
+the Task's request. Reporting the request as though it were the effect is exactly how a read-only
+badge ends up on a Run that can write.
+
 ## Decision 6: New product code lives under `packages/monolith/`, composed as another patch layer
 
 `packages/monolith/product-workspace` (Task/Run/Project sidecar storage + domain logic) and

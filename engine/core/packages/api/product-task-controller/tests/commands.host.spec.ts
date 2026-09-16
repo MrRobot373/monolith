@@ -19,6 +19,9 @@ import { DomainFacility } from '@monolith/storage-domain'
 import SessionStore, { SessionId } from '@monolith/session'
 import type { Session, SessionEvent, SessionHeader, SessionLogOffset } from '@monolith/session'
 import SessionProjectionRegistry from '@monolith/session-projection'
+import SandboxPolicyService from '@monolith/sandbox-policy'
+import ApprovalService from '@monolith/user-approval'
+import PermissionPresetService from '@monolith/permission-presets'
 import TaskRegistry from '@monolith/product-workspace'
 import { WorkspaceId } from '@monolith/workspace'
 import { remoteErrorOf } from '@monolith/typert-protocol'
@@ -31,7 +34,9 @@ import type { StartTaskRequest, TaskPolicyView } from '../src/types.ts'
 
 const POLICY: TaskPolicyView = {
   sandboxMode: 'workspace-write',
-  approvalPresetId: 'default',
+  // A real table entry: startTask now binds the preset, so a name the
+  // deployment does not define is rejected rather than recorded.
+  approvalPresetId: 'workspace-write',
   allowNetwork: false,
 }
 
@@ -125,6 +130,12 @@ async function harness(): Promise<Harness> {
   await ctx.plugin(Storage)
   await ctx.plugin(SessionStore)
   await ctx.plugin(SessionProjectionRegistry)
+  // The policy seams a Task's pinned triple binds to; the shell double only
+  // supplies the confining marker permission-presets requires to compose.
+  ctx.provide('shell', { sandboxMode: 'workspace-write' } as unknown as Context['shell'])
+  await ctx.plugin(SandboxPolicyService, { mode: 'workspace-write', workspaceRoot: '/tmp/ws' })
+  await ctx.plugin(ApprovalService)
+  await ctx.plugin(PermissionPresetService)
   ctx.storage.backend.register('memory', new MemoryStorageBackend(pool))
   const facility = new DomainFacility(ctx, { backend: 'memory', routes: {} })
   ctx.storage.mount('domain', facility)
@@ -213,6 +224,31 @@ describe('ProductTaskCommands.startTask', () => {
 
     expect(second.task.taskId).not.toBe(first.task.taskId)
     expect(env.sessionController.created).toHaveLength(2)
+  })
+
+  it('binds the pinned file policy to the Run before prompting it', async () => {
+    // The ordering matters as much as the binding: a prompt admitted before
+    // the knobs land could take a turn under the deployment default.
+    const value = await env.commands.startTask(startRequest({
+      policy: { ...POLICY, sandboxMode: 'read-only' },
+    }))
+    const session = env.ctx.sessions.get(value.runId) as Session
+
+    expect(env.ctx.sandboxPolicy.resolve({ session }).mode).toBe('read-only')
+    const events = session.snapshotEvents().map(event => event.type)
+    expect(events).toContain('sandbox/mode')
+  })
+
+  it('rejects an unknown approval preset before creating anything', async () => {
+    // A Task and a Session are both durable by the time a policy would bind,
+    // so a preset typo must fail before either exists rather than leaving an
+    // unpromptable Task behind for every attempt.
+    await expect(env.commands.startTask(startRequest({
+      policy: { ...POLICY, approvalPresetId: 'no-such-preset' },
+    }))).rejects.toThrow()
+
+    expect(env.commands.listTasks({ workspaceId: WORKSPACE }).items).toEqual([])
+    expect(env.sessionController.created).toEqual([])
   })
 
   it('lets the caller retry a key whose start failed', async () => {
@@ -369,6 +405,33 @@ describe('ProductTaskCommands.inspectTask', () => {
       runId: coldRun,
       endReason: 'aborted',
     })
+  })
+
+  it('reports the effective policy read back from the Run, not the request', async () => {
+    const env = await harness()
+    const started = await env.commands.startTask(startRequest({
+      policy: { ...POLICY, sandboxMode: 'read-only' },
+    }))
+
+    expect((await env.commands.inspectTask({ taskId: started.task.taskId })).effectivePolicy).toEqual({
+      sandboxMode: 'read-only',
+      // The Task's file mode outranks the preset's, so the effective knobs
+      // match no table entry.
+      approvalPreset: 'custom',
+      allowNetwork: false,
+    })
+  })
+
+  it('omits the effective policy for a draft Task, which has no Run to read', async () => {
+    const env = await harness()
+    const task = await env.ctx.productTasks.createTask({
+      workspaceId: WORKSPACE,
+      mode: 'cowork',
+      title: 'Drafted only',
+      policy: POLICY,
+    })
+
+    expect((await env.commands.inspectTask({ taskId: task.id })).effectivePolicy).toBeUndefined()
   })
 
   it('follows the retry to the new Run rather than reporting the failed one', async () => {

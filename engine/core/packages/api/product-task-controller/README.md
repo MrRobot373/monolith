@@ -7,7 +7,7 @@ kind: "package-reference"
 
 ## Summary
 
-`monolith-api-product-task-controller` serves the `productTask` Remote namespace: `startTask`, `cancelRun`, `resumeTask`, `inspectTask` and `listTasks`. It owns Task identity, the ordered Run account and the policy pinned at creation; it owns no execution. Every verb that starts, forks, prompts or stops a Run delegates to `ctx.sessionController`, because a Run is one engine Session and that lifecycle already has an owner. Mutating verbs take a caller-minted idempotency key, so a browser that retransmits over a reconnect gets its first result back instead of a second Run.
+`monolith-api-product-task-controller` serves the `productTask` Remote namespace: `startTask`, `cancelRun`, `resumeTask`, `inspectTask` and `listTasks`. It owns Task identity, the ordered Run account and the policy pinned at creation, and it binds that policy to the engine's own enforcement seams so a `read-only` Task is actually refused writes; it owns no execution. Every verb that starts, forks, prompts or stops a Run delegates to `ctx.sessionController`, because a Run is one engine Session and that lifecycle already has an owner. Mutating verbs take a caller-minted idempotency key, so a browser that retransmits over a reconnect gets its first result back instead of a second Run.
 
 ## Table of Contents
 
@@ -37,15 +37,19 @@ const { task, runId } = await ctx.remote.productTask.startTask({
   workspaceId,
   mode: 'code',
   request: 'Fix the failing tests',
-  policy: { sandboxMode: 'workspace-write', approvalPresetId: 'default', allowNetwork: false },
+  policy: { sandboxMode: 'workspace-write', approvalPresetId: 'workspace-write', allowNetwork: false },
 })
 ```
+
+The policy binds before the Run is prompted: `sandboxMode` becomes a durable `sandbox/mode` event every confining capability resolves, `approvalPresetId` must name a preset the deployment defines, and a Task denying network loses the configured reaching tools on its agent.
 
 `cancelRun` stops the Task's active Run. `resumeTask` retries: it forks the last attempt into a new Session and appends it, so the failed Run stays in the account as the record of what already happened.
 
 ### Read current state
 
 `inspectTask` returns the Task record plus the status derived from its active Run's session log — `draft` for a Task that has started nothing, and otherwise whatever the `taskRunStatus` projection folds. Because the status is derived rather than stored, a reloading caller reads the same value the previous one saw.
+
+It also returns `effectivePolicy`: what the Run is actually executing under, read back from the session's own knobs rather than echoed from the Task record. A Task pinning `read-only` whose approval preset bundles `workspace-write` reports `sandboxMode: 'read-only'` with `approvalPreset: 'custom'`, because the Task's file policy outranks the preset's and the resulting knobs match no table entry.
 
 -----
 
@@ -67,9 +71,12 @@ Idempotency stores the in-flight Promise rather than the settled result, so two 
 |---|---|
 | [`src/index.ts`](src/index.ts) | `ProductTaskController`: the `@Remote` surface and its service registration |
 | [`src/commands.ts`](src/commands.ts) | Task identity, the Run account, idempotency, and stable Remote failure mapping |
+| [`src/policy.ts`](src/policy.ts) | Binding a Task's pinned triple to `sandboxPolicy`, `permission-presets`, and the Run's tool scope |
 | [`src/types.ts`](src/types.ts) | Browser-safe request/result vocabulary and the namespace's error details |
 | — | No runtime invariant companion is published because the Task registry is the single writer and the status it reports is a pure fold of the session log; no two independent observations can diverge. |
 | [`tests/commands.host.spec.ts`](tests/commands.host.spec.ts) | Delegation, idempotency in all three shapes, retry-forks-a-new-Run, and status resolution |
+| [`tests/policy.host.spec.ts`](tests/policy.host.spec.ts) | Policy binding asserted through `sandboxPolicy.resolve()`, with a negative control proving the assertion measures this package |
+| [`tests/network-policy.host.spec.ts`](tests/network-policy.host.spec.ts) | Network denial per Run, including re-application to a second agent for the same Run |
 
 </details>
 
@@ -101,7 +108,8 @@ Nothing here enters a model request, so provider cache reuse is unaffected.
 - **No `follow` stream** — callers poll `inspectTask`. The projection's change feed already carries what a stream would publish; wiring it to a baseline-plus-increments generation is the next slice.
 - **Idempotency is process-lifetime** — the key map guards a browser retransmitting to the same Host, not a duplicate that spans a Host restart. Surviving a restart needs the key on the durable Task record.
 - **`cancelRun` and `resumeTask` act on the newest Run only** — a Task whose earlier attempt is somehow still live has no verb addressing it; nothing today can produce that state.
-- **Policy is recorded, not enforced** — the pinned `sandboxMode`/`approvalPresetId`/`allowNetwork` triple is stored on the Task and passed to nothing. Resolving it onto `sandboxPolicy` and `permission-presets` at Run start is F05.
+- **The network axis depends on a configured tool list** — `networkTools` defaults to empty, so a deployment that mounts reaching tools without listing them grants network access to every Run regardless of what its Task pinned. A name the composition does not mount is logged and skipped rather than failing the Run.
+- **A cold Run reports no effective policy** — `inspectTask` reads the knobs from a live session, so a Task whose Run is not loaded returns `status` without `effectivePolicy` rather than replaying the log for it.
 
 <a id="dev-note"></a>
 ### Dev Note

@@ -66,12 +66,35 @@ export interface TaskStatusView {
   readonly blockedActions: number
 }
 
+/**
+ * What a Run is actually executing under, read back from its own session log.
+ *
+ * Distinct from the {@link TaskPolicyView} the caller asked for: a Task records
+ * the request, and only the folded session knobs say what bound. `read-only`
+ * here means the file sandbox will refuse writes, not that someone asked for
+ * read-only.
+ */
+export interface EffectivePolicyView {
+  /** The file-effect mode every confining capability resolves for this Run. */
+  readonly sandboxMode: 'read-only' | 'workspace-write' | 'danger-full-access'
+  /**
+   * The preset matching the Run's effective knobs, or `custom` when they match
+   * no table entry — which is the normal reading when a Task pins a file mode
+   * its approval preset does not carry.
+   */
+  readonly approvalPreset: string
+  /** Whether this Run's agent keeps the deployment's network tools. */
+  readonly allowNetwork: boolean
+}
+
 declare module '@monolith/typert-protocol' {
   interface RemoteErrorDetailsMap {
     /** No Task record carries the requested identity. */
     'product-task/not-found': { readonly taskId: TaskId }
     /** The verb needs an active Run and the Task has none. */
     'product-task/no-active-run': { readonly taskId: TaskId }
+    /** The requested approval preset is not in the deployment's table. */
+    'product-task/unknown-preset': { readonly approvalPresetId: string }
   }
 }
 
@@ -133,6 +156,11 @@ export interface InspectTaskRequest {
 export interface InspectTaskValue {
   readonly task: TaskView
   readonly status: TaskStatusView
+  /**
+   * What the active Run is actually running under; absent for a `draft` Task,
+   * which has no Run whose knobs could be read.
+   */
+  readonly effectivePolicy?: EffectivePolicyView
 }
 
 /** Request for every Task in one Project. */
