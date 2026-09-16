@@ -58,6 +58,9 @@
     },
     {
       "path": "../../core/system-prompt"
+    },
+    {
+      "path": "../../monolith/product-artifacts"
     }
   ]
 }

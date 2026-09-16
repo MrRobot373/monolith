@@ -58,6 +58,7 @@ const SENTENCE_MODEL_EXPERIENCE: Readonly<Record<string, SentenceContract>> = {
   'packages/util/crypto': { kind: 'indirect', reason: 'Pure identifier minting; the ids consumers mint with it never enter prompts as semantic content.' },
   'packages/util/deque': { kind: 'none', reason: 'In-process collection primitive; registers nothing model-facing.' },
   'packages/monolith/product-workspace': { kind: 'none', reason: 'Durable product records plus a client-facing Run-status projection; it registers no prompt, tool, or schema, and nothing it owns enters a model request.' },
+  'packages/monolith/product-artifacts': { kind: 'none', reason: 'Durable output metadata and digests; it registers no prompt, tool, or schema, and nothing it owns enters a model request.' },
   'packages/api/product-task-controller': { kind: 'none', reason: 'A Remote namespace over the Task registry; the request text it forwards reaches a model through the Session controller, which owns that rendering.' },
   'packages/util/time': { kind: 'indirect', reason: 'Pure zone validation; the consumer that records a canonical zone owns the model-visible line derived from it.' },
   'packages/core/agent-default-model': { kind: 'indirect', reason: 'The service supplies a ModelSelection; request assembly and adapters own the model-visible request.' },

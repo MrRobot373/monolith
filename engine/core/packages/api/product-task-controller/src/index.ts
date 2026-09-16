@@ -14,15 +14,24 @@
 import { Context } from '@monolith/cordis'
 import z from '@monolith/schemastery'
 import { Remote, TypertRemoteService } from '@monolith/typert-protocol'
+import { ProductArtifactCommands } from './artifacts.ts'
 import { ProductTaskCommands } from './commands.ts'
 import { installNetworkRestriction } from './policy.ts'
 import type {
   CancelRunRequest,
   CancelRunValue,
+  DownloadArtifactRequest,
+  DownloadArtifactValue,
+  InspectArtifactRequest,
+  InspectArtifactValue,
   InspectTaskRequest,
   InspectTaskValue,
+  ListArtifactsRequest,
+  ListArtifactsValue,
   ListTasksRequest,
   ListTasksValue,
+  RegisterArtifactRequest,
+  RegisterArtifactValue,
   ResumeTaskRequest,
   ResumeTaskValue,
   StartTaskRequest,
@@ -31,6 +40,7 @@ import type {
 
 export type * from './types.ts'
 export { taskView } from './commands.ts'
+export { artifactView } from './artifacts.ts'
 
 declare module '@monolith/cordis' {
   interface Context {
@@ -51,6 +61,15 @@ export interface Config {
    * that has them — so a deployment with network tools must list them.
    */
   networkTools?: string[]
+
+  /**
+   * Largest artifact this deployment will return through `downloadArtifact`,
+   * in bytes (default 25 MiB). The read is refused above it rather than
+   * loading the file, because a deliverable is base64-encoded into one RPC
+   * response and a large one would cost the Host its memory before the
+   * browser could refuse it.
+   */
+  maxDownloadBytes?: number
 }
 
 /** Host service backing the generated `ctx.remote.productTask` namespace. */
@@ -58,6 +77,7 @@ export class ProductTaskController extends TypertRemoteService {
   // Inline schema call: the config catalog walks `static Config` statically.
   static Config: z<Config> = z.object({
     networkTools: z.array(z.string()).default([]),
+    maxDownloadBytes: z.number().default(25 * 1024 * 1024),
   })
 
   /**
@@ -81,9 +101,14 @@ export class ProductTaskController extends TypertRemoteService {
     'permissionPresets',
     'agents',
     'tools',
+    // Artifacts are authorized through their Task's Project, so the Workspace
+    // record supplying that directory is required, not optional.
+    'productArtifacts',
+    'workspaceRegistry',
   ]
 
   private readonly commands: ProductTaskCommands
+  private readonly artifacts: ProductArtifactCommands
 
   /**
    * @param ctx - Host context carrying the Task registry, Session controller and policy seams.
@@ -92,6 +117,7 @@ export class ProductTaskController extends TypertRemoteService {
   constructor(ctx: Context, config: Config) {
     super(ctx, 'productTaskController', { namespace: 'productTask' })
     this.commands = new ProductTaskCommands(ctx)
+    this.artifacts = new ProductArtifactCommands(ctx, config.maxDownloadBytes as number)
     // The schema defaulted the list — the cast records that runtime fact.
     ctx.effect(
       () => installNetworkRestriction(ctx, config.networkTools as string[]),
@@ -147,6 +173,46 @@ export class ProductTaskController extends TypertRemoteService {
   @Remote('listTasks')
   listTasks(request: ListTasksRequest): ListTasksValue {
     return this.commands.listTasks(request)
+  }
+
+  /**
+   * Register the current bytes at a path as the next version of one output.
+   * @param request - owning Task, output name, and path.
+   * @returns the Artifact including the version just added.
+   */
+  @Remote('registerArtifact')
+  registerArtifact(request: RegisterArtifactRequest): Promise<RegisterArtifactValue> {
+    return this.artifacts.registerArtifact(request)
+  }
+
+  /**
+   * List every Artifact owned by one Task.
+   * @param request - the owning Task.
+   * @returns that Task's artifacts, newest first.
+   */
+  @Remote('listArtifacts')
+  listArtifacts(request: ListArtifactsRequest): ListArtifactsValue {
+    return this.artifacts.listArtifacts(request)
+  }
+
+  /**
+   * Read one Artifact's record and versions, without its bytes.
+   * @param request - the artifact to inspect.
+   * @returns the Artifact projection.
+   */
+  @Remote('inspectArtifact')
+  inspectArtifact(request: InspectArtifactRequest): InspectArtifactValue {
+    return this.artifacts.inspectArtifact(request)
+  }
+
+  /**
+   * Read one Artifact version's bytes and re-check them against the registration.
+   * @param request - the artifact and optional version.
+   * @returns the bytes, their digest, and whether they still match.
+   */
+  @Remote('downloadArtifact')
+  downloadArtifact(request: DownloadArtifactRequest): Promise<DownloadArtifactValue> {
+    return this.artifacts.downloadArtifact(request)
   }
 }
 

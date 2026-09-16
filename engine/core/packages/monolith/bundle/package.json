@@ -23,6 +23,7 @@
     "@monolith/client-ui-directory-picker-browse": "workspace:^",
     "@monolith/host-directory-picker-browse": "workspace:^",
     "@monolith/mcp-client": "workspace:^",
+    "@monolith/product-artifacts": "workspace:^",
     "@monolith/product-workspace": "workspace:^",
     "@monolith/schedule": "workspace:^",
     "@monolith/time-context": "workspace:^"

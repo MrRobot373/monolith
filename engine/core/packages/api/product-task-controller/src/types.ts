@@ -95,6 +95,14 @@ declare module '@monolith/typert-protocol' {
     'product-task/no-active-run': { readonly taskId: TaskId }
     /** The requested approval preset is not in the deployment's table. */
     'product-task/unknown-preset': { readonly approvalPresetId: string }
+    /** No Artifact record carries the requested identity, or the version is absent. */
+    'product-artifact/not-found': { readonly artifactId: string }
+    /** The path resolves outside the Project directory that owns the Task. */
+    'product-artifact/outside-project': { readonly path: string }
+    /** The file exceeds the deployment's read ceiling. */
+    'product-artifact/too-large': { readonly bytes: number; readonly limit: number }
+    /** The Task's Project is no longer a registered Workspace. */
+    'product-artifact/no-project': { readonly taskId: TaskId }
   }
 }
 
@@ -161,6 +169,89 @@ export interface InspectTaskValue {
    * which has no Run whose knobs could be read.
    */
   readonly effectivePolicy?: EffectivePolicyView
+}
+
+/** One Artifact version projected for browser consumers. */
+export interface ArtifactVersionView {
+  readonly version: number
+  /** The Run that produced these bytes. */
+  readonly runId: SessionId
+  /** Path relative to the owning Project's directory. */
+  readonly path: string
+  /** Lowercase hex sha256 of the bytes as registered. */
+  readonly sha256: string
+  readonly bytes: number
+  readonly createdAt: string
+}
+
+/** One Artifact and every version of it. */
+export interface ArtifactView {
+  readonly artifactId: string
+  readonly taskId: TaskId
+  /** Name identifying this output within its Task. */
+  readonly name: string
+  readonly createdAt: string
+  readonly updatedAt: string
+  /** Versions in registration order, oldest first. */
+  readonly versions: readonly ArtifactVersionView[]
+}
+
+/** Request to register the current bytes at a path as an output version. */
+export interface RegisterArtifactRequest {
+  readonly taskId: TaskId
+  /** Name identifying the output; re-using it appends a version. */
+  readonly name: string
+  /** Path to the produced file, absolute or relative to the Project directory. */
+  readonly path: string
+}
+
+/** The Artifact after registration, including the version just added. */
+export interface RegisterArtifactValue {
+  readonly artifact: ArtifactView
+}
+
+/** Request for every Artifact owned by one Task. */
+export interface ListArtifactsRequest {
+  readonly taskId: TaskId
+}
+
+/** Every Artifact owned by one Task, newest first. */
+export interface ListArtifactsValue {
+  readonly items: readonly ArtifactView[]
+}
+
+/** Request for one Artifact's record. */
+export interface InspectArtifactRequest {
+  readonly artifactId: string
+}
+
+/** One Artifact's record and versions. */
+export interface InspectArtifactValue {
+  readonly artifact: ArtifactView
+}
+
+/** Request for one Artifact version's bytes. */
+export interface DownloadArtifactRequest {
+  readonly artifactId: string
+  /** Version to read; the newest when omitted. */
+  readonly version?: number
+}
+
+/** One Artifact version's current bytes and whether they match the registration. */
+export interface DownloadArtifactValue {
+  readonly artifact: ArtifactView
+  /** The version read. */
+  readonly version: ArtifactVersionView
+  /** Base64-encoded current bytes. */
+  readonly data: string
+  /** Digest of the bytes just read. */
+  readonly sha256: string
+  /**
+   * Whether the file still hashes to what was registered. A false here is the
+   * useful answer, not an error: the caller asked for the deliverable and is
+   * told it changed since it was produced.
+   */
+  readonly verified: boolean
 }
 
 /** Request for every Task in one Project. */

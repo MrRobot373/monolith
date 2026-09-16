@@ -699,6 +699,9 @@ importers:
       '@monolith/permission-presets':
         specifier: workspace:^
         version: link:../../interaction/permission-presets
+      '@monolith/product-artifacts':
+        specifier: workspace:^
+        version: link:../../monolith/product-artifacts
       '@monolith/product-workspace':
         specifier: workspace:^
         version: link:../../monolith/product-workspace
@@ -6573,6 +6576,9 @@ importers:
       '@monolith/mcp-client':
         specifier: workspace:^
         version: link:../../mcp/mcp-client
+      '@monolith/product-artifacts':
+        specifier: workspace:^
+        version: link:../product-artifacts
       '@monolith/product-workspace':
         specifier: workspace:^
         version: link:../product-workspace
@@ -6582,6 +6588,34 @@ importers:
       '@monolith/time-context':
         specifier: workspace:^
         version: link:../../context/time-context
+
+  packages/monolith/product-artifacts:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@monolith/brand':
+        specifier: workspace:^
+        version: link:../../util/brand
+      '@monolith/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@monolith/product-workspace':
+        specifier: workspace:^
+        version: link:../product-workspace
+      '@monolith/sandbox':
+        specifier: workspace:^
+        version: link:../../sandbox/sandbox
+      '@monolith/session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@monolith/storage':
+        specifier: workspace:^
+        version: link:../../storage/storage
+      '@monolith/storage-domain':
+        specifier: workspace:^
+        version: link:../../storage/storage-domain
 
   packages/monolith/product-workspace:
     dependencies:

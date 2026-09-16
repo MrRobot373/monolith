@@ -7,7 +7,7 @@ kind: "package-reference"
 
 ## Summary
 
-`monolith-api-product-task-controller` serves the `productTask` Remote namespace: `startTask`, `cancelRun`, `resumeTask`, `inspectTask` and `listTasks`. It owns Task identity, the ordered Run account and the policy pinned at creation, and it binds that policy to the engine's own enforcement seams so a `read-only` Task is actually refused writes; it owns no execution. Every verb that starts, forks, prompts or stops a Run delegates to `ctx.sessionController`, because a Run is one engine Session and that lifecycle already has an owner. Mutating verbs take a caller-minted idempotency key, so a browser that retransmits over a reconnect gets its first result back instead of a second Run.
+`monolith-api-product-task-controller` serves the `productTask` Remote namespace: `startTask`, `cancelRun`, `resumeTask`, `inspectTask`, `listTasks`, and the artifact verbs `registerArtifact`, `listArtifacts`, `inspectArtifact` and `downloadArtifact`. It owns Task identity, the ordered Run account and the policy pinned at creation, and it binds that policy to the engine's own enforcement seams so a `read-only` Task is actually refused writes; it owns no execution. Every verb that starts, forks, prompts or stops a Run delegates to `ctx.sessionController`, because a Run is one engine Session and that lifecycle already has an owner. Mutating verbs take a caller-minted idempotency key, so a browser that retransmits over a reconnect gets its first result back instead of a second Run.
 
 ## Table of Contents
 
@@ -51,6 +51,17 @@ The policy binds before the Run is prompted: `sandboxMode` becomes a durable `sa
 
 It also returns `effectivePolicy`: what the Run is actually executing under, read back from the session's own knobs rather than echoed from the Task record. A Task pinning `read-only` whose approval preset bundles `workspace-write` reports `sandboxMode: 'read-only'` with `approvalPreset: 'custom'`, because the Task's file policy outranks the preset's and the resulting knobs match no table entry.
 
+### Register and download outputs
+
+An Artifact belongs to a Task, and the Task's Project supplies the directory its bytes must live inside — so an artifact id from another Project reaches nothing, and a path escaping the Project is refused at registration and again at read:
+
+```ts
+const { artifact } = await ctx.remote.productTask.registerArtifact({ taskId, name: 'report', path: 'out/report.md' })
+const { data, verified } = await ctx.remote.productTask.downloadArtifact({ artifactId: artifact.artifactId })
+```
+
+`downloadArtifact` returns base64 bytes plus `verified`, which is false when the file changed after it was registered. The bytes still come back: the caller asked for the deliverable and is told what it is, rather than being refused.
+
 -----
 
 <a id="understand-the-implementation"></a>
@@ -72,11 +83,13 @@ Idempotency stores the in-flight Promise rather than the settled result, so two 
 | [`src/index.ts`](src/index.ts) | `ProductTaskController`: the `@Remote` surface and its service registration |
 | [`src/commands.ts`](src/commands.ts) | Task identity, the Run account, idempotency, and stable Remote failure mapping |
 | [`src/policy.ts`](src/policy.ts) | Binding a Task's pinned triple to `sandboxPolicy`, `permission-presets`, and the Run's tool scope |
+| [`src/artifacts.ts`](src/artifacts.ts) | Artifact verbs, authorized through the owning Task's Project |
 | [`src/types.ts`](src/types.ts) | Browser-safe request/result vocabulary and the namespace's error details |
 | — | No runtime invariant companion is published because the Task registry is the single writer and the status it reports is a pure fold of the session log; no two independent observations can diverge. |
 | [`tests/commands.host.spec.ts`](tests/commands.host.spec.ts) | Delegation, idempotency in all three shapes, retry-forks-a-new-Run, and status resolution |
 | [`tests/policy.host.spec.ts`](tests/policy.host.spec.ts) | Policy binding asserted through `sandboxPolicy.resolve()`, with a negative control proving the assertion measures this package |
 | [`tests/network-policy.host.spec.ts`](tests/network-policy.host.spec.ts) | Network denial per Run, including re-application to a second agent for the same Run |
+| [`tests/artifacts.host.spec.ts`](tests/artifacts.host.spec.ts) | Artifact ownership, Project containment, provenance refusal, and the download ceiling |
 
 </details>
 
@@ -105,6 +118,8 @@ Nothing here enters a model request, so provider cache reuse is unaffected.
 <a id="known-limitations-and-deferred-work"></a>
 
 - **No `submitDecision` verb** — ADR 0002 Decision 4 splits it in two: a tool-level approval routes through the existing `ui-approval` waterfall, and a task-level review is a product decision record that outlives any single Session. That record does not exist yet, so neither half is served.
+- **Artifacts are registered by name, never derived** — nothing watches a Run's file writes, so an output exists only because a caller registered it.
+- **A download is one base64 RPC response** — capped by `maxDownloadBytes` (25 MiB by default) because the whole file is encoded into a single reply. A streaming or ranged read is what a large deliverable needs.
 - **No `follow` stream** — callers poll `inspectTask`. The projection's change feed already carries what a stream would publish; wiring it to a baseline-plus-increments generation is the next slice.
 - **Idempotency is process-lifetime** — the key map guards a browser retransmitting to the same Host, not a duplicate that spans a Host restart. Surviving a restart needs the key on the durable Task record.
 - **`cancelRun` and `resumeTask` act on the newest Run only** — a Task whose earlier attempt is somehow still live has no verb addressing it; nothing today can produce that state.

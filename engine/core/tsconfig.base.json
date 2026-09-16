@@ -315,6 +315,8 @@
       "@monolith/plugin-package-inventory-deepseek": ["./packages/llm/plugin-package-inventory-deepseek/src"],
       "@monolith/api-product-task-controller": ["./packages/api/product-task-controller/src"],
       "@monolith/api-product-task-controller/types": ["./packages/api/product-task-controller/src/types.ts"],
+      "@monolith/product-artifacts": ["./packages/monolith/product-artifacts/src"],
+      "@monolith/product-artifacts/types": ["./packages/monolith/product-artifacts/src/types.ts"],
       "@monolith/product-workspace": ["./packages/monolith/product-workspace/src"],
       "@monolith/product-workspace/types": ["./packages/monolith/product-workspace/src/types.ts"],
       "@monolith/pwsh-sandbox": ["./packages/shell/pwsh-sandbox/src"],

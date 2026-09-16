@@ -185,6 +185,11 @@
 # beside session/workspace/settings, not a second server. Every execution verb
 # it serves delegates to the Session controller, so this row must sit after
 # the web-app layer that mounts that controller.
+# Versioned Task outputs with the digest captured at registration, so a
+# download can say whether the deliverable is still the one produced.
+    - id: product-artifacts
+      name: '@monolith/product-artifacts'
+
     - id: product-task-controller
       name: '@monolith/api-product-task-controller'
       config:
