@@ -1,0 +1,44 @@
+{
+  "name": "@monolith/session-title-all-prompts-llm",
+  "description": "All-user-messages LLM provider plugin for MONOLITH session titles",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/session/session-title-all-prompts-llm"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["lib/index.js", "lib/types/**/*.d.ts"],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-title": "workspace:^",
+    "@monolith/session-title-llm": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-title": "workspace:^",
+    "@monolith/session-title-llm": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/agent-loop": "workspace:^"
+  }
+}

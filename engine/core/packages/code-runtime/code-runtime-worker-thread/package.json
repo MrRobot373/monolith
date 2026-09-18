@@ -1,0 +1,49 @@
+{
+  "name": "@monolith/code-runtime-worker-thread",
+  "description": "Worker-thread implementation of the MONOLITH code-execution seam",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/code-runtime/code-runtime-worker-thread"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./worker": {
+      "types": "./lib/types/worker.d.ts",
+      "default": "./lib/worker.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/worker.cjs",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/code-runtime": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/timeout": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/util-values": "workspace:^",
+    "@monolith/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/code-runtime": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/timeout": "workspace:^"
+  }
+}

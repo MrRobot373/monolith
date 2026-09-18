@@ -1,0 +1,71 @@
+{
+  "name": "@monolith/client-ui-input-trigger",
+  "description": "Input trigger pipeline: '/' and '@' detection, candidate menu, pick routing to registered sources",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-input-trigger"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/api-session-controller",
+        "@monolith/client-locale",
+        "@monolith/client-ui-conversation",
+        "@monolith/client-ui-renderer"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "clsx": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-ui-conversation": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-test-runtime": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@types/react": "~18.3.1",
+    "@monolith/cordis": "workspace:^",
+    "react": "^18.2.0",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/client-store": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

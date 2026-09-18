@@ -1,0 +1,44 @@
+{
+  "name": "@monolith/subprocess-e2b",
+  "description": "E2B subprocess implementation for MONOLITH",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/e2b/subprocess-e2b"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/e2b": "workspace:^",
+    "@monolith/subprocess": "workspace:^",
+    "@monolith/timeout": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/e2b": "workspace:^",
+    "@monolith/subprocess": "workspace:^",
+    "@monolith/timeout": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

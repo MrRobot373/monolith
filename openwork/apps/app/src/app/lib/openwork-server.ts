@@ -762,20 +762,20 @@ export function writeOpenworkServerSettings(next: OpenworkServerSettings): Openw
 export function hydrateOpenworkServerSettingsFromEnv() {
   if (typeof window === "undefined") return;
 
-  const envDeployment = typeof import.meta.env?.VITE_OPENWORK_DEPLOYMENT === "string"
-    ? import.meta.env.VITE_OPENWORK_DEPLOYMENT.trim()
+  const envDeployment = typeof import.meta.env?.VITE_MONOLITH_DEPLOYMENT === "string"
+    ? import.meta.env.VITE_MONOLITH_DEPLOYMENT.trim()
     : "";
-  const envUrl = typeof import.meta.env?.VITE_OPENWORK_URL === "string"
-    ? import.meta.env.VITE_OPENWORK_URL.trim()
+  const envUrl = typeof import.meta.env?.VITE_MONOLITH_URL === "string"
+    ? import.meta.env.VITE_MONOLITH_URL.trim()
     : "";
-  const envPort = typeof import.meta.env?.VITE_OPENWORK_PORT === "string"
-    ? import.meta.env.VITE_OPENWORK_PORT.trim()
+  const envPort = typeof import.meta.env?.VITE_MONOLITH_PORT === "string"
+    ? import.meta.env.VITE_MONOLITH_PORT.trim()
     : "";
-  const envToken = typeof import.meta.env?.VITE_OPENWORK_TOKEN === "string"
-    ? import.meta.env.VITE_OPENWORK_TOKEN.trim()
+  const envToken = typeof import.meta.env?.VITE_MONOLITH_TOKEN === "string"
+    ? import.meta.env.VITE_MONOLITH_TOKEN.trim()
     : "";
-  const envHostToken = typeof import.meta.env?.VITE_OPENWORK_HOST_TOKEN === "string"
-    ? import.meta.env.VITE_OPENWORK_HOST_TOKEN.trim()
+  const envHostToken = typeof import.meta.env?.VITE_MONOLITH_HOST_TOKEN === "string"
+    ? import.meta.env.VITE_MONOLITH_HOST_TOKEN.trim()
     : "";
 
   if (!envUrl && !envPort && !envToken && !envHostToken) return;

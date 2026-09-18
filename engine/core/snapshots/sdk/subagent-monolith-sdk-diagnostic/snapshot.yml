@@ -1,0 +1,8 @@
+version: 1
+scenario: subagent-monolith-sdk-diagnostic
+profile: sdk
+composition: sdk-monolith-sdk-diagnostic
+recording: live
+header:
+  class: sdk-monolith-sdk-diagnostic
+  pin: true

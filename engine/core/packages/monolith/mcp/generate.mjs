@@ -1,0 +1,146 @@
+#!/usr/bin/env node
+/**
+ * Emit a cordis patch layer that mounts the MCP servers you name.
+ *
+ * The engine mounts one `@monolith/mcp-client` row per server, so enabling a
+ * server is a patch row — not a setting. This turns catalogued entries into
+ * those rows, refuses the ones this engine cannot reach, and reports which
+ * required environment variables are missing before you boot rather than
+ * after a silent connect failure.
+ *
+ *   node generate.mjs --ready                    every server needing no secret
+ *   node generate.mjs github context7 memory     the ones you name
+ *   node generate.mjs --all                      everything reachable
+ *   node generate.mjs --list                     print the catalog and exit
+ *
+ * Writes to `--out <path>` (default `./monolith-mcp.patch.yml`), then:
+ *   monolith --profile monolith --patch <path>
+ * @module
+ */
+import { writeFileSync } from 'node:fs'
+import { CATALOG, READY, UNSUPPORTED } from './catalog.mjs'
+
+const BLOCKED_REASON = {
+  oauth: 'authenticates by interactive OAuth; this engine sends static headers only',
+  sse: 'serves the legacy SSE transport; this engine speaks streamable-http only',
+}
+
+const argv = process.argv.slice(2)
+const flags = new Set(argv.filter(a => a.startsWith('--')))
+const outIndex = argv.indexOf('--out')
+const out = outIndex >= 0 ? argv[outIndex + 1] : './monolith-mcp.patch.yml'
+const named = argv.filter((a, i) => !a.startsWith('--') && i !== outIndex + 1)
+
+if (flags.has('--list')) {
+  const width = Math.max(...CATALOG.map(e => e.id.length))
+  for (const e of CATALOG) {
+    const mark = e.status === 'ready' ? 'ready       '
+      : e.status === 'needs-secret' ? `needs ${e.secrets.filter(s => s.required).map(s => s.env).join(', ')}`
+        : e.status === 'built-in' ? 'built-in    '
+          : `unsupported (${e.blocked})`
+    console.log(`${e.id.padEnd(width)}  ${e.transport.padEnd(16)}  ${mark}`)
+  }
+  process.exit(0)
+}
+
+/** Servers the caller asked for, before reachability is judged. */
+let selected
+if (flags.has('--ready')) selected = READY
+else if (flags.has('--all')) selected = CATALOG.filter(e => e.status === 'ready' || e.status === 'needs-secret')
+else selected = named.map((id) => {
+  const entry = CATALOG.find(e => e.id === id)
+  if (!entry) {
+    console.error(`monolith-mcp: no catalogued server "${id}" — run --list to see the ids`)
+    process.exit(1)
+  }
+  return entry
+})
+
+if (selected.length === 0) {
+  console.error('monolith-mcp: name at least one server, or pass --ready / --all / --list')
+  process.exit(1)
+}
+
+/* Refuse what the engine cannot reach, naming the reason. A row that cannot
+   connect is worse than an absent one: it costs a boot and teaches nothing. */
+const refused = selected.filter(e => e.status === 'unsupported' || e.status === 'built-in')
+for (const e of refused) {
+  const why = e.status === 'built-in'
+    ? 'already mounted by the product overlay'
+    : BLOCKED_REASON[e.blocked] ?? e.blocked
+  console.error(`monolith-mcp: skipping ${e.id} — ${why}`)
+}
+const mountable = selected.filter(e => !refused.includes(e))
+
+/** YAML scalar quoting: single-quoted unless it is a `!!js` expression. */
+const scalar = (v) => {
+  if (v !== null && typeof v === 'object' && 'expr' in v) {
+    const body = v.expr.includes('${') ? '`' + v.expr + '`' : v.expr
+    return `!!js ${body}`
+  }
+  return `'${String(v).replace(/'/g, "''")}'`
+}
+
+const rows = []
+for (const e of mountable) {
+  const name = e.id.replace(/[^A-Za-z0-9_-]/g, '')
+  const lines = [
+    `    - id: mcp-${name}`,
+    `      name: '@monolith/mcp-client'`,
+    `      config:`,
+    `        serverName: ${name.replace(/-/g, '').slice(0, 32)}`,
+    `        transport: ${e.transport}`,
+  ]
+  if (e.transport === 'stdio') {
+    lines.push(`        command: ${scalar(e.command)}`)
+    if (e.args?.length) {
+      lines.push(`        args:`)
+      for (const a of e.args) lines.push(`          - ${scalar(a)}`)
+    }
+    if (e.env) {
+      lines.push(`        env:`)
+      for (const [k, v] of Object.entries(e.env)) lines.push(`          ${k}: ${scalar(v)}`)
+    }
+    lines.push(`        cwd: !!js process.env.MONOLITH_CWD ?? process.cwd()`)
+  } else {
+    lines.push(`        url: ${scalar(e.url)}`)
+    if (e.headers) {
+      lines.push(`        headers:`)
+      for (const [k, v] of Object.entries(e.headers)) lines.push(`          ${k}: ${scalar(v)}`)
+    }
+  }
+  lines.push(`        toolCallTimeoutMs: 60000`)
+  // Left false deliberately: one unreachable third-party server should not
+  // stop the whole workspace from booting. The startup log names what failed.
+  lines.push(`        failOnStartupError: false`)
+  rows.push({ entry: e, yaml: lines.join('\n') })
+}
+
+const missing = []
+for (const { entry } of rows) {
+  for (const s of entry.secrets.filter(x => x.required)) {
+    if (!process.env[s.env]) missing.push(`${entry.id}: ${s.env} (${s.label})`)
+  }
+}
+
+const header = `# MONOLITH MCP servers — generated by packages/monolith/mcp/generate.mjs
+# ${new Date().toISOString().slice(0, 10)} · ${rows.length} server(s)
+#
+# Each row mounts one MCP server; its tools reach the model as
+# mcp__<serverName>__<tool>. Secrets are read from the environment at boot, so
+# this file carries no credentials and is safe to commit.
+#
+#   monolith --profile monolith --patch ${out}
+`
+
+writeFileSync(out, header + '\n- insert:\n' + rows.map(r => r.yaml).join('\n\n') + '\n')
+
+console.log(`monolith-mcp: wrote ${rows.length} server row(s) to ${out}`)
+for (const { entry } of rows) console.log(`  ${entry.id} (${entry.transport})`)
+if (missing.length) {
+  console.log(`\nmonolith-mcp: ${missing.length} required variable(s) unset — those servers will fail to connect until they are:`)
+  for (const m of missing) console.log(`  ${m}`)
+}
+if (UNSUPPORTED.length && (flags.has('--all') || flags.has('--ready'))) {
+  console.log(`\nmonolith-mcp: ${UNSUPPORTED.length} catalogued server(s) this engine cannot reach — see README.md`)
+}

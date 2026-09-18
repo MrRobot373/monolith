@@ -6,7 +6,7 @@
 # 2) Launches the OpenWork host (server + engine); UI is served at :8787/ui.
 set -euo pipefail
 
-WS="${OPENWORK_WORKSPACE:-/workspace}"
+WS="${MONOLITH_WORKSPACE:-${OPENWORK_WORKSPACE:-/workspace}}"
 export CFG="$WS/opencode.json"
 mkdir -p "$WS"
 
@@ -80,26 +80,28 @@ fi
 # have no equivalent here and aren't needed.
 ENGINE_MODE="${MONOLITH_ENGINE:-own}"
 if [ "$ENGINE_MODE" = "legacy" ]; then
-  echo "[monolith] MONOLITH_ENGINE=legacy -> starting the openwork-orchestrator binary"
+  echo "[monolith] MONOLITH_ENGINE=legacy -> starting the legacy engine binary"
+  # These --openwork-* flag names are the prebuilt legacy binary's own fixed
+  # CLI contract — not ours to rename.
   exec openwork serve \
     --workspace "$WS" \
     --remote-access \
     --openwork-port 8787 \
     --opencode-host 127.0.0.1 \
     --opencode-port 4096 \
-    --connect-host "${OPENWORK_CONNECT_HOST:-127.0.0.1}" \
+    --connect-host "${MONOLITH_CONNECT_HOST:-${OPENWORK_CONNECT_HOST:-127.0.0.1}}" \
     --cors "*" \
-    --approval "${OPENWORK_APPROVAL_MODE:-manual}" \
+    --approval "${MONOLITH_APPROVAL_MODE:-${OPENWORK_APPROVAL_MODE:-manual}}" \
     --no-opencode-router
 else
   echo "[monolith] starting the MONOLITH orchestrator (our own engine on vendored opencode)"
-  export ORCH_PORT=8787
+  export MONOLITH_PORT=8787
   # 0.0.0.0, not 127.0.0.1: other containers (Caddy, webui, monolith-server)
   # reach this over the Docker bridge network, which loopback can't answer.
-  export ORCH_HOST="${ORCH_HOST:-0.0.0.0}"
-  export OPENCODE_PORT=4096
-  export OPENCODE_DIR="${OPENCODE_DIR:-/opt/engine/opencode}"
+  export MONOLITH_HOST="${MONOLITH_HOST:-0.0.0.0}"
+  export MONOLITH_ENGINE_PORT=4096
+  export MONOLITH_ENGINE_DIR="${MONOLITH_ENGINE_DIR:-/opt/engine/opencode}"
   export DATA_DIR="${MONOLITH_ORCH_DATA_DIR:-/data/orchestrator}"
-  export OPENWORK_WORKSPACE="$WS"
+  export MONOLITH_WORKSPACE="$WS"
   exec node /app/monolith-server/orchestrator.mjs
 fi

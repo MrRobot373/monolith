@@ -1,0 +1,62 @@
+{
+  "name": "@monolith/plugin-package-inventory-deepseek",
+  "description": "Active Loader-backed plugin package inventory for official DeepSeek LLM API requests",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/llm/plugin-package-inventory-deepseek"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/brand": "workspace:^",
+    "@monolith/schemastery": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/deepseek-llm-api-extensions": "workspace:^",
+    "@monolith/session": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@monolith/agent-presets": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/deepseek-llm-api-extensions": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "name": "@monolith/tool-subagent",
+  "description": "Model-facing subagent delegation tool over the ctx.subagents seam",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/subagent/tool-subagent"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./model-selection-settings": {
+      "types": "./lib/types/model-selection-settings.d.ts",
+      "default": "./lib/model-selection-settings.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/model-selection-settings.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/settings": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session-persistence": "workspace:^",
+    "@monolith/session-persistence-jsonl": "workspace:^",
+    "@monolith/settings": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/subagent-spawn-in-process": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/jobs": "workspace:^",
+    "@monolith/jobs-local": "workspace:^",
+    "@monolith/tool-jobs": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/session-projection": "workspace:^"
+  }
+}

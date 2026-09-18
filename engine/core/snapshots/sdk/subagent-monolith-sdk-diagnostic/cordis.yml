@@ -1,0 +1,68 @@
+# TypeScript SDK snapshot patch for foreground and background MONOLITH SDK failures.
+
+- id: skill-filesystem
+  name: '@monolith/skill-filesystem'
+  config:
+    includeDefaultRoots: false
+
+- id: llm-deepseek
+  name: '@monolith/llm-deepseek'
+  config:
+    thinking: enabled
+    reasoningEffort: max
+
+- id: session-persistence-jsonl
+  name: '@monolith/session-persistence-jsonl'
+  config:
+    root: !!js monolithHomePath('sessions')
+    compression: !!js "process.env.MONOLITH_SNAPSHOT === undefined ? 'zstd' : 'none'"
+
+- id: session-log-deepseek
+  name: '@monolith/session-log-deepseek'
+  config:
+    enabled: true
+
+- insert:
+    - id: subagent-monolith-sdk-diagnostic
+      name: '@monolith/subagent-monolith-sdk'
+      config:
+        providerName: monolith-sdk-diagnostic
+        profile: sdk
+        patches:
+          - !!js process.env.MONOLITH_TEST_CHILD_PATCH
+        monolithHome: !!js monolithHomePath('children/foreground')
+        provider: mock
+        model: mock-echo
+        env:
+          MONOLITH_TELEMETRY_DISABLED: '1'
+          MONOLITH_TEST_CHILD_FAILURE: '1'
+    - id: tool-subagent-monolith-sdk-diagnostic
+      name: '@monolith/tool-subagent'
+      config:
+        provider: monolith-sdk-diagnostic
+        toolName: subagent_monolith_sdk
+        backgroundMode: one-shot
+        maxDepth: provider-managed
+    - id: subagent-monolith-sdk-diagnostic-background
+      name: '@monolith/subagent-monolith-sdk'
+      config:
+        providerName: monolith-sdk-diagnostic-background
+        profile: sdk
+        patches:
+          - !!js process.env.MONOLITH_TEST_CHILD_PATCH
+        monolithHome: !!js monolithHomePath('children/background')
+        provider: mock
+        model: mock-echo
+        env:
+          MONOLITH_TELEMETRY_DISABLED: '1'
+          MONOLITH_TEST_CHILD_FAILURE: '1'
+          FAKE_INIT_GO: .monolith-sdk-background-release
+    - id: tool-subagent-monolith-sdk-diagnostic-background
+      name: '@monolith/tool-subagent'
+      config:
+        provider: monolith-sdk-diagnostic-background
+        toolName: subagent_monolith_sdk_background
+        backgroundMode: one-shot
+        maxDepth: provider-managed
+    - id: release-monolith-sdk-background-on-job-output
+      name: '../../../apps/cli/tests/profiles/sdk/fixtures/subagent-monolith-sdk-release-on-job-output.ts'

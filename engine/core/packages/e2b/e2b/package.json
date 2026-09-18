@@ -1,0 +1,55 @@
+{
+  "name": "@monolith/e2b",
+  "description": "Shared E2B sandbox lifecycle for MONOLITH provider adapters",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/e2b/e2b"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/http-proxy": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^",
+    "e2b": "2.29.1"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/app-boot": "workspace:^",
+    "@monolith/bash-local": "workspace:^",
+    "@monolith/fs-e2b": "workspace:^",
+    "@monolith/loader-smoke": "workspace:^",
+    "@monolith/lsp": "workspace:^",
+    "@monolith/lsp-stdio": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/subprocess-e2b": "workspace:^",
+    "@monolith/terminal": "workspace:^",
+    "@monolith/terminal-bash": "workspace:^",
+    "@monolith/http-proxy": "workspace:^",
+    "@monolith/launch-environment": "workspace:^"
+  }
+}

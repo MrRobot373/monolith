@@ -1,0 +1,61 @@
+{
+  "name": "@monolith/subagent-in-process-driver",
+  "description": "Shared in-process subagent run driver: drives a child agent on ctx.agents (used by the spawn and fork backends)",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/subagent/subagent-in-process-driver"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-loop": "workspace:^",
+    "@monolith/agent-loop-testkit": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/fs-sandbox": "workspace:^",
+    "@monolith/invariants": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tool-fs": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/user-approval": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/brand": "workspace:^"
+  }
+}

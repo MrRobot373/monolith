@@ -7,9 +7,9 @@
 FROM node:22-bookworm-slim
 
 # Legacy-fallback pin only; MONOLITH_ENGINE=own (the default) ignores this.
-ARG OPENWORK_ORCHESTRATOR_VERSION=0.17.8
+ARG MONOLITH_LEGACY_ENGINE_VERSION=0.17.8
 # Pinned opencode release we vendor from source (MIT, github.com/sst/opencode).
-ARG OPENCODE_VERSION=v1.18.10
+ARG MONOLITH_ENGINE_VERSION=v1.18.10
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -17,14 +17,14 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 
 # Legacy-fallback binary (best-effort — MONOLITH_ENGINE=own never touches this).
-RUN npm install -g "openwork-orchestrator@${OPENWORK_ORCHESTRATOR_VERSION}" \
- || echo "[warn] legacy openwork-orchestrator install failed (non-fatal; MONOLITH_ENGINE=own doesn't need it)"
+RUN npm install -g "openwork-orchestrator@${MONOLITH_LEGACY_ENGINE_VERSION}" \
+ || echo "[warn] legacy engine install failed (non-fatal; MONOLITH_ENGINE=own doesn't need it)"
 
 # Our own engine: bun + opencode vendored from source (same recipe as
 # native/setup.mjs). --ignore-scripts skips node-gyp native-module builds the
 # server doesn't need (mirrors a real Windows dev-time gotcha; harmless here too).
 RUN npm install -g bun
-RUN git clone --depth 1 --branch "${OPENCODE_VERSION}" https://github.com/sst/opencode /opt/engine/opencode \
+RUN git clone --depth 1 --branch "${MONOLITH_ENGINE_VERSION}" https://github.com/sst/opencode /opt/engine/opencode \
  && cd /opt/engine/opencode \
  && bun install --ignore-scripts
 
@@ -48,13 +48,12 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     || echo "[warn] agent-reach git install failed; yt-dlp/feedparser web-reach still available"
 # ----------------------------------------------------------------------------
 
-ENV OPENWORK_DATA_DIR=/data/openwork-orchestrator \
-    OPENWORK_SIDECAR_DIR=/data/sidecars \
-    OPENWORK_WORKSPACE=/workspace
+ENV MONOLITH_ENGINE_DATA_DIR=/data/orchestrator \
+    MONOLITH_SIDECAR_DIR=/data/sidecars \
+    MONOLITH_WORKSPACE=/workspace
 
 # --- Phase 5: domain agents + skills (seeded into each workspace on boot) ----
-# Agent personas (Legal/Finance/Health/Research/Code) come from the repo; the
-# Legal & Finance skills come from Anthropic's open-source knowledge-work-plugins.
+# Agent personas (Chat/Research/Code) come from the repo.
 COPY workspace-image/seed/ /opt/monolith-seed/
 COPY workspace-image/seed-models.mjs /opt/monolith-seed/seed-models.mjs
 # Tools guide Tier 3/4: the built-in web-search MCP server + the MCP catalog
@@ -63,12 +62,6 @@ COPY workspace-image/seed-models.mjs /opt/monolith-seed/seed-models.mjs
 COPY native/mcp/web-tools.mjs /opt/monolith-seed/mcp/web-tools.mjs
 COPY monolith-server/mcp-catalog.mjs /opt/monolith-seed/mcp-catalog.mjs
 COPY monolith-server/mcp-catalog-data.mjs /opt/monolith-seed/mcp-catalog-data.mjs
-RUN git clone --depth 1 https://github.com/anthropics/knowledge-work-plugins.git /tmp/kwp \
- && mkdir -p /opt/monolith-seed/.opencode/skills \
- && cp -r /tmp/kwp/legal/skills/.   /opt/monolith-seed/.opencode/skills/ 2>/dev/null || true \
- && cp -r /tmp/kwp/finance/skills/. /opt/monolith-seed/.opencode/skills/ 2>/dev/null || true \
- && rm -rf /tmp/kwp \
- || echo "[warn] knowledge-work-plugins clone failed; domain agents still work without their skills"
 # ----------------------------------------------------------------------------
 
 EXPOSE 8787

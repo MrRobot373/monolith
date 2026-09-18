@@ -11,7 +11,15 @@ import http from "node:http";
 
 // Hop-by-hop headers must not be forwarded.
 const STRIP_REQ = new Set(["host", "connection", "content-length", "accept-encoding"]);
-const STRIP_RES = new Set(["connection", "transfer-encoding", "content-encoding"]);
+// content-length is deliberately stripped here too: we re-stream the body via
+// our own reader/writer pump rather than a byte-perfect passthrough, so if
+// upstream's declared Content-Length is ever stale/wrong (observed live: opencode
+// returned content-length:714 for a 2911-byte /session body), forwarding it
+// verbatim makes Node's http server truncate the client's response to match the
+// wrong header instead of the real body. Omitting it lets Node fall back to
+// chunked transfer-encoding, which is correct for a streamed length we don't
+// know in advance — and matches what we already need for /event SSE anyway.
+const STRIP_RES = new Set(["connection", "transfer-encoding", "content-encoding", "content-length"]);
 
 function collectBody(req) {
   return new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
 # MONOLITH front door.
-# Local:  hub=http://localhost  ·  work=http://work.localhost  ·  search=http://localhost:3001
-# Prod:   set MONOLITH_SITE_ADDRESS / MONOLITH_SEARCH_ADDRESS to real domains for auto-HTTPS.
+# Local:  hub=http://localhost  ·  work=http://work.localhost
+# Prod:   set MONOLITH_SITE_ADDRESS to a real domain for auto-HTTPS.
 #
 # Login = HTTP basic auth (same admin credentials on each site). Note: basic auth is per-host,
 # so the browser prompts once per app per session. True single-sign-on (no reprompt) is an
@@ -25,7 +25,7 @@
 	file_server
 }
 
-# ---- OpenWork workspace (work.<domain>) -------------------------------------
+# ---- MONOLITH workspace (work.<domain>) --------------------------------------
 # API paths are protected by the engine's own bearer token (basic auth would
 # collide with the app's Authorization: Bearer header). The SPA is behind login.
 http://work.localhost {
@@ -41,7 +41,7 @@ http://work.localhost {
 	}
 	@api path /health* /workspaces* /workspace/* /opencode/* /event* /files* /session* /host/*
 	handle @api {
-		reverse_proxy openwork-host:8787
+		reverse_proxy engine:8787
 	}
 	handle {
 		basic_auth {
@@ -49,15 +49,6 @@ http://work.localhost {
 		}
 		reverse_proxy webui:80
 	}
-}
-
-# ---- Perplexica / Vane search (search.<domain> and :3001) -------------------
-http://search.localhost, {$MONOLITH_SEARCH_ADDRESS::3001} {
-	import headers
-	basic_auth {
-		admin $2a$14$oq3Dt1zMiwsnE7BkvLHleuE2WhxMKOs5VUbjL.oQiboTZFrlbEcSG
-	}
-	reverse_proxy vane:3000
 }
 
 # Per-user workspaces provisioned by scripts/add-user.sh (one file each).

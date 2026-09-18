@@ -1,0 +1,205 @@
+# MONOLITH overlay for the monolith Web surface.
+#
+# Applied last, over monolith-base + monolith-web-app:
+#   monolith web --patch packages/monolith/cordis.patch.yml
+#
+# Everything MONOLITH changes about the shipped harness lives here. monolith itself
+# stays vendored and unmodified, so pulling a newer upstream is a merge of
+# engine/core alone — this file and packages/monolith/* are the whole product
+# delta. A patch row REPLACES the targeted row's whole `config`, so each row
+# below restates every key it owns.
+
+# ── brand ───────────────────────────────────────────────────────────────────
+
+# The upstream 'official' occupants step aside; ui-brand-official's own README
+# names this as the supported route for a deployment with its own identity.
+# Disabling rather than deleting is deliberate: the row is defined in the
+# shared web-app layer, and a row merely absent here would silently reappear
+# the day that layer is reordered.
+- id: ui-brand-official
+  disabled: true
+
+- insert:
+    # Occupies sidebar.brand.mark, sidebar.brand.name, and — unlike the
+    # official build — conversation.hero.brand.mark, whose fallback is
+    # the official mark rather than a neutral one.
+    - id: monolith-ui-brand
+      name: '@monolith/client-ui-brand'
+
+# ── workspace picking ────────────────────────────────────────────────
+
+# The shipped `auto` picker samples the host at boot and mounts the NATIVE OS
+# chooser whenever the bind is loopback-only with a display — which is exactly
+# how a MONOLITH engine runs. That opens a file dialog on the SERVER, where no
+# user is sitting: verified live, the workspace button did nothing in the
+# browser. Staff reach MONOLITH over Caddy, so pin the browse backend, which
+# lists directories in-app and renders nothing on the host display.
+# An override row replaces a row's `config`, not the package it names, so the
+# `auto` row is disabled and the browse backend mounted directly — the route
+# monolith-web-app's own comment prescribes for pinning the interaction.
+- id: directory-picker
+  disabled: true
+
+# `auto` mounts a backend AND its browser half; mounting the host half alone
+# left the sidebar with no "new workspace" control at all (verified live), so
+# both halves are named here.
+- insert:
+    - id: directory-picker-browse
+      name: '@monolith/host-directory-picker-browse'
+
+    - id: ui-directory-picker-browse
+      name: '@monolith/client-ui-directory-picker-browse'
+
+# ── MONOLITH skills ───────────────────────────────────────────────
+
+# monolith ships no document production of any kind — no pptx, docx or xlsx anywhere
+# in the tree. Asked for a presentation, the agent writes an outline in chat and
+# says "I cannot output an actual .pptx file" (observed live). MONOLITH's skills
+# close that gap. The web profile also ships this provider DISABLED, so
+# filesystem skills reach no agent at all until it is turned back on.
+# Skills are INSTALLED into `$MONOLITH_HOME/skills` by packages/monolith/skills/
+# install.mjs rather than scanned from source, because installing resolves each
+# skill's {{SKILL_DIR}} placeholder to a real absolute path. A skill that ships
+# an executable must name that executable's absolute location: monolith does hand the
+# model a "Base directory for this skill" line, but a 9B model ignores it, runs
+# the relative path against its own cwd, and fails with `No such file or
+# directory` (observed live). `$MONOLITH_HOME/skills` is already a default root, so
+# no customSkillDirs entry is needed — pointing one at the SOURCE tree would
+# serve the unresolved placeholder and reintroduce the bug.
+- id: skill-filesystem
+  disabled: false
+
+# ── web reach ────────────────────────────────────────────────────────
+
+# `web_search` and `web_fetch` already exist as first-class tools, but every
+# shipped search provider is keyed (deepseek, exa, perplexity) and mcp-client is
+# not mounted at all. MONOLITH's own stdio server does keyless search
+# (DuckDuckGo, or a self-hosted SearXNG when SEARXNG_URL is set) plus URL fetch.
+# MCP tools are namespaced `mcp__monolithweb__*`, so they never collide with the
+# native pair.
+- insert:
+    - id: mcp-web
+      name: '@monolith/mcp-client'
+      config:
+        transport: stdio
+        serverName: monolithweb
+        command: !!js process.execPath
+        args:
+          - !!js process.env.MONOLITH_MCP_WEB ?? '/opt/monolith/mcp/web-tools.mjs'
+        env:
+          SEARXNG_URL: !!js process.env.SEARXNG_URL ?? ''
+        cwd: !!js process.env.MONOLITH_CWD ?? process.cwd()
+        toolCallTimeoutMs: 60000
+        # Default false makes a failed connect SILENT: no log line, no child
+        # process, and web search just missing from the toolset. Fail the boot.
+        failOnStartupError: true
+
+# ── scheduled tasks ─────────────────────────────────────────────────────────
+
+# Scheduled tasks are a MONOLITH product surface, so the Schedule catalog the
+# web bundle ships disabled is turned on here. The client row alone is not
+# enough: the host Schedule service and the clock it reads are absent from the
+# shipped Web roster, so both are inserted. Mirrors the opt-in overlay at
+# apps/cli/config/examples/schedule/cordis.yml.
+- insert:
+    - id: time-context
+      name: '@monolith/time-context'
+
+    - id: schedule
+      name: '@monolith/schedule'
+
+- id: ui-schedule
+  disabled: false
+
+# ── models: everything routes through the MONOLITH LiteLLM gateway ──────────
+
+# MONOLITH does not talk to model vendors directly: one LiteLLM gateway owns
+# the keys, the budgets, and the per-user spend caps, and speaks the OpenAI
+# completions protocol. Declaring it as a pi-ai route is configuration rather
+# than a code change (see packages/llm/llm-pi-ai/README.md), and the catalog
+# below is the gateway's own alias list from litellm/config.yaml — not vendor
+# model ids, which the gateway resolves on its side.
+#
+# The key is a credential REFERENCE: pi-ai resolves MONOLITH_GATEWAY_KEY per
+# request through ctx.credentials, so no secret is written into this file.
+- id: llm-pi-ai
+  config:
+    providers:
+      monolith:
+        displayName: MONOLITH Gateway
+        api: openai-completions
+        baseURL: !!js process.env.MONOLITH_GATEWAY_URL ?? 'http://litellm:4000/v1'
+        apiKeyEnv: MONOLITH_GATEWAY_KEY
+        # Aliases served by litellm/config.yaml. contextWindow/maxTokens are
+        # stated because the installed catalog does not describe gateway
+        # aliases, and the route-level defaults would otherwise size every
+        # model identically.
+        models:
+          - id: claude
+            name: Claude (cloud)
+            contextWindow: 200000
+            maxTokens: 32768
+          - id: gpt
+            name: GPT (cloud)
+            contextWindow: 128000
+            maxTokens: 16384
+          - id: gemini
+            name: Gemini (cloud)
+            contextWindow: 1000000
+            maxTokens: 32768
+          - id: local-qwen
+            name: Qwen (local)
+            contextWindow: 32768
+            maxTokens: 8192
+
+# Every new session's route. The shipped default is deepseek-official/
+# deepseek-v4-flash, which reaches api.deepseek.com around the gateway — and in
+# a MONOLITH deployment is simply unconfigured, so a fresh session opens on
+# "This model is unavailable" (verified live). Point it at the gateway alias.
+- id: agent-default-model
+  config:
+    provider: monolith
+    model: claude
+
+# The native DeepSeek adapter would reach api.deepseek.com directly, around the
+# gateway's keys and budgets. MONOLITH is a self-hosted product: one egress
+# path, one place spend is accounted.
+- id: llm-deepseek
+  disabled: true
+
+# ── product: task registry ───────────────────────────────────────────────
+
+# Walking skeleton for Master Plan Phase 1 (see
+# docs/adr/0002-task-project-run-ownership-on-engine-core.md). A Task groups
+# Run attempts (each an existing engine Session id) under a Project (an
+# existing engine Workspace record) — no new HTTP API, no parallel server,
+# just another row on this same product-delta patch. Depends on the shipped
+# storageDomain service, which monolith-base already mounts for
+# monolith-workspace.
+- insert:
+    - id: product-tasks
+      name: '@monolith/product-workspace'
+
+# The Task command surface (ADR 0002 Decision 4). It rides the Connection/
+# Gateway transport the browser already holds open — one more Remote namespace
+# beside session/workspace/settings, not a second server. Every execution verb
+# it serves delegates to the Session controller, so this row must sit after
+# the web-app layer that mounts that controller.
+# Versioned Task outputs with the digest captured at registration, so a
+# download can say whether the deliverable is still the one produced.
+    - id: product-artifacts
+      name: '@monolith/product-artifacts'
+
+    - id: product-task-controller
+      name: '@monolith/api-product-task-controller'
+      config:
+        # Withheld from a Run whose Task pins allowNetwork: false. These are
+        # the reaching tools THIS deployment mounts: the native pair, plus the
+        # MCP web server's namespaced tools from the mcp-web row above. A tool
+        # added here that the composition does not mount is logged and skipped,
+        # so trimming the roster does not brick a Run.
+        networkTools:
+          - web_search
+          - web_fetch
+          - mcp__monolithweb__search
+          - mcp__monolithweb__fetch

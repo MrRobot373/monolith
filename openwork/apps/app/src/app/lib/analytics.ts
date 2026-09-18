@@ -16,12 +16,12 @@
 import { denSessionUpdatedEvent, type DenSessionUpdatedDetail } from "./den-session-events";
 import { recordInspectorEvent } from "./app-inspector";
 
-const ENV_POSTHOG_KEY = String(import.meta.env.VITE_OPENWORK_POSTHOG_KEY ?? "").trim();
-const ENV_POSTHOG_HOST = String(import.meta.env.VITE_OPENWORK_POSTHOG_HOST ?? "").trim();
-const ENV_APP_VERSION = String(import.meta.env.VITE_OPENWORK_APP_VERSION ?? "").trim();
+const ENV_POSTHOG_KEY = String(import.meta.env.VITE_MONOLITH_POSTHOG_KEY ?? "").trim();
+const ENV_POSTHOG_HOST = String(import.meta.env.VITE_MONOLITH_POSTHOG_HOST ?? "").trim();
+const ENV_APP_VERSION = String(import.meta.env.VITE_MONOLITH_APP_VERSION ?? "").trim();
 
 // Same public project key the landing page and den-web use; PostHog client
-// keys are publishable by design. Override or blank via VITE_OPENWORK_POSTHOG_KEY.
+// keys are publishable by design. Override or blank via VITE_MONOLITH_POSTHOG_KEY.
 const DEFAULT_POSTHOG_KEY = "phc_4YnPTlDVYPjgwKvLuNxhbHjV5kadgvd7XLzVHWnCXAI";
 const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
 

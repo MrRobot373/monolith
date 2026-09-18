@@ -1,10 +1,10 @@
 # MONOLITH — Phase 1 core stack (single shared workspace).
 # Built on OpenWork's MIT-licensed orchestrator (UI served at :8787/ui) + a LiteLLM
 # hybrid model gateway (cloud + local Ollama). Multi-user auth (Authelia) and the
-# agent tools (Agent-Reach, open-claude-code, Perplexica) arrive in Phases 2-3.
+# agent tools (Agent-Reach, open-claude-code) arrive in Phases 2-3.
 #
 # Bring up:   docker compose up -d --build
-# Then open:  http://localhost   (Caddy -> openwork-host:8787/ui)
+# Then open:  http://localhost   (Caddy -> engine:8787/ui)
 
 name: monolith
 
@@ -16,7 +16,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "3001:3001"   # Perplexica/Vane cited-search site (behind login)
     environment:
       # Local default = ":80" (plain http). For a real server set
       # MONOLITH_SITE_ADDRESS=work.yourco.com and Caddy auto-provisions HTTPS.
@@ -29,27 +28,6 @@ services:
       - caddy_config:/config
     depends_on:
       - webui
-      - vane
-
-  # ---- Perplexica / Vane — cited AI web search (self-contained, bundles SearxNG)
-  vane:
-    image: itzcrazykns1337/vane:latest
-    restart: unless-stopped
-    entrypoint:
-      - /bin/sh
-      - -c
-      - node /monolith/seed-config.mjs && exec docker-entrypoint.sh /home/vane/entrypoint.sh
-    environment:
-      MONOLITH_GATEWAY_URL: http://litellm:4000/v1
-      MONOLITH_GATEWAY_KEY: ${LITELLM_MASTER_KEY}
-      MONOLITH_VANE_CHAT_MODEL: local-qwen
-    volumes:
-      - vane_data:/home/vane/data
-      - ./vane/seed-config.mjs:/monolith/seed-config.mjs:ro
-    expose:
-      - "3000"
-    depends_on:
-      - litellm
 
   # ---- Full OpenWork web UI (built from source, replaces the Toy UI) ---------
   webui:
@@ -58,20 +36,20 @@ services:
       dockerfile: webui/Dockerfile
       args:
         # Browser-reachable engine API + tokens, baked into the SPA at build time.
-        VITE_OPENWORK_URL: ${WEBUI_OPENWORK_URL:-http://localhost}
-        VITE_OPENWORK_TOKEN: ${OPENWORK_TOKEN}
-        VITE_OPENWORK_HOST_TOKEN: ${OPENWORK_HOST_TOKEN}
+        VITE_MONOLITH_URL: ${WEBUI_MONOLITH_URL:-http://localhost}
+        VITE_MONOLITH_TOKEN: ${MONOLITH_TOKEN}
+        VITE_MONOLITH_HOST_TOKEN: ${MONOLITH_HOST_TOKEN}
         MONOLITH_PRODUCT_NAME: ${MONOLITH_PRODUCT_NAME:-MONOLITH}
     restart: unless-stopped
     expose:
       - "80"
     depends_on:
-      - openwork-host
+      - engine
 
-  # ---- OpenWork workspace (MIT core: orchestrator + server + opencode engine)-
-  # One container == one working OpenWork workspace at :8787/ui.
+  # ---- MONOLITH engine (MIT core: our orchestrator + vendored opencode) ------
+  # One container == one working MONOLITH workspace at :8787/ui.
   # Phase 2 replaces this single service with one container per user.
-  openwork-host:
+  engine:
     build:
       context: .
       dockerfile: workspace-image/Dockerfile
@@ -81,22 +59,22 @@ services:
       # binary. legacy = the old openwork-orchestrator prebuilt binary,
       # kept one release as a rollback path.
       MONOLITH_ENGINE: ${MONOLITH_ENGINE:-own}
-      OPENWORK_DATA_DIR: /data/openwork-orchestrator
-      OPENWORK_SIDECAR_DIR: /data/sidecars
-      OPENWORK_WORKSPACE: /workspace
-      OPENWORK_TOKEN: ${OPENWORK_TOKEN}
-      OPENWORK_HOST_TOKEN: ${OPENWORK_HOST_TOKEN}
-      OPENWORK_APPROVAL_MODE: ${OPENWORK_APPROVAL_MODE:-manual}
+      MONOLITH_ENGINE_DATA_DIR: /data/orchestrator
+      MONOLITH_SIDECAR_DIR: /data/sidecars
+      MONOLITH_WORKSPACE: /workspace
+      MONOLITH_TOKEN: ${MONOLITH_TOKEN}
+      MONOLITH_HOST_TOKEN: ${MONOLITH_HOST_TOKEN}
+      MONOLITH_APPROVAL_MODE: ${MONOLITH_APPROVAL_MODE:-manual}
       # Model gateway wiring (consumed by the entrypoint's opencode provider seed).
       MONOLITH_GATEWAY_URL: http://litellm:4000/v1
-      MONOLITH_GATEWAY_KEY: ${OPENWORK_LITELLM_KEY:-${LITELLM_MASTER_KEY}}
+      MONOLITH_GATEWAY_KEY: ${MONOLITH_LITELLM_KEY:-${LITELLM_MASTER_KEY}}
       # Read-only view of the sidecar's per-user MCP catalog store (see
       # monolith_sidecar mount below) so seed-models.mjs can mirror enabled
       # catalog servers into this workspace's opencode.json on boot.
       MONOLITH_SIDECAR_DATA_DIR: /sidecar-data
     volumes:
-      - openwork_workspace:/workspace
-      - openwork_data:/data
+      - monolith_workspace:/workspace
+      - monolith_data:/data
       - monolith_sidecar:/sidecar-data:ro
     # Not published to the host: the browser reaches the API only through Caddy
     # (same-origin, behind the login). Internal-only.
@@ -104,7 +82,6 @@ services:
       - "8787"
     depends_on:
       - litellm
-      - searxng
 
   # ---- MONOLITH sidecar (scheduled tasks + dispatch threads) ----------------
   # Plain Node, no build: the source dir is mounted read-only. Caddy routes
@@ -114,9 +91,9 @@ services:
     restart: unless-stopped
     command: ["node", "/app/server.mjs"]
     environment:
-      OPENWORK_URL: http://openwork-host:8787
-      OPENWORK_TOKEN: ${OPENWORK_TOKEN}
-      OPENWORK_HOST_TOKEN: ${OPENWORK_HOST_TOKEN}
+      MONOLITH_ENGINE_URL: http://engine:8787
+      MONOLITH_TOKEN: ${MONOLITH_TOKEN}
+      MONOLITH_HOST_TOKEN: ${MONOLITH_HOST_TOKEN}
       LITELLM_URL: http://litellm:4000
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
       DATA_DIR: /data
@@ -137,16 +114,7 @@ services:
     expose:
       - "8790"
     depends_on:
-      - openwork-host
-
-  # ---- SearXNG — privacy-respecting search engine for agents ----------------
-  searxng:
-    image: searxng/searxng:latest
-    restart: unless-stopped
-    volumes:
-      - ./searxng:/etc/searxng:rw
-    expose:
-      - "8080"
+      - engine
 
   # ---- Hybrid model gateway --------------------------------------------------
   litellm:
@@ -206,9 +174,8 @@ services:
 volumes:
   caddy_data:
   caddy_config:
-  openwork_workspace:
-  openwork_data:
+  monolith_workspace:
+  monolith_data:
   litellm_pg:
   ollama_models:
-  vane_data:
   monolith_sidecar:

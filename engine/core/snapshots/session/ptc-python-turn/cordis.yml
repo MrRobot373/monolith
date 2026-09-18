@@ -1,0 +1,38 @@
+# Private Python PTC composition: replace the headless worker provider through
+# the real Loader and render the generated Python SDK prompt.
+- id: agent-default-model
+  name: '@monolith/agent-default-model'
+  config:
+    provider: deepseek-official
+    model: deepseek-v4-pro
+
+- id: session-persistence-jsonl
+  name: '@monolith/session-persistence-jsonl'
+  config:
+    root: !!js monolithHomePath('sessions')
+    compression: !!js 'process.env.MONOLITH_SNAPSHOT === undefined ? ''zstd'' : ''none'''
+
+- id: agent-instructions
+  name: '@monolith/agent-instructions'
+  config:
+    maxBytes: 65536
+
+- id: tools
+  name: '@monolith/tools'
+  config:
+    mode: ptc
+
+- id: code-runtime
+  disabled: true
+
+- insert:
+    - id: code-runtime-python
+      name: '@monolith/experimental-code-runtime-python'
+
+- id: system-prompt
+  name: '@monolith/system-prompt'
+  config:
+    persona: |
+      You are a coding assistant powered by the {{model}} model. Your working directory is {{cwd}}.
+
+      Verify your work by running the code or tests. Keep answers brief and factual.

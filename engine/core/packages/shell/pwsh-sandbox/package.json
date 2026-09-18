@@ -1,0 +1,46 @@
+{
+  "name": "@monolith/pwsh-sandbox",
+  "description": "Sandbox-consuming implementation of the MONOLITH PowerShell executor seam (confines every command via ctx.sandbox, reports denial/enforcement result facts)",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/shell/pwsh-sandbox"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/shell": "workspace:^",
+    "@monolith/pwsh-local": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/shell": "workspace:^",
+    "@monolith/pwsh-local": "workspace:^",
+    "@monolith/sandbox": "workspace:^",
+    "@monolith/sandbox-local": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/subprocess-local": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

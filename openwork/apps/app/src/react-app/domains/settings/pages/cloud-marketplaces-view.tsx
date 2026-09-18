@@ -265,7 +265,7 @@ export function CloudMarketplacesView({
       return {
         source: "built-in",
         marketplaceId: "openwork-builtins",
-        marketplaceName: "OpenWork Built-ins",
+        marketplaceName: "MONOLITH Built-ins",
         entry,
         active,
         status: item?.installState ?? (active ? "installed" : "available"),
@@ -289,7 +289,7 @@ export function CloudMarketplacesView({
 
   const marketplaceOptions = React.useMemo(
     () => canShowRows ? [
-      ...(builtInRows.length > 0 ? [{ id: "openwork-builtins", name: "OpenWork Built-ins" }] : []),
+      ...(builtInRows.length > 0 ? [{ id: "openwork-builtins", name: "MONOLITH Built-ins" }] : []),
       ...marketplaces.map((marketplace) => ({ id: marketplace.marketplace.id, name: marketplace.marketplace.name })),
     ] : [],
     [builtInRows.length, canShowRows, marketplaces],
@@ -477,7 +477,7 @@ export function CloudMarketplacesView({
       {!isSignedIn ? (
         <SettingsNotice>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <span>You can use OpenWork without an account. Sign in to OpenWork Cloud to load the Marketplace, including OpenWork's built-in extensions and any organization marketplaces.</span>
+            <span>You can use MONOLITH without an account. Sign in to OpenWork Cloud to load the Marketplace, including MONOLITH's built-in extensions and any organization marketplaces.</span>
             <Button size="sm" onClick={onOpenAccount}>
               {t("skills.share_team_sign_in")}
             </Button>

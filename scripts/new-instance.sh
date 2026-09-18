@@ -21,8 +21,8 @@ set_kv() { # key value  — replace the KEY=... line in .env
   fi
 }
 
-set_kv OPENWORK_TOKEN       "$(gen 24)"
-set_kv OPENWORK_HOST_TOKEN  "$(gen 24)"
+set_kv MONOLITH_TOKEN       "$(gen 24)"
+set_kv MONOLITH_HOST_TOKEN  "$(gen 24)"
 set_kv LITELLM_MASTER_KEY   "sk-$(gen 24)"
 set_kv LITELLM_SALT_KEY     "$(gen 24)"
 set_kv LITELLM_DB_PASSWORD  "$(gen 18)"

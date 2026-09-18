@@ -38,7 +38,7 @@ import { decodeComposerMentionValue, encodeComposerMentionValue, type ComposerMe
 import { desktopBridge } from "@/app/lib/desktop";
 import { parseSlashCommandInvocation } from "./composer/slash-command";
 import { DevProfiler } from "@/react-app/shell/dev-profiler";
-import { PaperGrainGradient } from "@openwork/ui/react";
+import { ThinkingOrb } from "thinking-orbs";
 import { useShellConfig } from "@/react-app/shell/shell-config";
 import { useReactRenderWatchdog } from "@/react-app/shell/react-render-watchdog";
 import { SessionDebugPanel } from "./debug-panel";
@@ -49,6 +49,8 @@ import { deriveSessionRenderModel } from "@/react-app/domains/session/sync/trans
 import { useSessionScrollController } from "./scroll-controller";
 import { SessionScrollOverlay } from "./scroll-overlay";
 import { getSessionActivityStatusLabel, useSessionActivityStore, type SessionActivityStatus } from "@/react-app/domains/session/status/session-activity-store";
+import { activityStatusToOrbPreset, WEB_SEARCH_ORB_PRESET } from "@/react-app/domains/session/status/activity-orb-state";
+import { isWebSearchInFlight } from "@/react-app/domains/session/status/web-search-activity";
 import { PermissionApprovalPanel } from "@/react-app/domains/session/chat/permission-approval-modal";
 import { QuestionPanel } from "@/react-app/domains/session/modals/question-modal";
 import { QueuedMessagesPanel } from "@/react-app/domains/session/modals/queued-messages-panel";
@@ -84,7 +86,7 @@ import {
 
 const EMPTY_TRANSCRIPT: UIMessage[] = [];
 const IDLE_STATUS: SessionStatus = { type: "idle" };
-const DEFAULT_COMPOSER_CONTROL_TEXT = "Help me outline the next OpenWork task.";
+const DEFAULT_COMPOSER_CONTROL_TEXT = "Help me outline the next task.";
 
 type SessionError = {
   message: string;
@@ -150,7 +152,7 @@ export type SessionSurfaceProps = {
 };
 
 function messageToReadableText(message: UIMessage) {
-  const header = message.role === "user" ? "You" : message.role === "assistant" ? "OpenWork" : message.role;
+  const header = message.role === "user" ? "You" : message.role === "assistant" ? "MONOLITH" : message.role;
   const body = message.parts
     .flatMap((part) => {
       if (part.type === "text") return [part.text];
@@ -210,22 +212,20 @@ function messageHasVisibleAssistantOutput(message: UIMessage) {
   });
 }
 
-function AssistantWaitingCard({ label = t("session.assistant_thinking") }: { label?: string }) {
+function AssistantWaitingCard({
+  label = t("session.assistant_thinking"),
+  status = "thinking",
+  searching = false,
+}: {
+  label?: string;
+  status?: SessionActivityStatus;
+  searching?: boolean;
+}) {
+  const preset = searching ? WEB_SEARCH_ORB_PRESET : (activityStatusToOrbPreset(status) ?? { state: "working" as const, speed: 1 });
   return (
     <div className="flex justify-start" role="status" aria-live="polite">
-      <div className="inline-flex items-center gap-1.5 px-1 py-1 text-[12px] text-dls-secondary">
-        <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden" }}>
-          <PaperGrainGradient
-            speed={12}
-            softness={0.1}
-            intensity={1}
-            noise={0.05}
-            shape="sphere"
-            colors={["#818cf8", "#fb7185", "#fbbf24", "#34d399"]}
-            colorBack="#ffffff00"
-            style={{ backgroundColor: "#818cf8", width: "100%", height: "100%", borderRadius: "50%" }}
-          />
-        </div>
+      <div className="inline-flex items-center gap-2 px-1 py-1 text-[12px] text-dls-secondary">
+        <ThinkingOrb state={preset.state} size={20} speed={preset.speed} aria-hidden="true" />
         <span>{label}</span>
       </div>
     </div>
@@ -1339,7 +1339,11 @@ export function SessionSurface(props: SessionSurfaceProps) {
               </div>
             ) : renderedMessages.length === 0 && effectiveActivityStatus !== "idle" ? (
               <div className="px-6 py-12">
-                <AssistantWaitingCard label={getSessionActivityStatusLabel(effectiveActivityStatus)} />
+                <AssistantWaitingCard
+                  label={getSessionActivityStatusLabel(effectiveActivityStatus)}
+                  status={effectiveActivityStatus}
+                  searching={isWebSearchInFlight(renderedMessages)}
+                />
               </div>
             ) : renderedMessages.length === 0 && snapshot && snapshot.messages.length === 0 && error ? (
               <SessionErrorCard

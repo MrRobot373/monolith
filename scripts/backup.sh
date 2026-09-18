@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PROJECT="monolith"
-VOLUMES=(openwork_workspace openwork_data litellm_pg ollama_models caddy_data)
+VOLUMES=(monolith_workspace monolith_data litellm_pg ollama_models caddy_data)
 TS="$(date +%Y%m%d-%H%M%S)"
 STAGE="backups/${PROJECT}-${TS}"
 mkdir -p "$STAGE"

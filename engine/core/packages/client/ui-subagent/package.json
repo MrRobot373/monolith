@@ -1,0 +1,73 @@
+{
+  "name": "@monolith/client-ui-subagent",
+  "description": "Subagent conversation catalog, continuation routing UI, and '@' reference source",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/client/ui-subagent"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/api-session-controller",
+        "@monolith/client-locale",
+        "@monolith/client-ui-conversation",
+        "@monolith/client-ui-primitives",
+        "@monolith/client-ui-input-trigger"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/client-locale": "workspace:^",
+    "@monolith/client-test-runtime": "workspace:^",
+    "@monolith/client-ui-conversation": "workspace:^",
+    "@monolith/client-ui-input-trigger": "workspace:^",
+    "@monolith/client-ui-primitives": "workspace:^",
+    "@monolith/client-ui-slots": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/token-meter": "workspace:^",
+    "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.0",
+    "@monolith/cordis": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/client-ui-renderer": "workspace:^",
+    "@monolith/client-ui-session": "workspace:^"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

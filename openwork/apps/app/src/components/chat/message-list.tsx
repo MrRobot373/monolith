@@ -11,7 +11,7 @@ import {
   Split,
   Undo2,
 } from "lucide-react"
-import { PaperGrainGradient } from "@openwork/ui/react"
+import { ThinkingOrb } from "thinking-orbs"
 import {
   DynamicToolUIPart,
   isFileUIPart,
@@ -80,6 +80,8 @@ import {
   collectToolParts,
   getActiveToolLabel,
 } from "@/lib/tool-activity"
+import { isWebSearchInFlight } from "@/react-app/domains/session/status/web-search-activity"
+import { WEB_SEARCH_ORB_PRESET } from "@/react-app/domains/session/status/activity-orb-state"
 import { cn } from "@/lib/utils"
 import { groupMessages, isMessageGroup, getLastTextPart, getAssistantRenderGroups, getFileTitle, getMediaBadge, getMessageCreated, formatMessageTimestamp, type UIMessageWithIndex, getMessagesText } from "./utils"
 
@@ -541,27 +543,19 @@ const MessageComponent = React.memo(
 
 MessageComponent.displayName = "MessageComponent"
 
-const LoadingMessage = React.memo(({ label }: { label?: string }) => (
-  <Message className="mx-auto flex w-full max-w-3xl flex-col items-start gap-2 px-2 md:px-10">
-    <div className="group flex w-full flex-col gap-0">
-      <div className="flex items-center gap-1.5 px-1 py-1 text-sm text-muted-foreground">
-        <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden" }}>
-          <PaperGrainGradient
-            speed={12}
-            softness={0.1}
-            intensity={1}
-            noise={0.05}
-            shape="sphere"
-            colors={["#d97757", "#e08b6d", "#f2c4b0", "#c96442"]}
-            colorBack="#ffffff00"
-            style={{ backgroundColor: "#d97757", width: "100%", height: "100%", borderRadius: "50%" }}
-          />
+const LoadingMessage = React.memo(({ label, searching }: { label?: string; searching?: boolean }) => {
+  const preset = searching ? WEB_SEARCH_ORB_PRESET : { state: "composing" as const, speed: 1.55 };
+  return (
+    <Message className="mx-auto flex w-full max-w-3xl flex-col items-start gap-2 px-2 md:px-10">
+      <div className="group flex w-full flex-col gap-0">
+        <div className="flex items-center gap-2 px-1 py-1 text-sm text-muted-foreground">
+          <ThinkingOrb state={preset.state} size={20} speed={preset.speed} aria-hidden="true" />
+          <span>{label ?? "Working on it…"}</span>
         </div>
-        <span>{label ?? "Working on it…"}</span>
       </div>
-    </div>
-  </Message>
-))
+    </Message>
+  );
+})
 
 LoadingMessage.displayName = "LoadingMessage"
 
@@ -821,7 +815,9 @@ export function MessageList({ messages, status, retryStatus }: MessageListProps)
         )
       })}
 
-      {status === "streaming" && <LoadingMessage label={liveActionLabel ?? undefined} />}
+      {status === "streaming" && (
+        <LoadingMessage label={liveActionLabel ?? undefined} searching={isWebSearchInFlight(messages)} />
+      )}
       {retryStatus ? <RetryMessage status={retryStatus} /> : null}
       {error && !hasSessionErrorMessage ? <ErrorMessage error={error} /> : null}
     </div>

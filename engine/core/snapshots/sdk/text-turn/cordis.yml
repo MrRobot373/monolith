@@ -1,0 +1,34 @@
+# TypeScript SDK snapshot-record patch over `monolith --profile sdk`.
+
+# The fixture corpus must not depend on the developer's personal skill roots.
+# Ordinary product launches retain the sdk profile's default skill discovery.
+- id: skill-filesystem
+  name: '@monolith/skill-filesystem'
+  config:
+    includeDefaultRoots: false
+
+- id: llm-deepseek
+  name: '@monolith/llm-deepseek'
+  config:
+    thinking: enabled
+    reasoningEffort: max
+
+- id: session-persistence-jsonl
+  name: '@monolith/session-persistence-jsonl'
+  config:
+    root: !!js monolithHomePath('sessions')
+    compression: !!js "process.env.MONOLITH_SNAPSHOT === undefined ? 'zstd' : 'none'"
+
+- id: tool-subagent
+  name: '@monolith/tool-subagent'
+  config:
+    provider: spawn
+    toolName: subagent
+    backgroundMode: one-shot
+    enableRunInBackground: false
+    maxDepth: 1
+
+- id: session-log-deepseek
+  name: '@monolith/session-log-deepseek'
+  config:
+    enabled: true

@@ -25,7 +25,7 @@ type OptionalFeature = "gmailRead" | "driveFull" | "calendarWrite" | "chat";
 
 const OPTIONAL_FEATURES: { id: OptionalFeature; label: string; description: string }[] = [
   { id: "gmailRead", label: "Read Gmail", description: "Read your Gmail messages and threads." },
-  { id: "driveFull", label: "Full Google Drive access", description: "Search, read, and edit all files in your Drive, not just files created through OpenWork." },
+  { id: "driveFull", label: "Full Google Drive access", description: "Search, read, and edit all files in your Drive, not just files created through MONOLITH." },
   { id: "calendarWrite", label: "Create calendar events", description: "Create events on your Google Calendar." },
   { id: "chat", label: "Google Chat", description: "List spaces, read messages, and send messages in Google Chat." },
 ];
@@ -148,7 +148,7 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
       const result = await Promise.race([
         command(),
         new Promise<never>((_, reject) => {
-          window.setTimeout(() => reject(new Error("Google Workspace connection is taking too long. Try again, or restart OpenWork if the browser already said authorization was received.")), DESKTOP_ACTION_TIMEOUT_MS);
+          window.setTimeout(() => reject(new Error("Google Workspace connection is taking too long. Try again, or restart MONOLITH if the browser already said authorization was received.")), DESKTOP_ACTION_TIMEOUT_MS);
         }),
       ]);
       const next = normalizeGoogleWorkspaceAuthStatus(result);
@@ -183,7 +183,7 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
       onSaved();
       if (restartLocalServer) {
         const restarted = await restartLocalServer();
-        if (!restarted) setError("Saved Google OAuth settings. Restart OpenWork to apply them.");
+        if (!restarted) setError("Saved Google OAuth settings. Restart MONOLITH to apply them.");
       } else {
         setError("Saved Google OAuth settings. Restart OpenWork to apply them.");
       }
@@ -212,7 +212,7 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
       return;
     }
     if (id === OPENWORK_BUILTIN_GOOGLE_CLIENT_ID) {
-      setError("That is the built-in OpenWork client ID, which cannot unlock Gmail read access. Create your own OAuth client in Google Cloud Console (APIs & Services > Credentials > Create OAuth client ID > Desktop app) and paste its client ID here.");
+      setError("That is the built-in MONOLITH client ID, which cannot unlock Gmail read access. Create your own OAuth client in Google Cloud Console (APIs & Services > Credentials > Create OAuth client ID > Desktop app) and paste its client ID here.");
       return;
     }
     await saveOauthEnv(
@@ -234,8 +234,8 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
       {!serverAvailable ? (
         <Alert variant="warning">
           <ShieldCheck />
-          <AlertTitle>OpenWork server required</AlertTitle>
-          <AlertDescription>Start OpenWork server to connect Google Workspace.</AlertDescription>
+          <AlertTitle>MONOLITH required</AlertTitle>
+          <AlertDescription>Start MONOLITH to connect Google Workspace.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -299,7 +299,7 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
         <Alert variant="destructive">
           <XCircle />
           <AlertTitle>Encrypted token vault unavailable</AlertTitle>
-          <AlertDescription>OpenWork cannot securely save your Google connection on this machine right now.</AlertDescription>
+          <AlertDescription>MONOLITH cannot securely save your Google connection on this machine right now.</AlertDescription>
         </Alert>
       ) : null}
 
@@ -321,7 +321,7 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
 
       <Card variant="outline" size="sm">
         <CardHeader>
-          <CardTitle>What OpenWork can do</CardTitle>
+          <CardTitle>What MONOLITH can do</CardTitle>
           <CardDescription>
             Connect Google Workspace so OpenWork can help with meeting prep, selected files, and draft emails.
           </CardDescription>
@@ -340,7 +340,7 @@ function GoogleWorkspaceConfig({ openworkServerClient, hostOpenworkServerClient,
           <div className="rounded-2xl border border-border bg-card p-3">
             <FileText className="mb-2 size-4 text-green-11" />
             <div className="text-sm font-medium text-card-foreground">Selected Drive files</div>
-            <div className="mt-1 text-xs leading-relaxed text-muted-foreground">Read files explicitly selected or created through OpenWork.</div>
+            <div className="mt-1 text-xs leading-relaxed text-muted-foreground">Read files explicitly selected or created through MONOLITH.</div>
           </div>
         </CardContent>
       </Card>

@@ -27,9 +27,9 @@ const ROOT = path.resolve(HERE, "..", "openwork", "apps", "app", "dist");
 // MONOLITH sidecar features (scheduled tasks) share this server under /__monolith/*.
 const scheduler = createMonolithScheduler({
   dataDir: path.join(HERE, "data"),
-  openworkUrl: `http://127.0.0.1:${process.env.OPENWORK_PORT || 8787}`,
-  token: process.env.OPENWORK_TOKEN || "",
-  hostToken: process.env.OPENWORK_HOST_TOKEN || "",
+  openworkUrl: `http://127.0.0.1:${process.env.MONOLITH_PORT || process.env.OPENWORK_PORT || 8787}`,
+  token: process.env.MONOLITH_TOKEN || process.env.OPENWORK_TOKEN || "",
+  hostToken: process.env.MONOLITH_HOST_TOKEN || process.env.OPENWORK_HOST_TOKEN || "",
   log: (...args) => console.log("[scheduler]", ...args),
 });
 const monolithAuth = createSupabaseRequestAuthenticator();
@@ -38,9 +38,9 @@ const monolithAuth = createSupabaseRequestAuthenticator();
 const workspaceFiles = createWorkspaceFileService({
   dataDir: path.join(HERE, "data"),
   resolveWorkspaceRoot: createEngineWorkspaceResolver({
-    openworkUrl: `http://127.0.0.1:${process.env.OPENWORK_PORT || 8787}`,
-    token: process.env.OPENWORK_TOKEN || "",
-    hostToken: process.env.OPENWORK_HOST_TOKEN || "",
+    openworkUrl: `http://127.0.0.1:${process.env.MONOLITH_PORT || process.env.OPENWORK_PORT || 8787}`,
+    token: process.env.MONOLITH_TOKEN || process.env.OPENWORK_TOKEN || "",
+    hostToken: process.env.MONOLITH_HOST_TOKEN || process.env.OPENWORK_HOST_TOKEN || "",
   }),
   log: (...args) => console.log("[workspace-files]", ...args),
 });
@@ -141,13 +141,28 @@ function pickDirectoryNative() {
       return;
     }
 
+    // This PowerShell process is spawned by a background Node child process (no
+    // window of its own), not launched directly by the user — Windows' focus-
+    // stealing prevention means a dialog shown with no owner can open minimized
+    // or behind the browser with no visible sign it exists ("nothing happens"
+    // from the user's side, even though it's genuinely waiting). Giving the
+    // dialog an invisible, TopMost owner form and Activate()-ing it before
+    // ShowDialog() forces it to the foreground reliably.
     const script = `
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
+$owner = New-Object System.Windows.Forms.Form
+$owner.TopMost = $true
+$owner.ShowInTaskbar = $false
+$owner.StartPosition = "CenterScreen"
+$owner.Size = New-Object System.Drawing.Size(1,1)
+$owner.Show()
+$owner.Activate()
 $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-$dialog.Description = "Select OpenWork workspace folder"
+$dialog.Description = "Select MONOLITH workspace folder"
 $dialog.ShowNewFolderButton = $true
-$result = $dialog.ShowDialog()
+$result = $dialog.ShowDialog($owner)
+$owner.Close()
 if ($result -eq [System.Windows.Forms.DialogResult]::OK) {
   @{ path = $dialog.SelectedPath; cancelled = $false } | ConvertTo-Json -Compress
 } else {

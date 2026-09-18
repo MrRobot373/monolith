@@ -52,7 +52,7 @@ if (engineMode === "legacy") {
     console.log("[setup] openwork orchestrator already installed.");
   }
 } else {
-  const opencodeDir = process.env.OPENCODE_DIR || path.join(HERE, "..", "engine", "opencode");
+  const opencodeDir = process.env.MONOLITH_ENGINE_DIR || process.env.OPENCODE_DIR || path.join(HERE, "..", "engine", "opencode");
   if (spawnSync("bun", ["--version"], { shell: true }).status !== 0) {
     const r = sh("npm", ["install", "-g", "bun"]);
     if (r.status !== 0) {

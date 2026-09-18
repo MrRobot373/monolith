@@ -165,7 +165,7 @@ export function resolveRemoteWorkspaceConnectionTarget(workspace: WorkspaceInfo)
       ok: false,
       state: {
         status: "error",
-        message: "Connection diagnostics are only available for OpenWork remote workers.",
+        message: "Connection diagnostics are only available for MONOLITH remote workers.",
         checkedAt: Date.now(),
       },
     };

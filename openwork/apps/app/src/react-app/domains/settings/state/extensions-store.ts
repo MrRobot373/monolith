@@ -744,7 +744,7 @@ export function createExtensionsStore(options: {
     const nextConfig = withWorkspaceCloudImports(config, nextCloudImports);
     const persisted = await writeWorkspaceOpenworkConfigRecord(nextConfig);
     if (!persisted) {
-      throw new Error("OpenWork server unavailable. Connect to manage imported cloud marketplaces.");
+      throw new Error("MONOLITH unavailable. Connect to manage imported cloud marketplaces.");
     }
     setStateField("importedCloudMarketplaces", nextMarketplaces);
     void refreshPendingCloudPluginChanges();
@@ -759,7 +759,7 @@ export function createExtensionsStore(options: {
     });
     const persisted = await writeWorkspaceOpenworkConfigRecord(nextConfig);
     if (!persisted) {
-      throw new Error("OpenWork server unavailable. Connect to manage imported cloud skills.");
+      throw new Error("MONOLITH unavailable. Connect to manage imported cloud skills.");
     }
     setStateField("importedCloudSkills", nextSkills);
   };
@@ -774,7 +774,7 @@ export function createExtensionsStore(options: {
     const nextConfig = withWorkspaceCloudImports(config, nextCloudImports);
     const persisted = await writeWorkspaceOpenworkConfigRecord(nextConfig);
     if (!persisted) {
-      throw new Error("OpenWork server unavailable. Connect to manage imported cloud plugins.");
+      throw new Error("MONOLITH unavailable. Connect to manage imported cloud plugins.");
     }
     setStateField("importedCloudPlugins", nextPlugins);
     void refreshPendingCloudPluginChanges(nextPlugins);
@@ -821,11 +821,11 @@ export function createExtensionsStore(options: {
     }
 
     if (hasOpenworkTarget) {
-      throw new Error("OpenWork server cannot write skills for this workspace.");
+      throw new Error("MONOLITH cannot write skills for this workspace.");
     }
 
     if (isRemoteWorkspace) {
-      throw new Error("OpenWork server unavailable. Connect to import skills.");
+      throw new Error("MONOLITH unavailable. Connect to import skills.");
     }
 
     if (!isDesktopRuntime()) {
@@ -880,11 +880,11 @@ export function createExtensionsStore(options: {
     }
 
     if (hasOpenworkTarget) {
-      throw new Error("OpenWork server cannot remove skills for this workspace.");
+      throw new Error("MONOLITH cannot remove skills for this workspace.");
     }
 
     if (isRemoteWorkspace) {
-      throw new Error("OpenWork server unavailable. Connect to remove skills.");
+      throw new Error("MONOLITH unavailable. Connect to remove skills.");
     }
 
     if (!isDesktopRuntime()) {
@@ -1063,7 +1063,7 @@ export function createExtensionsStore(options: {
       await openworkClient.addMcp(openworkWorkspaceId, { name, config });
       return;
     }
-    throw new Error("OpenWork server unavailable. Connect to import MCP servers into this workspace.");
+    throw new Error("MONOLITH unavailable. Connect to import MCP servers into this workspace.");
   };
 
   const deletePluginMcpConfig = async (name: string) => {
@@ -1079,7 +1079,7 @@ export function createExtensionsStore(options: {
       await openworkClient.removeMcp(openworkWorkspaceId, name);
       return;
     }
-    throw new Error("OpenWork server unavailable. Connect to remove imported MCP servers from this workspace.");
+    throw new Error("MONOLITH unavailable. Connect to remove imported MCP servers from this workspace.");
   };
 
   const pluginReloadReason = (objectType: string): ReloadReason => {
@@ -1110,7 +1110,7 @@ export function createExtensionsStore(options: {
       await openworkClient.writeWorkspaceFile(openworkWorkspaceId, { path, content, force: true });
       return;
     }
-    throw new Error("OpenWork server unavailable. Connect to import plugin files into this workspace.");
+    throw new Error("MONOLITH unavailable. Connect to import plugin files into this workspace.");
   };
 
   const deletePluginWorkspaceFiles = async (files: Array<{ path: string; recursive?: boolean }>) => {
@@ -1133,7 +1133,7 @@ export function createExtensionsStore(options: {
       }
       return;
     }
-    throw new Error("OpenWork server unavailable. Connect to remove imported plugin files from this workspace.");
+    throw new Error("MONOLITH unavailable. Connect to remove imported plugin files from this workspace.");
   };
 
   const applyCloudOrgPluginImport = async (
@@ -1616,7 +1616,7 @@ export function createExtensionsStore(options: {
   async function previewClaudePlugin(url: string): Promise<OpenworkClaudePluginPreview> {
     const target = await resolveWorkspaceServerTarget();
     if (!target.openworkClient || !target.openworkWorkspaceId) {
-      throw new Error("OpenWork server unavailable. Connect to install plugins from GitHub.");
+      throw new Error("MONOLITH unavailable. Connect to install plugins from GitHub.");
     }
     const result = await target.openworkClient.previewClaudePlugin(target.openworkWorkspaceId, { url });
     return result.preview;
@@ -1628,7 +1628,7 @@ export function createExtensionsStore(options: {
     try {
       const target = await resolveWorkspaceServerTarget();
       if (!target.openworkClient || !target.openworkWorkspaceId) {
-        throw new Error("OpenWork server unavailable. Connect to install plugins from GitHub.");
+        throw new Error("MONOLITH unavailable. Connect to install plugins from GitHub.");
       }
       const result = await target.openworkClient.installClaudePlugin(target.openworkWorkspaceId, { url });
       await refreshSkills({ force: true });
@@ -1721,8 +1721,8 @@ export function createExtensionsStore(options: {
       openworkSnapshot.openworkServerCapabilities?.hub?.skills?.install !== false;
 
     if (!canUseOpenworkServer) {
-      if (isRemoteWorkspace) return { ok: false, message: "OpenWork server unavailable. Connect to install skills." };
-      return { ok: false, message: "Hub install requires OpenWork server." };
+      if (isRemoteWorkspace) return { ok: false, message: "MONOLITH unavailable. Connect to install skills." };
+      return { ok: false, message: "Hub install requires MONOLITH." };
     }
 
     options.setBusy(true);
@@ -1731,7 +1731,7 @@ export function createExtensionsStore(options: {
 
     try {
       const repoOverride: OpenworkHubRepo = { owner: repo.owner, repo: repo.repo, ref: repo.ref };
-      if (!openworkClient || !openworkWorkspaceId) return { ok: false, message: "Hub install requires OpenWork server." };
+      if (!openworkClient || !openworkWorkspaceId) return { ok: false, message: "Hub install requires MONOLITH." };
       const result = await openworkClient.installHubSkill(openworkWorkspaceId, trimmed, { repo: repoOverride });
       await Promise.all([refreshSkills({ force: true }), refreshHubSkills({ force: true })]);
       if (!result?.ok) return { ok: false, message: "Install failed." };
@@ -1901,7 +1901,7 @@ export function createExtensionsStore(options: {
       mutateState((current) => ({
         ...current,
         skills: [],
-        skillsStatus: "OpenWork server cannot read skills for this workspace.",
+        skillsStatus: "MONOLITH cannot read skills for this workspace.",
       }));
       return;
     }
@@ -1951,7 +1951,7 @@ export function createExtensionsStore(options: {
       mutateState((current) => ({
         ...current,
         skills: [],
-        skillsStatus: "OpenWork server unavailable. Connect to load skills.",
+        skillsStatus: "MONOLITH unavailable. Connect to load skills.",
       }));
       return;
     }
@@ -1965,7 +1965,7 @@ export function createExtensionsStore(options: {
     try {
       setStateField("skillsStatus", null);
       const rawClient = client as unknown as { _client?: { get: (input: { url: string }) => Promise<unknown> } };
-      if (!rawClient._client) throw new Error("OpenCode client unavailable.");
+      if (!rawClient._client) throw new Error("Engine client unavailable.");
       const result = await rawClient._client.get({ url: "/skill" }) as {
         data?: Array<{ name: string; description: string; location: string }>;
         error?: unknown;
@@ -2071,9 +2071,9 @@ export function createExtensionsStore(options: {
     if (scope === "project" && hasOpenworkTarget) {
       mutateState((current) => ({
         ...current,
-        pluginStatus: "OpenWork server cannot read plugins for this workspace.",
+        pluginStatus: "MONOLITH cannot read plugins for this workspace.",
         pluginList: [],
-        sidebarPluginStatus: "OpenWork server cannot read plugins for this workspace.",
+        sidebarPluginStatus: "MONOLITH cannot read plugins for this workspace.",
         sidebarPluginList: [],
       }));
       refreshPluginsInFlight = false;
@@ -2095,9 +2095,9 @@ export function createExtensionsStore(options: {
     if (!isLocalWorkspace && !canUseOpenworkServer) {
       mutateState((current) => ({
         ...current,
-        pluginStatus: "OpenWork server unavailable. Connect to manage plugins.",
+        pluginStatus: "MONOLITH unavailable. Connect to manage plugins.",
         pluginList: [],
-        sidebarPluginStatus: "Connect an OpenWork server to load plugins.",
+        sidebarPluginStatus: "Connect MONOLITH to load plugins.",
         sidebarPluginList: [],
       }));
       refreshPluginsInFlight = false;
@@ -2215,7 +2215,7 @@ export function createExtensionsStore(options: {
     }
 
     if (snapshot.pluginScope === "project" && hasOpenworkTarget) {
-      setStateField("pluginStatus", "OpenWork server cannot write plugins for this workspace.");
+      setStateField("pluginStatus", "MONOLITH cannot write plugins for this workspace.");
       return;
     }
 
@@ -2225,7 +2225,7 @@ export function createExtensionsStore(options: {
     }
 
     if (!isLocalWorkspace) {
-      setStateField("pluginStatus", "OpenWork server unavailable. Connect to manage plugins.");
+      setStateField("pluginStatus", "MONOLITH unavailable. Connect to manage plugins.");
       return;
     }
 
@@ -2305,7 +2305,7 @@ export function createExtensionsStore(options: {
     }
 
     if (snapshot.pluginScope === "project" && hasOpenworkTarget) {
-      setStateField("pluginStatus", "OpenWork server cannot write plugins for this workspace.");
+      setStateField("pluginStatus", "MONOLITH cannot write plugins for this workspace.");
       return;
     }
 
@@ -2315,7 +2315,7 @@ export function createExtensionsStore(options: {
     }
 
     if (!isLocalWorkspace) {
-      setStateField("pluginStatus", "OpenWork server unavailable. Connect to manage plugins.");
+      setStateField("pluginStatus", "MONOLITH unavailable. Connect to manage plugins.");
       return;
     }
 
@@ -2425,13 +2425,13 @@ export function createExtensionsStore(options: {
     }
 
     if (hasOpenworkTarget) {
-      const message = "OpenWork server cannot write skills for this workspace.";
+      const message = "MONOLITH cannot write skills for this workspace.";
       setStateField("skillsStatus", message);
       return { ok: false, message };
     }
 
     if (isRemoteWorkspace) {
-      const message = "OpenWork server unavailable. Connect to install skills.";
+      const message = "MONOLITH unavailable. Connect to install skills.";
       setStateField("skillsStatus", message);
       return { ok: false, message };
     }
@@ -2566,7 +2566,7 @@ export function createExtensionsStore(options: {
     }
 
     if (hasOpenworkTarget) {
-      setStateField("skillsStatus", "OpenWork server cannot read skills for this workspace.");
+      setStateField("skillsStatus", "MONOLITH cannot read skills for this workspace.");
       return null;
     }
 
@@ -2576,7 +2576,7 @@ export function createExtensionsStore(options: {
     }
 
     if (isRemoteWorkspace) {
-      setStateField("skillsStatus", "OpenWork server unavailable. Connect to view skills.");
+      setStateField("skillsStatus", "MONOLITH unavailable. Connect to view skills.");
       return null;
     }
     if (!isDesktopRuntime()) {
@@ -2633,7 +2633,7 @@ export function createExtensionsStore(options: {
     }
 
     if (hasOpenworkTarget) {
-      setStateField("skillsStatus", "OpenWork server cannot write skills for this workspace.");
+      setStateField("skillsStatus", "MONOLITH cannot write skills for this workspace.");
       return;
     }
 
@@ -2643,7 +2643,7 @@ export function createExtensionsStore(options: {
     }
 
     if (isRemoteWorkspace) {
-      setStateField("skillsStatus", "OpenWork server unavailable. Connect to edit skills.");
+      setStateField("skillsStatus", "MONOLITH unavailable. Connect to edit skills.");
       return;
     }
     if (!isDesktopRuntime()) {

@@ -1,0 +1,89 @@
+{
+  "name": "@monolith/api-product-task-controller",
+  "description": "Product Task Remote commands over the Task registry and the Session controller",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/api/product-task-controller"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
+    },
+    "./remote": {
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/brand": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/permission-presets": "workspace:^",
+    "@monolith/product-artifacts": "workspace:^",
+    "@monolith/product-workspace": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/workspace": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/api-session-controller": "workspace:^",
+    "@monolith/brand": "workspace:^",
+    "@monolith/cordis": "workspace:^",
+    "@monolith/permission-presets": "workspace:^",
+    "@monolith/product-artifacts": "workspace:^",
+    "@monolith/product-workspace": "workspace:^",
+    "@monolith/sandbox-policy": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/storage": "workspace:^",
+    "@monolith/storage-domain": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/workspace": "workspace:^"
+  }
+}

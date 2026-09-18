@@ -1,0 +1,168 @@
+# Standalone minimal SDK application. Unlike the ordinary SDK profile, this
+# bundle does not layer over monolith-base: this insert is the complete Cordis tree.
+# User profile, home, and invocation patches still apply above it.
+
+- insert:
+    - id: sdk-app-startup
+      name: '@monolith/sdk-app'
+      config:
+        profile: sdk-minimal
+
+    - id: sdk-jsonrpc-server
+      name: '@monolith/sdk-jsonrpc-server'
+      inject: [sdkAppStartup, loader]
+      config:
+        maxTokensAsSuccess: false
+
+    - id: deepseek-llm-api-extensions
+      name: '@monolith/deepseek-llm-api-extensions'
+
+    - id: session-log-deepseek
+      name: '@monolith/session-log-deepseek'
+
+    - id: plugin-package-inventory-deepseek
+      name: '@monolith/plugin-package-inventory-deepseek'
+
+    - id: llm-deepseek
+      name: '@monolith/llm-deepseek'
+      config:
+        apiKeyEnv: DEEPSEEK_API_KEY
+        defaultContextWindow: !!js Number(process.env.MONOLITH_CONTEXT_WINDOW ?? 1000000)
+        streamIdleTimeoutMs: 172800000
+
+    - id: sandbox
+      name: '@monolith/sandbox-local'
+
+    # Shared projection registry: sandbox-policy and terminal-bash fold
+    # sandbox-mode state through its units and require it as a hard injection.
+    - id: session-projection
+      name: '@monolith/session-projection'
+
+    - id: sandbox-policy
+      name: '@monolith/sandbox-policy'
+      config:
+        mode: danger-full-access
+        workspaceRoot: !!js process.cwd()
+
+    - id: subprocess
+      name: '@monolith/subprocess-local'
+
+    - id: pty
+      name: '@monolith/terminal'
+
+    - id: terminal-bash
+      name: '@monolith/terminal-bash'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 300000
+
+    - id: terminal-pwsh
+      name: '@monolith/terminal-bash'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        shellDialect: pwsh
+        timeoutMs: 300000
+
+    # The editor uses the bare local filesystem; persistent Bash still consumes
+    # the shared danger-full-access sandbox policy above.
+    - id: fs-local
+      name: '@monolith/fs-local'
+      config:
+        cwd: !!js process.cwd()
+
+    # Keep the minimal agent kernel explicit: unlike monolith-base, this profile
+    # owns each service row and omits every optional producer it does not use.
+    - id: timer
+      name: '@monolith/cordis-plugin-timer'
+
+    - id: llm
+      name: '@monolith/llm'
+
+    - id: session
+      name: '@monolith/session'
+
+    - id: session-title
+      name: '@monolith/session-title'
+      config:
+        fallbackMaxWords: 5
+        fallbackMaxBytes: 40
+        maxTitleBytes: 80
+
+    - id: system-prompt
+      name: '@monolith/system-prompt'
+      config:
+        includeHarnessIdentity: false
+        includeRuntimeContext: false
+        persona: !!js process.env.MONOLITH_SYSTEM_PROMPT ?? 'You are a helpful software engineer assistant.'
+
+    - id: tools
+      name: '@monolith/tools'
+
+    - id: agent
+      name: '@monolith/agent'
+
+    - id: llm-retry
+      name: '@monolith/llm-retry'
+
+    - id: jobs
+      name: '@monolith/jobs-local'
+
+    - id: invariants
+      name: '@monolith/invariants'
+
+    - id: session-invariant
+      name: '@monolith/session/invariant'
+
+    - id: agent-invariant
+      name: '@monolith/agent/invariant'
+
+    - id: scope-invariant
+      name: '@monolith/scope/invariant'
+
+    - id: agent-loop-invariant
+      name: '@monolith/agent-loop/invariant'
+
+    - id: agent-loop
+      name: '@monolith/agent-loop'
+      config:
+        agents: []
+
+    - id: persistent-bash
+      name: '@monolith/tool-bash-persistent'
+      disabled: !!js process.platform === 'win32'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a bash shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * You do have access to a mirror of common linux and python packages via apt and pip.
+          * State is persistent across command calls and discussions with the user.
+          * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
+          * Please avoid commands that may produce a very large amount of output.
+          * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.
+
+    - id: persistent-pwsh
+      name: '@monolith/tool-pwsh-persistent'
+      disabled: !!js process.platform !== 'win32'
+      config:
+        timeoutMs: 300000
+        description: |-
+          Run commands in a PowerShell shell
+          * When invoking this tool, the contents of the "command" parameter does NOT need to be XML-escaped.
+          * You don't have access to the internet via this tool.
+          * State is persistent across command calls and discussions with the user.
+          * Use native Windows paths (C:\...) and $env:NAME variables; this is PowerShell, not bash.
+          * Please avoid commands that may produce a very large amount of output.
+          * Please run long lived commands in the background, e.g. 'Start-Job' or start a server with Start-Process.
+
+    - id: str-replace-editor
+      name: '@monolith/tool-str-replace-editor'
+      config:
+        maxOutputChars: 16000
+
+    - id: sessions
+      name: '@monolith/session-persistence-jsonl'
+      config:
+        root: !!js monolithHomePath('sessions')
+        compression: none

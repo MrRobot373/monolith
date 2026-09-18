@@ -392,7 +392,114 @@ const buildWorkerAgent = (modelRef) => ({
     "extract specific facts. Be concise and literal — return exactly what was asked (file " +
     "contents, matches, or a short summary). Do not plan, redesign, or make architectural " +
     "decisions; if a task needs judgment beyond a lookup, say so briefly and stop.",
+  permission: { bash: MONOLITH_HARD_DENY_BASH },
 });
+
+// OpenCode hardcodes "build" as its own native, unbranded default primary agent
+// (full tool permissions, no MONOLITH instructions) and there is no config way
+// to change WHICH agent a session defaults to — but a session that never gets
+// an explicit agent choice silently runs on "build" regardless. Rather than
+// leave that path undisciplined, we override build's own prompt/description in
+// config (verified live: opencode does apply a config-level override to native
+// agents, even though it can't rename or un-default one). This is the same
+// persona + rules as our own agents, just under the name opencode itself picks.
+// MONOLITH_APPROVAL_MODE previously only reached the legacy openwork.exe binary's
+// `--approval` CLI flag (native/start.mjs) — on the default "own" engine path
+// (our orchestrator + vendored opencode) it was read nowhere, so setting it did
+// nothing. This wires it into opencode's own native permission config instead:
+// "auto" lets ordinary bash commands run without a pause; anything else (unset,
+// "manual", or a typo) asks first, which is the safer default.
+const approvalMode = (process.env.MONOLITH_APPROVAL_MODE || process.env.OPENWORK_APPROVAL_MODE || "manual")
+  .trim()
+  .toLowerCase();
+const bashDefault = approvalMode === "auto" ? "allow" : "ask";
+
+// Hard-denial floor, inspired by yc-software/qm's "predeclared command policy":
+// a fixed set of irreversible/catastrophic bash patterns that are denied in
+// EVERY approval mode, auto included — no approval-mode setting and no user
+// "always allow" click can undo these (opencode's permission engine checks this
+// exact ruleset for a "deny" match before it ever considers saved/remembered
+// rules — see PermissionV2.denied() in the vendored engine).
+//
+// Key ordering matters: opencode's permission matcher picks the LAST rule in
+// this object whose pattern matches a given command, so "*" (the catch-all
+// default) MUST come first and the specific deny patterns after it — the
+// reverse order would let "*" win and silently swallow every deny rule below.
+//
+// This is defense-in-depth pattern matching on the literal command string, not
+// a sandboxing guarantee — an unusual phrasing (different flag order, an alias,
+// a script that wraps the same call) can still slip past it. It's a floor
+// against the common, obviously-catastrophic forms, not a substitute for
+// running the engine with least-privilege OS permissions.
+const MONOLITH_HARD_DENY_BASH = {
+  "*": bashDefault,
+  // Recursive/force filesystem wipes of root or home (Unix).
+  "*rm -rf /*": "deny",
+  "rm -rf /": "deny",
+  "*rm -fr /*": "deny",
+  "*rm --recursive --force /*": "deny",
+  "*rm -rf ~*": "deny",
+  "*rm -rf $HOME*": "deny",
+  // Classic fork bomb.
+  "*:(){ :|:& };:*": "deny",
+  // Recursive/force filesystem wipes of a drive root (Windows).
+  "*Remove-Item*-Recurse*-Force*C:\\*": "deny",
+  "*rd /s /q C:\\*": "deny",
+  "*rmdir /s /q C:\\*": "deny",
+  "*format C:*": "deny",
+  // Raw disk / partition operations.
+  "*mkfs*": "deny",
+  "*dd if=*of=/dev/*": "deny",
+  "*diskpart*": "deny",
+  // Destructive SQL (best-effort — SQL keyword casing varies; both covered).
+  "*DROP DATABASE*": "deny",
+  "*drop database*": "deny",
+  "*DROP TABLE*": "deny",
+  "*drop table*": "deny",
+  "*TRUNCATE TABLE*": "deny",
+  "*truncate table*": "deny",
+};
+
+const MONOLITH_BUILD_AGENT = {
+  description: "General-purpose assistant with full tool access — research, files, code, and everyday tasks.",
+  prompt:
+    "You are MONOLITH, a dependable assistant with full tool access: reading, writing, and running " +
+    "code; searching the web; and creating or editing files. Handle whatever the task actually needs " +
+    "— don't assume it's a coding task unless it is.\n\n" +
+    "## Delegate bulk work to save cost\n\n" +
+    "When a cheap `worker` sub-agent is available, delegate high-volume mechanical work to it via the " +
+    "Task tool instead of doing it yourself: reading or summarizing files, searching/grepping, listing " +
+    "directories, and gathering context. Reserve your own reasoning for planning, judgment calls, and " +
+    "producing the final result. If no worker exists, just do the work yourself.\n\n" +
+    "## Answer discipline (always apply)\n\n" +
+    "- Report outcomes in the question's own terms first; only then reasoning that changes what the " +
+    "user does; end with **Risks** for anything assumed or unverified (risk → consequence → fix).\n" +
+    "- Label claims: verified (you ran/read it) → plain statement; recalled-but-unverified → " +
+    '"Likely: … — [basis]"; chosen to proceed → "Assumption: … If wrong: [what changes]".\n' +
+    "- NEVER claim a file was created, a command succeeded, or a task completed without actually " +
+    "verifying it — read the file back, check the exit code, run the check. If something failed after " +
+    "retries, say so plainly and explain what went wrong; do not report success to avoid an awkward " +
+    "answer. A false completion claim is worse than admitting failure.\n" +
+    "- Never invent API signatures, package names, or config keys — run/check them, or mark " +
+    '"unverified — check docs for [exact phrase]".\n' +
+    "- Same rule for search results, links, and citations: only present a URL/repo/name as a real " +
+    "result if it appeared verbatim in actual tool output. Never pad a results list to a round number " +
+    "with invented-but-plausible entries — a fabricated citation is the same failure as a fabricated " +
+    "file, just harder for the user to catch until they click it.\n" +
+    "- If verification keeps failing (repeated 404s/errors on a search or fetch), stop after a few " +
+    "tries and report exactly what you could and could not confirm. Don't keep guessing new " +
+    "URLs/names hoping one resolves — a lucky guess presented as a search result is still not one.\n" +
+    "- No silent drops on multi-part requests — do each part or decline it out loud.\n\n" +
+    "## Tool selection\n\n" +
+    "- Local file tools (grep/glob/read/list/search) only see this machine's filesystem — never pass " +
+    "a URL to them, and never ask a sub-agent to \"grep\" or \"search\" content that lives on a remote " +
+    "page. To inspect a remote repo or page, fetch it (the web-fetch tool) or use its API.\n" +
+    "- Match each call's arguments to that exact tool's schema. Don't reuse a field name from one tool " +
+    "(e.g., a file-write tool's `filePath`/`content`) on a different tool that expects something else " +
+    "(e.g., a fetch tool's `url`). On a \"missing key\" or \"invalid arguments\" error, first check " +
+    "which tool you meant to call before retrying.",
+  permission: { bash: MONOLITH_HARD_DENY_BASH },
+};
 
 // Pick a real, working, cheap model ref for the small_model slot + worker agent.
 // Prefers MONOLITH_ROUTER_SMALL_MODEL (consistent with the chat router), then any
@@ -510,15 +617,17 @@ function seedWorkspace(workspacePath) {
   // the `worker` agent refreshes each seed; any other user-defined agent survives.
   const cheapModel = pickCheapModel(cfg.model);
   const existingAgent = cfg.agent && typeof cfg.agent === "object" && !Array.isArray(cfg.agent) ? cfg.agent : {};
+  // build override always applies — a session with no explicit agent choice
+  // silently runs on OpenCode's native "build" default, so it must never be
+  // undisciplined. Product-managed: refreshes each seed, like worker.
+  cfg.agent = { ...existingAgent, build: MONOLITH_BUILD_AGENT };
   if (cheapModel) {
     cfg.small_model = cheapModel;
-    cfg.agent = { ...existingAgent, worker: buildWorkerAgent(cheapModel) };
+    cfg.agent.worker = buildWorkerAgent(cheapModel);
   } else {
     // No cheaper tier available — drop a stale product worker rather than leave
     // it pointing at a model that may no longer exist.
-    delete existingAgent.worker;
-    cfg.agent = existingAgent;
-    if (Object.keys(cfg.agent).length === 0) delete cfg.agent;
+    delete cfg.agent.worker;
   }
 
   // MCP servers: existing user entries survive; product-managed names refresh.
@@ -571,7 +680,7 @@ function seedWorkspace(workspacePath) {
   );
 }
 
-const defaultWorkspace = process.env.OPENWORK_WORKSPACE || path.join(HERE, "workspace");
+const defaultWorkspace = process.env.MONOLITH_WORKSPACE || process.env.OPENWORK_WORKSPACE || path.join(HERE, "workspace");
 const args = process.argv.slice(2).map((value) => value.trim()).filter(Boolean);
 const workspacePaths = [...new Set(args.length ? args : [defaultWorkspace])];
 for (const workspacePath of workspacePaths) seedWorkspace(workspacePath);

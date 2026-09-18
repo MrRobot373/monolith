@@ -1,0 +1,85 @@
+{
+  "name": "@monolith/api-remotes",
+  "description": "Remote BFF assembly for application-selected Host capabilities",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/api/remotes"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "monolith": {
+    "client": {
+      "inject": [
+        "@monolith/api-gateway"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "dependencies": {
+    "@monolith/deque": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/util-values": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/scope": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/agent-presets": "workspace:^",
+    "@monolith/api-gateway": "workspace:^",
+    "@monolith/api-settings-controller": "workspace:^",
+    "@monolith/api-workspace-controller": "workspace:^",
+    "@monolith/commands": "workspace:^",
+    "@monolith/cordis-host-runner": "workspace:^",
+    "@monolith/credentials": "workspace:^",
+    "@monolith/file-reference": "workspace:^",
+    "@monolith/goal": "workspace:^",
+    "@monolith/host-plugin-inventory": "workspace:^",
+    "@monolith/llm": "workspace:^",
+    "@monolith/message-feedback": "workspace:^",
+    "@monolith/session-reference": "workspace:^",
+    "@monolith/settings": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/user-approval": "workspace:^",
+    "@monolith/user-questions": "workspace:^",
+    "@monolith/client-connection": "workspace:^",
+    "@monolith/typert-protocol": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/api-session-controller": "workspace:^"
+  }
+}

@@ -741,14 +741,14 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
       await bootFullEngineStack();
       setOpencodeServiceStatus({
         tone: "success",
-        message: t("settings.restart_succeeded_template", { service: "OpenCode" }),
+        message: t("settings.restart_succeeded_template", { service: "Engine" }),
       });
-      pushDeveloperLog("Restarted OpenCode via engine_start");
+      pushDeveloperLog("Restarted engine via engine_start");
     } catch (error) {
       const message = error instanceof Error ? error.message : safeStringify(error);
       setOpencodeServiceStatus({
         tone: "error",
-        message: `${t("settings.restart_failed_template", { service: "OpenCode" })} ${message}`,
+        message: `${t("settings.restart_failed_template", { service: "Engine" })} ${message}`,
       });
       setServiceRestartError(message);
     } finally {
@@ -767,7 +767,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
       });
       setOpenworkServiceStatus({
         tone: "success",
-        message: t("settings.restart_succeeded_template", { service: "OpenWork server" }),
+        message: t("settings.restart_succeeded_template", { service: "MONOLITH" }),
       });
       pushDeveloperLog("Restarted openwork-server");
       await openworkServerStore.reconnectOpenworkServer();
@@ -775,7 +775,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
       const message = error instanceof Error ? error.message : safeStringify(error);
       setOpenworkServiceStatus({
         tone: "error",
-        message: `${t("settings.restart_failed_template", { service: "OpenWork server" })} ${message}`,
+        message: `${t("settings.restart_failed_template", { service: "MONOLITH" })} ${message}`,
       });
       setServiceRestartError(message);
     } finally {
@@ -807,7 +807,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
     }
     try {
       await navigator.clipboard.writeText(text);
-      setOpencodeLogStatus(t("settings.copied_service_logs", { service: "OpenCode" }));
+      setOpencodeLogStatus(t("settings.copied_service_logs", { service: "Engine" }));
     } catch (error) {
       setOpencodeLogStatus(error instanceof Error ? error.message : safeStringify(error));
     }
@@ -840,7 +840,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
     }
     try {
       await navigator.clipboard.writeText(text);
-      setOpenworkLogStatus(t("settings.copied_service_logs", { service: "OpenWork server" }));
+      setOpenworkLogStatus(t("settings.copied_service_logs", { service: "MONOLITH" }));
     } catch (error) {
       setOpenworkLogStatus(error instanceof Error ? error.message : safeStringify(error));
     }
@@ -872,7 +872,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
       if (!isDesktopRuntime()) return;
       const message =
         mode === "all"
-          ? "Reset ALL OpenWork app data? Open sessions and workspaces will be removed."
+          ? "Reset ALL MONOLITH data? Open sessions and workspaces will be removed."
           : "Reset onboarding state only?";
       if (typeof window !== "undefined" && !window.confirm(message)) {
         return;
@@ -884,7 +884,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
           clearOpenworkLocalStorageForReset(mode);
           setResetStatus(
             mode === "all"
-              ? "Reset OpenWork state. Restart the app to see changes."
+              ? "Reset MONOLITH state. Restart the app to see changes."
               : "Reset onboarding state. Restart the app to see changes.",
           );
           pushDeveloperLog(`reset_openwork_state mode=${mode}`);
@@ -905,7 +905,7 @@ export function useDebugViewModel(options: UseDebugViewModelOptions) {
       typeof window === "undefined"
         ? true
         : window.confirm(
-            "Delete ALL local OpenWork + OpenCode config and quit? This cannot be undone.",
+            "Delete ALL local MONOLITH + engine config and quit? This cannot be undone.",
           );
     if (!confirmed) return;
     setNukeConfigBusy(true);

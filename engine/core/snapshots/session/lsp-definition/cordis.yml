@@ -1,0 +1,21 @@
+# Exercise the model-facing LSP tool through the shipped Loader entry path.
+# The scenario workspace supplies the deterministic stdio server used by this test composition.
+- insert:
+    - id: lsp
+      name: '@monolith/lsp'
+    - id: lsp-stdio
+      name: '@monolith/lsp-stdio'
+      config:
+        servers:
+          fixture:
+            command: !!js process.execPath
+            args: ['./lsp-server.mjs']
+            extensionToLanguage:
+              '.ts': typescript
+    - id: tool-lsp
+      name: '@monolith/tool-lsp'
+      config:
+        maxLocations: 1
+
+- id: timeout-policy
+  name: '@monolith/tool-call-timeout-policy'

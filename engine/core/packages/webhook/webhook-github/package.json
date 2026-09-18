@@ -1,0 +1,55 @@
+{
+  "name": "@monolith/webhook-github",
+  "description": "Signed GitHub HTTP webhook adapter for the MONOLITH webhook runtime",
+  "version": "0.1.2-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/webhook/webhook-github"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/credentials": "workspace:^",
+    "@monolith/host-webserver": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/webhook": "workspace:^"
+  },
+  "dependencies": {
+    "@monolith/util-values": "workspace:^",
+    "@monolith/schemastery": "workspace:^",
+    "@octokit/webhooks": "^14.2.0"
+  },
+  "devDependencies": {
+    "@monolith/cordis": "workspace:^",
+    "@monolith/cordis-plugin-include": "workspace:^",
+    "@monolith/cordis-plugin-loader": "workspace:^",
+    "@monolith/credentials": "workspace:^",
+    "@monolith/host-webserver": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/webhook": "workspace:^"
+  }
+}

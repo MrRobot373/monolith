@@ -1,0 +1,56 @@
+{
+  "name": "@monolith/experimental-tool-agent-team",
+  "description": "Scoped model-facing Agent Teams tools over ctx.agentTeams",
+  "version": "0.1.2-rc.1",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrRobot373/monolith.git",
+    "directory": "packages/experimental/tool-agent-team"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@monolith/schemastery": "workspace:^"
+  },
+  "peerDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/experimental-agent-team": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  },
+  "devDependencies": {
+    "@monolith/agent": "workspace:^",
+    "@monolith/agent-loop": "workspace:^",
+    "@monolith/agent-loop-testkit": "workspace:^",
+    "@monolith/session": "workspace:^",
+    "@monolith/session-projection": "workspace:^",
+    "@monolith/session-persistence-jsonl": "workspace:^",
+    "@monolith/session-query": "workspace:^",
+    "@monolith/scope": "workspace:^",
+    "@monolith/subagent": "workspace:^",
+    "@monolith/subagent-fork-in-process": "workspace:^",
+    "@monolith/subagent-spawn-in-process": "workspace:^",
+    "@monolith/tool-subagent-control": "workspace:^",
+    "@monolith/system-prompt": "workspace:^",
+    "@monolith/experimental-agent-team": "workspace:^",
+    "@monolith/tools": "workspace:^",
+    "@monolith/cordis": "workspace:^"
+  }
+}

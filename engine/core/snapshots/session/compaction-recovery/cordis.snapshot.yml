@@ -1,0 +1,29 @@
+# Keyless context-overflow replay composition.
+
+- id: llm-deepseek
+  name: '@monolith/llm-deepseek'
+  disabled: true
+
+- id: session-persistence-jsonl
+  name: '@monolith/session-persistence-jsonl'
+  config:
+    root: !!js monolithHomePath('sessions')
+    compression: none
+
+- id: compaction-basic
+  name: '@monolith/compaction-basic'
+  config:
+    thresholdRatio: 0.99
+    retainTokens: 20
+    maxTokens: 32
+
+- insert:
+    - id: llm-replay
+      name: '@monolith/llm-replay'
+      config:
+        providers:
+          - id: deepseek-official
+            name: DeepSeek
+            models:
+              - id: deepseek-v4-flash
+                contextWindow: 128000
