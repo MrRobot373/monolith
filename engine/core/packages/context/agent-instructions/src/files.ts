@@ -484,7 +484,9 @@ export async function probeScopeInstruction(
   if (info?.type !== 'file') return { kind: 'absent' }
   const file: ProbedInstructionFile = {
     absolutePath,
-    displayPath: directory === USER_GLOBAL_DIRECTORY ? userGlobalDisplayPath(resolved.monolithHome) : relativeDisplay(projectRoot, absolutePath),
+    displayPath: directory === USER_GLOBAL_DIRECTORY
+      ? userGlobalDisplayPath(resolved.monolithHome)
+      : relativeDisplay(projectRoot, absolutePath),
     target,
     version: info.version,
     ...info.size === undefined ? {} : { size: info.size },
