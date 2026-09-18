@@ -21,8 +21,21 @@ import { remoteErrorOf } from '@monolith/typert-protocol'
 import { applyTaskPolicy, effectivePolicyOf } from '../src/policy.ts'
 import type { TaskPolicyView } from '../src/types.ts'
 
-/** Compose the real policy seams over a confining shell double. */
-async function harness(): Promise<{ ctx: Context; session: Session }> {
+/** A deployment's preset table, in the shape `permission-presets` configures. */
+type PresetTable = Record<string, {
+  sandbox: 'read-only' | 'workspace-write' | 'danger-full-access'
+  approval: 'ask' | 'never'
+}>
+
+/**
+ * Compose the real policy seams over a confining shell double.
+ *
+ * @param presets - preset table for the deployment, or undefined for the
+ * plugin's own default, which carries no `read-only` entry. Which entries a
+ * deployment defines decides what `current()` can name, so the table is a
+ * parameter rather than a constant of these tests.
+ */
+async function harness(presets?: PresetTable): Promise<{ ctx: Context; session: Session }> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   await ctx.plugin(SessionProjectionRegistry)
@@ -32,8 +45,15 @@ async function harness(): Promise<{ ctx: Context; session: Session }> {
   ctx.provide('shell', { sandboxMode: 'workspace-write' } as unknown as Context['shell'])
   await ctx.plugin(SandboxPolicyService, { mode: 'workspace-write', workspaceRoot: '/tmp/ws' })
   await ctx.plugin(ApprovalService)
-  await ctx.plugin(PermissionPresetService)
+  await ctx.plugin(PermissionPresetService, presets === undefined ? {} : { presets })
   return { ctx, session: ctx.sessions.create(SessionId('run-1')) }
+}
+
+/** The preset table the product bundle actually ships, which has `read-only`. */
+const SHIPPED_PRESETS: PresetTable = {
+  'read-only': { sandbox: 'read-only', approval: 'ask' },
+  'workspace-write': { sandbox: 'workspace-write', approval: 'ask' },
+  'danger-full-access': { sandbox: 'danger-full-access', approval: 'never' },
 }
 
 function policy(overrides: Partial<TaskPolicyView> = {}): TaskPolicyView {
@@ -91,9 +111,11 @@ describe('applyTaskPolicy', () => {
     expect(ctx.permissionPresets.current(session)).toBe('workspace-write')
   })
 
-  it('reads as custom when the Task pins a file mode its preset does not carry', async () => {
+  it('reads as custom when the resulting knobs match no entry in the table', async () => {
     // Not an error: the Task's file policy outranks the preset's bundled one,
     // and `custom` is the engine's own word for knobs matching no table entry.
+    // `custom` here is a fact about this harness's table, which has no
+    // `read-only` entry — not about pinning `read-only` in general.
     const { ctx, session } = await harness()
     applyTaskPolicy(ctx, session, policy({
       sandboxMode: 'read-only',
@@ -126,6 +148,24 @@ describe('effectivePolicyOf', () => {
     expect(effectivePolicyOf(ctx, session, false)).toEqual({
       sandboxMode: 'read-only',
       approvalPreset: 'custom',
+      allowNetwork: false,
+    })
+  })
+
+  it('names the entry the resulting knobs match, over the preset that was asked for', async () => {
+    // The shipped table's case, and the one a browser actually sees: pinning
+    // `read-only` under the `workspace-write` preset lands on knobs that are
+    // exactly the `read-only` entry, so the deployment's own word for them is
+    // `read-only` — not `custom`, and not the `workspace-write` requested.
+    const { ctx, session } = await harness(SHIPPED_PRESETS)
+    applyTaskPolicy(ctx, session, policy({
+      sandboxMode: 'read-only',
+      approvalPresetId: 'workspace-write',
+    }))
+
+    expect(effectivePolicyOf(ctx, session, false)).toEqual({
+      sandboxMode: 'read-only',
+      approvalPreset: 'read-only',
       allowNetwork: false,
     })
   })

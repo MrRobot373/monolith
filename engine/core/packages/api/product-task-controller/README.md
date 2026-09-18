@@ -49,7 +49,7 @@ The policy binds before the Run is prompted: `sandboxMode` becomes a durable `sa
 
 `inspectTask` returns the Task record plus the status derived from its active Run's session log — `draft` for a Task that has started nothing, and otherwise whatever the `taskRunStatus` projection folds. Because the status is derived rather than stored, a reloading caller reads the same value the previous one saw.
 
-It also returns `effectivePolicy`: what the Run is actually executing under, read back from the session's own knobs rather than echoed from the Task record. A Task pinning `read-only` whose approval preset bundles `workspace-write` reports `sandboxMode: 'read-only'` with `approvalPreset: 'custom'`, because the Task's file policy outranks the preset's and the resulting knobs match no table entry.
+It also returns `effectivePolicy`: what the Run is actually executing under, read back from the session's own knobs rather than echoed from the Task record. A Task pinning `read-only` under the `workspace-write` preset reports `sandboxMode: 'read-only'`, because the Task's file policy outranks the preset's bundled one. `approvalPreset` then names whichever table entry those resulting knobs match — `read-only` in a deployment defining that preset, as the product bundle does — and `custom` only where nothing matches. It is the settled knobs that are named, never the preset the caller asked for.
 
 ### Register and download outputs
 

@@ -78,9 +78,11 @@ export interface EffectivePolicyView {
   /** The file-effect mode every confining capability resolves for this Run. */
   readonly sandboxMode: 'read-only' | 'workspace-write' | 'danger-full-access'
   /**
-   * The preset matching the Run's effective knobs, or `custom` when they match
-   * no table entry — which is the normal reading when a Task pins a file mode
-   * its approval preset does not carry.
+   * The preset whose bundle equals the Run's effective knobs, or `custom` when
+   * they equal none. Pinning a file mode the requested preset does not carry
+   * lands on a different entry, not necessarily outside the table: which name
+   * comes back is a fact about the deployment's table, so a caller rendering
+   * this must treat it as an opaque label rather than the preset it asked for.
    */
   readonly approvalPreset: string
   /** Whether this Run's agent keeps the deployment's network tools. */
